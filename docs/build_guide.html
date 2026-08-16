@@ -1,0 +1,1410 @@
+<title>MazeRunner Build Guide</title>
+<style>
+  :root {
+    --bg:        #F3F5F3;
+    --surface:   #FFFFFF;
+    --sunk:      #E9EDEB;
+    --ink:       #14201D;
+    --muted:     #5A6B67;
+    --line:      #D3DAD7;
+    --accent:    #00868C;
+    --accent-sk: #E0F0F0;
+    --warn:      #A8690B;
+    --warn-sk:   #F8EEDC;
+    --danger:    #A63A2E;
+    --danger-sk: #F8E6E3;
+    --ok:        #2C7A52;
+    --ok-sk:     #E2F0E8;
+
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+    --measure: 68ch;
+    --r: 3px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #0E1614;
+      --surface:   #16211F;
+      --sunk:      #1D2A27;
+      --ink:       #DFE8E5;
+      --muted:     #8A9C98;
+      --line:      #2A3936;
+      --accent:    #31B7BD;
+      --accent-sk: #102E2F;
+      --warn:      #D9962F;
+      --warn-sk:   #2E2415;
+      --danger:    #E0705E;
+      --danger-sk: #2E1A17;
+      --ok:        #4FB07C;
+      --ok-sk:     #12281D;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:        #0E1614;
+    --surface:   #16211F;
+    --sunk:      #1D2A27;
+    --ink:       #DFE8E5;
+    --muted:     #8A9C98;
+    --line:      #2A3936;
+    --accent:    #31B7BD;
+    --accent-sk: #102E2F;
+    --warn:      #D9962F;
+    --warn-sk:   #2E2415;
+    --danger:    #E0705E;
+    --danger-sk: #2E1A17;
+    --ok:        #4FB07C;
+    --ok-sk:     #12281D;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16.5px;
+    line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px 96px; }
+
+  /* ---------- hero: the maze grid, one foot to a square ---------- */
+  header.hero {
+    position: relative;
+    padding: 72px 0 40px;
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+  }
+  header.hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, var(--line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+    background-size: 46px 46px;
+    opacity: .40;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,.9), transparent 78%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,.9), transparent 78%);
+    pointer-events: none;
+  }
+  header.hero > * { position: relative; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-size: clamp(34px, 6vw, 56px);
+    line-height: 1.03;
+    letter-spacing: -.025em;
+    font-weight: 700;
+    margin: 0 0 18px;
+    text-wrap: balance;
+    max-width: 16ch;
+  }
+  .standfirst {
+    font-size: clamp(17px, 2.2vw, 20px);
+    color: var(--muted);
+    max-width: var(--measure);
+    margin: 0 0 32px;
+    text-wrap: pretty;
+  }
+
+  .scoreboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    overflow: hidden;
+    max-width: 760px;
+  }
+  .scoreboard div { background: var(--surface); padding: 14px 16px; }
+  .scoreboard dt {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 6px;
+  }
+  .scoreboard dd {
+    margin: 0; font-family: var(--mono); font-size: 21px; font-weight: 600;
+    font-variant-numeric: tabular-nums; color: var(--accent);
+  }
+  .scoreboard dd small { font-size: 12px; color: var(--muted); font-weight: 400; }
+
+  /* ---------- layout ---------- */
+  .cols { display: grid; grid-template-columns: 1fr; gap: 40px; }
+  @media (min-width: 1000px) {
+    .cols { grid-template-columns: 216px minmax(0, 1fr); gap: 56px; align-items: start; }
+    nav.toc { position: sticky; top: 24px; max-height: calc(100vh - 48px); overflow-y: auto; }
+  }
+  nav.toc { padding-top: 40px; }
+  nav.toc p {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 12px;
+  }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  nav.toc a {
+    display: flex; gap: 10px; align-items: baseline;
+    padding: 5px 8px; border-radius: var(--r);
+    color: var(--ink); text-decoration: none; font-size: 14px; line-height: 1.35;
+  }
+  nav.toc a:hover { background: var(--sunk); }
+  nav.toc a b {
+    font-family: var(--mono); font-size: 11px; color: var(--accent);
+    font-weight: 600; font-variant-numeric: tabular-nums; flex: none;
+  }
+  main { padding-top: 40px; min-width: 0; }
+
+  /* ---------- phases ---------- */
+  section.phase { margin: 0 0 72px; scroll-margin-top: 20px; }
+  .phase-head { border-top: 2px solid var(--ink); padding-top: 16px; margin-bottom: 26px; }
+  .phase-num {
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    letter-spacing: .1em; color: var(--accent); display: block; margin-bottom: 8px;
+  }
+  h2 {
+    font-size: clamp(25px, 3.6vw, 33px); line-height: 1.14; letter-spacing: -.02em;
+    font-weight: 700; margin: 0 0 10px; text-wrap: balance;
+  }
+  .phase-meta {
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    display: flex; flex-wrap: wrap; gap: 8px 18px;
+  }
+
+  h3 {
+    font-size: 19px; line-height: 1.3; letter-spacing: -.01em; font-weight: 650;
+    margin: 38px 0 12px; text-wrap: balance;
+  }
+  h4 {
+    font-size: 15px; font-weight: 650; margin: 26px 0 8px;
+  }
+  p, li { max-width: var(--measure); text-wrap: pretty; }
+  p { margin: 0 0 15px; }
+  ul, ol { margin: 0 0 15px; padding-left: 22px; }
+  li { margin-bottom: 7px; }
+  a { color: var(--accent); }
+  strong { font-weight: 650; }
+  code {
+    font-family: var(--mono); font-size: .885em;
+    background: var(--sunk); padding: .12em .38em; border-radius: var(--r);
+    word-break: break-word;
+  }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 34px 0; }
+
+  /* ---------- steps ---------- */
+  ol.steps { list-style: none; padding: 0; counter-reset: s; max-width: var(--measure); }
+  ol.steps > li {
+    counter-increment: s; position: relative;
+    padding: 0 0 20px 44px; margin: 0;
+    border-left: 1px solid var(--line); margin-left: 12px;
+  }
+  ol.steps > li::before {
+    content: counter(s);
+    position: absolute; left: -12px; top: 0;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--line); color: var(--accent);
+    font-family: var(--mono); font-size: 11.5px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  ol.steps > li:last-child { border-left-color: transparent; padding-bottom: 4px; }
+  ol.steps > li > :first-child { margin-top: -3px; }
+
+  /* ---------- callouts ---------- */
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-sk);
+    padding: 14px 18px; margin: 20px 0; border-radius: 0 var(--r) var(--r) 0;
+    max-width: var(--measure);
+  }
+  .note > :last-child { margin-bottom: 0; }
+  .note.warn   { border-color: var(--warn);   background: var(--warn-sk); }
+  .note.danger { border-color: var(--danger); background: var(--danger-sk); }
+  .note.pass   { border-color: var(--ok);     background: var(--ok-sk); }
+  .note-label {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+    text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 6px;
+    color: var(--accent);
+  }
+  .note.warn   .note-label { color: var(--warn); }
+  .note.danger .note-label { color: var(--danger); }
+  .note.pass   .note-label { color: var(--ok); }
+
+  /* ---------- code ---------- */
+  .code {
+    background: var(--sunk); border: 1px solid var(--line); border-radius: var(--r);
+    margin: 18px 0; overflow: hidden;
+  }
+  .code-cap {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface);
+  }
+  .code pre { margin: 0; padding: 14px; overflow-x: auto; }
+  .code code {
+    background: none; padding: 0; font-size: 13px; line-height: 1.65;
+    white-space: pre; word-break: normal;
+  }
+
+  /* ---------- tables ---------- */
+  .tw { overflow-x: auto; margin: 18px 0; border: 1px solid var(--line); border-radius: var(--r); }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; padding: 9px 13px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--muted); font-weight: 600;
+    background: var(--surface); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.pin, td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ar { font-size: 13.5px; color: var(--muted); }
+
+  /* ---------- checklists ---------- */
+  .check { list-style: none; padding: 0; margin: 16px 0; max-width: var(--measure); }
+  .check li {
+    display: flex; gap: 11px; align-items: flex-start;
+    padding: 8px 10px; border-bottom: 1px solid var(--line); margin: 0;
+  }
+  .check li:last-child { border-bottom: 0; }
+  .check input { margin: 4px 0 0; accent-color: var(--accent); flex: none; width: 15px; height: 15px; }
+  .check label { flex: 1; cursor: pointer; }
+  .check input:checked + label { color: var(--muted); text-decoration: line-through; }
+
+  .progress {
+    position: sticky; bottom: 0; z-index: 5;
+    background: var(--surface); border-top: 1px solid var(--line);
+    padding: 9px 20px; font-family: var(--mono); font-size: 12px;
+    display: flex; justify-content: space-between; gap: 16px; align-items: center;
+    color: var(--muted);
+  }
+  .progress b { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .progress button {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    background: none; border: 1px solid var(--line); border-radius: var(--r);
+    padding: 4px 10px; cursor: pointer;
+  }
+  .progress button:hover { color: var(--ink); border-color: var(--muted); }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  footer {
+    border-top: 1px solid var(--line); margin-top: 40px; padding-top: 26px;
+    color: var(--muted); font-size: 14px;
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Robotics Navigation Challenge · Arduino Uno</p>
+  <h1>MazeRunner Build Guide</h1>
+  <p class="standfirst">
+    Everything from the shop counter to the start line: what to buy, how to wire it,
+    what to test at each stage, and what to do on the day. Written for one specific
+    robot that has been simulated to completion — but the method transfers to any
+    two-wheeled maze robot on an Uno.
+  </p>
+  <dl class="scoreboard">
+    <div><dt>Maps completed</dt><dd>3 / 3</dd></div>
+    <div><dt>Sector points</dt><dd>17 / 17</dd></div>
+    <div><dt>Simulated runs</dt><dd>96 <small>all passed</small></dd></div>
+    <div><dt>Slowest map</dt><dd>48 s <small>of 180</small></dd></div>
+    <div><dt>Wall contact</dt><dd>0</dd></div>
+  </dl>
+</header>
+
+<div class="cols">
+
+<nav class="toc" aria-label="Contents">
+  <p>Phases</p>
+  <ol>
+    <li><a href="#p0"><b>00</b><span>Before you spend anything</span></a></li>
+    <li><a href="#p1"><b>01</b><span>Shopping</span></a></li>
+    <li><a href="#p2"><b>02</b><span>Software setup</span></a></li>
+    <li><a href="#p3"><b>03</b><span>Test the code first</span></a></li>
+    <li><a href="#p4"><b>04</b><span>Bench-test each part</span></a></li>
+    <li><a href="#p5"><b>05</b><span>Mechanical assembly</span></a></li>
+    <li><a href="#p6"><b>06</b><span>Wiring, in order</span></a></li>
+    <li><a href="#p7"><b>07</b><span>First power-up</span></a></li>
+    <li><a href="#p8"><b>08</b><span>Measure and calibrate</span></a></li>
+    <li><a href="#p9"><b>09</b><span>Tuning on the real track</span></a></li>
+    <li><a href="#p10"><b>10</b><span>Competition day</span></a></li>
+    <li><a href="#p11"><b>11</b><span>When it goes wrong</span></a></li>
+    <li><a href="#p12"><b>12</b><span>For other students</span></a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 00 ============ -->
+<section class="phase" id="p0">
+  <div class="phase-head">
+    <span class="phase-num">PHASE 00</span>
+    <h2>Before you spend anything</h2>
+    <div class="phase-meta"><span>~30 min</span><span>No parts needed</span></div>
+  </div>
+
+  <p>
+    One measurement decides whether this robot can work at all, and it is not
+    about code. A two-wheeled robot pivoting on the spot sweeps a circle as wide
+    as its body diagonal. If that circle does not fit between the walls, the
+    robot <em>cannot turn around</em> — no amount of tuning fixes it.
+  </p>
+
+  <p>The competition passage is one foot: <strong>304.8 mm</strong>.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Robot size</th><th>Body diagonal</th><th>Clearance</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td class="num">250 × 150 mm</td><td class="num">292 mm</td><td class="num">6 mm</td><td>Jams in corners</td></tr>
+        <tr><td class="num"><strong>220 × 115 mm</strong></td><td class="num"><strong>248 mm</strong></td><td class="num"><strong>28 mm</strong></td><td><strong>Target — build to this</strong></td></tr>
+        <tr><td class="num">200 × 110 mm</td><td class="num">228 mm</td><td class="num">38 mm</td><td>Fits, but twitchy — short wheelbase</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    <strong>220 × 115 mm</strong> is a measured optimum, not a guess. Narrower is
+    not automatically better: a narrower body means a shorter wheelbase, which
+    makes the robot more sensitive to motor mismatch. In simulation, 110 mm wide
+    completed 83% of runs and 115 mm completed 97%.
+  </p>
+
+  <div class="note warn">
+    <span class="note-label">Measure this today</span>
+    <p>
+      Put a ruler across your chassis as it stands, nose to tail and tyre-outside
+      to tyre-outside. Most kit builds come out around 250 × 150 mm, and almost
+      all of the excess is in the front ultrasonic bracket hanging off the nose.
+      You need to find about 3 cm of length. Knowing that now changes what you
+      buy.
+    </p>
+  </div>
+
+  <h3>Two questions worth asking the organisers</h3>
+  <ol>
+    <li><strong>What is the actual passage width?</strong> The rulebook says 200–400 mm and calls the dimensions "tentative". At 200 mm no standard kit robot can turn at all — that affects every team equally and is worth raising early, in writing.</li>
+    <li><strong>Are the start and finish gates marked on the floor?</strong> It changes nothing in the code, but it is good to know what the robot will see.</li>
+  </ol>
+</section>
+
+<!-- ============ 01 ============ -->
+<section class="phase" id="p1">
+  <div class="phase-head">
+    <span class="phase-num">PHASE 01</span>
+    <h2>Shopping</h2>
+    <div class="phase-meta"><span>Half a day</span><span>~300 SAR electronics + ~300 SAR tools</span></div>
+  </div>
+
+  <p>
+    Two trips: an electronics shop, then SACO. <strong>No practice track</strong> —
+    you have the real one, which saves about 120 SAR and a full weekend of cutting
+    foam board.
+  </p>
+
+  <h3>Which to choose when there is a choice</h3>
+  <p>
+    Scoring is sector points first (§6.1); time only breaks ties (§6.3). So
+    <strong>reliability wins the event and weight wins the tie-break</strong>. Buy
+    the reliable option, and take the lighter one only where it costs nothing.
+  </p>
+
+  <h3>Electronics shop <span class="ar">(الموجات الإلكترونية, King Fahd St, Khobar)</span></h3>
+
+  <ul class="check">
+    <li><input type="checkbox" id="b1"><label for="b1"><strong>MPU-6050 / GY-521 gyro × 2</strong> <span class="ar">حساس جيروسكوب</span> — 15–25 SAR each. The highest-value part you can add: it is what makes a turn actually 90°. Only 3 g, so no trade-off. <strong>Buy two</strong> — a dead gyro on the day ends your event. <em>Not</em> a compass module (HMC5883L/QMC5883); the motors fool it.</label></li>
+    <li><input type="checkbox" id="b2"><label for="b2"><strong>LM393 slot encoder × 2</strong> (+2 spare) <span class="ar">حساس سرعة العجلة</span> — 8–12 SAR each. The slotted discs in your kit only fit these.</label></li>
+    <li><input type="checkbox" id="b3"><label for="b3"><strong>Momentary push button × 2</strong> <span class="ar">زر ضغط</span> — 2 SAR each. The GO button. Two wires, no resistor.</label></li>
+    <li><input type="checkbox" id="b4"><label for="b4"><strong>2 × 18650 Li-ion + holder + charger</strong> <span class="ar">بطاريات ١٨٦٥٠ + بيت + شاحن</span> — ~60 SAR. 7.4 V, ~95 g, rechargeable, holds voltage under load. <strong>This is the reliable choice.</strong></label></li>
+    <li><input type="checkbox" id="b5"><label for="b5"><strong>Rocker/toggle switch, 3 A × 2</strong> <span class="ar">مفتاح تشغيل</span> — 5 SAR each. Master power. One is enough; buy a spare.</label></li>
+    <li><input type="checkbox" id="b6"><label for="b6"><strong>Inline fuse holder + 3 A fuse</strong> <span class="ar">حامل فيوز</span> — 8 SAR. Insurance against a shorted motor lead.</label></li>
+    <li><input type="checkbox" id="b7"><label for="b7"><strong>1000 µF 16 V capacitor × 2</strong> <span class="ar">مكثف ١٠٠٠ مايكرو</span> — 3 SAR each. Across the L298N supply; stops motor surges resetting the Arduino.</label></li>
+    <li><input type="checkbox" id="b8"><label for="b8"><strong>100 nF ceramic ("104") × 10</strong> <span class="ar">مكثف ١٠٤</span> — 1 SAR each. One across each motor's terminals; kills the brush noise that upsets the gyro.</label></li>
+    <li><input type="checkbox" id="b9"><label for="b9"><strong>JST-XH connector kit + crimp tool</strong> <span class="ar">وصلات JST + كماشة تكريب</span> — ~60 SAR. Cables cut to exact length, sensors unplug for repair. The biggest tidiness win. A Dupont kit is the cheaper substitute.</label></li>
+    <li><input type="checkbox" id="b10"><label for="b10"><strong>22 AWG stranded wire, 3 colours</strong> <span class="ar">سلك ٢٢ مجدول</span> — 15 SAR. <strong>Stranded, not solid.</strong> Solid wire work-hardens and snaps from vibration.</label></li>
+    <li><input type="checkbox" id="b11"><label for="b11"><strong>Heat-shrink assortment</strong> <span class="ar">أنابيب حرارية</span> — 15 SAR. §5.1 forbids exposed conductor.</label></li>
+    <li><input type="checkbox" id="b12"><label for="b12"><strong>Spiral cable wrap 6 mm, 2 m</strong> <span class="ar">لفافة أسلاك</span> — 10 SAR.</label></li>
+    <li><input type="checkbox" id="b13"><label for="b13"><strong>Pin headers, male + female</strong> <span class="ar">هيدر ذكر وأنثى</span> — 10 SAR.</label></li>
+    <li><input type="checkbox" id="b14"><label for="b14"><strong>Spare HC-SR04 × 2</strong> <span class="ar">حساس مسافة</span> — 20 SAR each. They die.</label></li>
+    <li><input type="checkbox" id="b15"><label for="b15"><em>Optional:</em> piezo buzzer 5 V <span class="ar">صافرة</span> — 5 SAR. In parallel with the LED, so the countdown is audible to a judge.</label></li>
+  </ul>
+
+  <div class="note danger">
+    <span class="note-label">Do not buy</span>
+    <ul>
+      <li><strong>Any second microcontroller</strong> — ESP32, Nano, Pi. Rule §2.2, instant disqualification, even fitted and unused.</li>
+      <li><strong>An external memory chip.</strong> The Uno's built-in 1 kB EEPROM is ten times what this needs — the junction memory uses 192 bytes.</li>
+      <li><strong>A TCRT5000 line sensor.</strong> It was in an earlier version of this design and was removed: its only job was spotting the finish, and a TCRT5000 chatters crossing tape at an angle, which could stop the robot mid-map. Measured with it gone: identical times, every sector line still crossed.</li>
+      <li><strong>Laser distance sensors</strong> (VL53L0X/VL53L1X). Modelled, and they measured <em>worse</em> than HC-SR04 here — a wide sonar cone averages a whole square of wall, which is exactly what a wall-follower wants.</li>
+    </ul>
+  </div>
+
+  <h3>SACO <span class="ar">(ساكو)</span> — tools</h3>
+  <ul class="check">
+    <li><input type="checkbox" id="t1"><label for="t1"><strong>Soldering iron 40–60 W + stand, solder, flux</strong> <span class="ar">كاوي لحام + قصدير</span> — 90 SAR</label></li>
+    <li><input type="checkbox" id="t2"><label for="t2"><strong>Digital multimeter</strong> <span class="ar">افوميتر</span> — 60 SAR. You will use this more than you expect.</label></li>
+    <li><input type="checkbox" id="t3"><label for="t3">Precision screwdriver set + PH1/PH2 <span class="ar">طقم مفكات دقيقة + مفك صليبة</span> — 50 SAR</label></li>
+    <li><input type="checkbox" id="t4"><label for="t4">Needle-nose pliers, side cutters, wire strippers <span class="ar">زرادية، قصافة، مقشر أسلاك</span> — 55 SAR</label></li>
+    <li><input type="checkbox" id="t5"><label for="t5">Desoldering braid <span class="ar">شفاط لحام</span> — 10 SAR</label></li>
+    <li><input type="checkbox" id="t6"><label for="t6">Hot glue gun + sticks <span class="ar">مسدس شمع</span> — 30 SAR</label></li>
+    <li><input type="checkbox" id="t7"><label for="t7">Craft knife, small files <span class="ar">كتر، مبارد</span> — 25 SAR</label></li>
+    <li><input type="checkbox" id="t8"><label for="t8">Safety glasses <span class="ar">نظارة أمان</span> — 15 SAR</label></li>
+    <li><input type="checkbox" id="t9"><label for="t9">Parts organiser box <span class="ar">علبة تنظيم</span> — 25 SAR</label></li>
+    <li><input type="checkbox" id="t10"><label for="t10"><strong>Tape measure + long steel ruler</strong> <span class="ar">متر + مسطرة</span> — to measure the real track the first time you see it</label></li>
+  </ul>
+
+  <h3>SACO — fasteners</h3>
+  <ul class="check">
+    <li><input type="checkbox" id="f1"><label for="f1">M3 screws 6/8/10/12/20 mm <span class="ar">مسامير M3</span> — steel where it carries load</label></li>
+    <li><input type="checkbox" id="f2"><label for="f2"><strong>M3 NYLON standoffs 10–25 mm</strong> <span class="ar">فواصل نايلون M3</span> — buy nylon, not brass. Same job, a third of the weight, and you need 8–12. Free ~25 g.</label></li>
+    <li><input type="checkbox" id="f3"><label for="f3"><strong>M3 nylon screws + nuts</strong> <span class="ar">مسامير نايلون M3</span> — for the sensor boards, which carry nothing. Another ~10 g.</label></li>
+    <li><input type="checkbox" id="f4"><label for="f4">M3 steel nuts, nylon lock nuts, washers <span class="ar">صواميل وورد M3</span> — steel for the motor brackets only</label></li>
+    <li><input type="checkbox" id="f5"><label for="f5">M2 screws + nuts <span class="ar">مسامير M2</span> — sensor modules</label></li>
+    <li><input type="checkbox" id="f6"><label for="f6"><strong>Blue thread-lock</strong> <span class="ar">مثبت مسامير</span> — vibration loosens everything on this robot</label></li>
+    <li><input type="checkbox" id="f7"><label for="f7">Zip ties 100 mm + adhesive mounts <span class="ar">ربطات + قواعد لاصقة</span></label></li>
+    <li><input type="checkbox" id="f8"><label for="f8"><strong>Double-sided foam tape</strong> (3M VHB if stocked) <span class="ar">لاصق وجهين</span> — for mounting the gyro flat and rigid</label></li>
+    <li><input type="checkbox" id="f9"><label for="f9">Electrical tape <span class="ar">شريط عازل</span></label></li>
+  </ul>
+
+  <div class="note">
+    <span class="note-label">Free weight — about 90 g</span>
+    <p>
+      Nylon standoffs instead of brass (~35 g), leaving the breadboard off the
+      robot (~30 g, and §2.2 explicitly allows it), cutting wires to length
+      instead of coiling jumper leads (~15 g), green perfboard instead of the
+      white breadboard (~25 g). On a ~600 g robot that is 15%, and it shows up as
+      quicker starts out of every one of Map 3's eight turns.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 02 ============ -->
+<section class="phase" id="p2">
+  <div class="phase-head">
+    <span class="phase-num">PHASE 02</span>
+    <h2>Software setup</h2>
+    <div class="phase-meta"><span>~45 min</span><span>Laptop only</span></div>
+  </div>
+
+  <ol class="steps">
+    <li>
+      <h4>Install the Arduino IDE</h4>
+      <p>
+        Download from <code>arduino.cc/en/software</code> — take <strong>IDE
+        2.x</strong>. Install with the default options and let it install the
+        USB drivers when it asks.
+      </p>
+    </li>
+    <li>
+      <h4>Install the CH340 driver (most likely needed)</h4>
+      <p>
+        Kit Unos are usually clones with a <strong>CH340</strong> USB chip rather
+        than the original FTDI. If you plug the board in and no port appears,
+        this is why. Search "CH340 driver" for your operating system, install it,
+        and replug.
+      </p>
+      <p><strong>Windows:</strong> the port shows up as <code>COM3</code> or similar.
+      <strong>macOS:</strong> <code>/dev/cu.wchusbserial...</code>.
+      <strong>Linux:</strong> <code>/dev/ttyUSB0</code> — and you may need
+      <code>sudo usermod -aG dialout $USER</code>, then log out and back in.</p>
+    </li>
+    <li>
+      <h4>Select the board</h4>
+      <p>In the IDE: <strong>Tools → Board → Arduino AVR Boards → Arduino Uno</strong>,
+      then <strong>Tools → Port →</strong> whichever port appeared in the previous step.</p>
+    </li>
+    <li>
+      <h4>Prove the toolchain with Blink</h4>
+      <p><strong>File → Examples → 01.Basics → Blink</strong>, then press
+      <strong>Upload</strong> (the arrow). The board's LED should blink once a
+      second.</p>
+      <div class="note pass">
+        <span class="note-label">Pass</span>
+        <p>Blink uploads and runs. Do not go further until it does — every later
+        problem is easier to diagnose once you know uploading works.</p>
+      </div>
+    </li>
+    <li>
+      <h4>Get the project files</h4>
+      <p>
+        Download the repository. If you use git:
+      </p>
+      <div class="code">
+        <div class="code-cap">terminal</div>
+        <pre><code>git clone https://github.com/Muzoka/Robotic-comp.git
+cd Robotic-comp</code></pre>
+      </div>
+      <p>Otherwise use GitHub's <strong>Code → Download ZIP</strong> and unzip it.</p>
+    </li>
+    <li>
+      <h4>Optional but recommended: run the simulator</h4>
+      <p>
+        You need Python 3, <code>pillow</code>, and a C++ compiler
+        (<code>g++</code> — already present on macOS and Linux; on Windows use
+        WSL). Then:
+      </p>
+      <div class="code">
+        <div class="code-cap">terminal</div>
+        <pre><code>pip install pillow
+python3 tools/geometry_check.py      # can the robot turn in the corridor?
+cd sim && python3 run.py --all       # drive all three maps, makes GIFs</code></pre>
+      </div>
+      <p>
+        The unusual thing about this project: the simulator runs the
+        <em>real firmware</em>. <code>nav_core.cpp</code> is compiled twice — once
+        by the Arduino IDE onto the Uno, once by <code>g++</code> into a library
+        the Python simulator drives. What you watch in a simulated run is the
+        behaviour of the code you flash.
+      </p>
+    </li>
+  </ol>
+</section>
+
+<!-- ============ 03 ============ -->
+<section class="phase" id="p3">
+  <div class="phase-head">
+    <span class="phase-num">PHASE 03</span>
+    <h2>Test the code before you own the parts</h2>
+    <div class="phase-meta"><span>~1 hour</span><span>Browser only · free</span></div>
+  </div>
+
+  <p>
+    <a href="https://wokwi.com">Wokwi</a> is a browser Arduino simulator. It cannot
+    tell you whether the robot navigates a maze — it has no wheels — but it proves
+    the pin map, the I²C gyro, the sonar timing and the whole state machine. This
+    is the cheapest bug-finding available, and it found three real bugs in this
+    project that the maze simulator could not.
+  </p>
+
+  <ol class="steps">
+    <li>
+      <h4>New project</h4>
+      <p>Sign in at <code>wokwi.com</code> (free) → <strong>New Project → Arduino Uno</strong>.</p>
+    </li>
+    <li>
+      <h4>Paste two files</h4>
+      <p>
+        Click the <strong>diagram.json</strong> tab, select all, delete, paste
+        <code>wokwi/diagram.json</code>. Then the <strong>sketch.ino</strong> tab,
+        select all, delete, paste <code>wokwi/sketch.ino</code>.
+      </p>
+      <div class="note warn">
+        <span class="note-label">Use wokwi/sketch.ino, not the firmware one</span>
+        <p>
+          <code>firmware/MazeRunner/MazeRunner.ino</code> is split across four
+          files and opens with <code>#include "config.h"</code>. Paste that one on
+          its own and the build stops with
+          <code>fatal error: config.h: No such file or directory</code>.
+          <code>wokwi/sketch.ino</code> is the same code with all four files
+          already merged, so there is nothing to name and nothing to miss.
+        </p>
+      </div>
+    </li>
+    <li>
+      <h4>Press play, then open the Serial Monitor at 115200</h4>
+      <div class="code">
+        <div class="code-cap">expected output</div>
+        <pre><code># MazeRunner booting - hold still, calibrating gyro
+# gyro OK
+# ready. Press GO, or wave a hand in front of the nose.
+t_ms,state,dF,dL,dR,head,tgt,encL,encR,pwmL,pwmR,sect
+2685,WAIT_START,602,2000,2000,0.0,0.0,0,0,0,0,0
+2785,WAIT_START,602,90,90,0.0,0.0,0,0,0,0,0</code></pre>
+      </div>
+      <p>
+        <code>602</code> is the front sensor's default slider (60 cm) and
+        <code>90</code> the sides (9 cm). Seeing the right numbers on the right
+        channels is your pin map confirmed.
+      </p>
+    </li>
+    <li>
+      <h4>Check it does nothing on its own</h4>
+      <p>Leave it alone for ten seconds. It must stay in <code>WAIT_START</code>.</p>
+    </li>
+    <li>
+      <h4>Press the red GO button</h4>
+      <div class="code">
+        <div class="code-cap">expected</div>
+        <pre><code># GO pressed
+6088,COUNTDOWN,602,90,90,...      &lt;- D13 blinks ~3 s
+9088,DRIVE,602,90,90,...,200,200  &lt;- both motors forward
+9988,STUCK,602,90,90,...,-140,-55 &lt;- expected, see below</code></pre>
+      </div>
+    </li>
+  </ol>
+
+  <div class="note">
+    <span class="note-label">Why STUCK is correct here</span>
+    <p>
+      Wokwi has no wheels, so the encoder counts never rise. From the firmware's
+      point of view the motors are running and the wheels are not turning, which
+      is exactly what "jammed" means — so the watchdog fires after 900 ms. Tap the
+      blue and green buttons to feed it fake encoder ticks, or ignore it. Watch
+      the escape direction alternate (<code>-140,-55</code> then
+      <code>-55,-140</code>): that is the robot avoiding repeating a failed escape.
+    </p>
+  </div>
+
+  <p>Other things worth doing in Wokwi while you have it open:</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Do this</th><th>Should happen</th></tr></thead>
+      <tbody>
+        <tr><td>Drag the <strong>front</strong> sensor down to 15 cm</td><td>State goes <code>CREEP</code> → <code>TURN</code>; the IN1/IN2 or IN3/IN4 LEDs swap — it is pivoting</td></tr>
+        <tr><td>Drag the <strong>left</strong> sensor up to 100 cm, front clear</td><td>It spots a left opening, creeps, then turns left</td></tr>
+        <tr><td>Drag <strong>all three</strong> above 60 cm</td><td>It keeps going straight — this is the straight-through-a-crossing rule</td></tr>
+        <tr><td>Check the compile output</td><td>RAM comfortably under 2048 bytes. The navigation brain uses 432 bytes, about 21%</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 04 ============ -->
+<section class="phase" id="p4">
+  <div class="phase-head">
+    <span class="phase-num">PHASE 04</span>
+    <h2>Bench-test each part, one at a time</h2>
+    <div class="phase-meta"><span>~2 hours</span><span>Before assembly</span></div>
+  </div>
+
+  <p>
+    Test every subsystem <strong>before</strong> it is buried inside the robot.
+    Debugging three subsystems at once is how a week disappears. Full sketches
+    are in <code>tools/serial_check.md</code>; here is what each one has to prove.
+  </p>
+
+  <div class="note warn">
+    <span class="note-label">Wheels off the ground</span>
+    <p>Put the chassis on a block for anything involving motors. It will drive off the table otherwise.</p>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Test</th><th>Pass criteria</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="pin">1</td><td><strong>Motors</strong></td>
+          <td>All four motions correct — both forward, both back, spin left, spin right — and the wheels stop dead in the pause. Note the lowest PWM at which each wheel actually turns; that is <code>PWM_MIN</code>, usually 50–70.</td>
+        </tr>
+        <tr>
+          <td class="pin">2</td><td><strong>Encoders</strong></td>
+          <td>Turn each wheel exactly one revolution by hand; the count rises by 20 (or however many slots your disc has — count them). If it jumps 2–3 per slot you have contact bounce: the disc is rubbing or off-centre in the slot.</td>
+        </tr>
+        <tr>
+          <td class="pin">3</td><td><strong>Ultrasonics</strong></td>
+          <td>Hold a flat book at 50, 100, 300 and 1000 mm; each sensor within ~10 mm of a ruler. Then hold the book <strong>at 45°</strong> — it should report no echo. That is real physics, not a fault, and it is why the firmware treats a missing echo as "far".</td>
+        </tr>
+        <tr>
+          <td class="pin">4</td><td><strong>Gyro</strong></td>
+          <td>Three checks: (a) still for 60 s, heading drifts under ±2°; (b) turn 90° by hand against a square, reads 90 ± 3°; (c) turn 90° the other way, reads −90. If the sign is backwards set <code>GYRO_Z_SIGN = -1.0f</code>.</td>
+        </tr>
+        <tr>
+          <td class="pin">5</td><td><strong>GO button</strong></td>
+          <td>Steady <code>1</code> untouched, <code>0</code> while held, back to <code>1</code> on release. Always <code>0</code> means wrong pin or a short; never <code>0</code> means a wire is not making contact.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <span class="note-label">Try the cross-talk failure deliberately</span>
+    <p>
+      In the ultrasonic test, remove the <code>delay(60)</code> between sensors and
+      watch the readings go mad. Three sonars firing together hear each other's
+      pings. That is why the firmware fires them one at a time, front / left /
+      front / right — never "ping all three to go faster".
+    </p>
+  </div>
+</section>
+
+<!-- ============ 05 ============ -->
+<section class="phase" id="p5">
+  <div class="phase-head">
+    <span class="phase-num">PHASE 05</span>
+    <h2>Mechanical assembly</h2>
+    <div class="phase-meta"><span>~4 hours</span><span>Target: 220 × 115 mm</span></div>
+  </div>
+
+  <ol class="steps">
+    <li>
+      <h4>Mount the motors with the axle centred</h4>
+      <p>
+        The wheel axle should sit <strong>halfway along the body</strong>. An axle
+        mounted two-thirds of the way back makes the pivot circle bigger for no
+        benefit — and it is usually just a matter of which mounting holes you use.
+        Steel screws and nylock nuts here; this joint carries load. Thread-lock on
+        every one.
+      </p>
+    </li>
+    <li>
+      <h4>Fit the encoder discs and sensors</h4>
+      <p>
+        The LM393 slot sensor straddles the black slotted disc on the inside of
+        each wheel. Get the disc <strong>centred in the slot</strong>: if it rubs,
+        it brakes the wheel; too far out and it misses counts. Check by spinning
+        the wheel by hand and watching the sensor's LED flicker evenly.
+      </p>
+    </li>
+    <li>
+      <h4>Bring the body down to size</h4>
+      <p>
+        This is the step that decides whether the robot works. Everything must sit
+        <strong>inside the tyre line and inside the nose</strong> — no bracket,
+        sensor, wire loom or battery sticking out past the tyres or off the front.
+      </p>
+      <p>
+        The front ultrasonic bracket is almost always the problem. Mount the front
+        sensor flush against the nose, not on an arm. Put the battery <strong>on
+        top</strong>, never behind the axle — anything behind the axle adds to the
+        tail, and the tail is what sweeps the wall.
+      </p>
+      <div class="note pass">
+        <span class="note-label">Pass</span>
+        <p>Nose to tail ≤ 220 mm. Tyre outside to tyre outside ≤ 115 mm. Measure it, do not estimate it.</p>
+      </div>
+    </li>
+    <li>
+      <h4>Mount the three ultrasonics</h4>
+      <p>
+        Front one dead ahead in the middle of the nose. Left and right facing
+        <strong>exactly 90° out</strong>, level, and — this matters — <strong>on the
+        wheel-axle line</strong>, not ahead of it. That way a gap is seen at the
+        instant the axle draws level with it, which is the moment the robot needs
+        to know. Moving them back from 40 mm ahead to the axle line was worth about
+        20 percentage points of completion on Map 3 in simulation, and it costs
+        nothing but where you drill.
+      </p>
+      <p>Nylon screws here — these boards carry nothing.</p>
+    </li>
+    <li>
+      <h4>Mount the gyro flat, level and rigid</h4>
+      <p>
+        As close to the middle of the robot as you can. Double-sided foam tape,
+        then a zip tie over the top. <strong>If it can wobble, it will report the
+        wobble as turning.</strong> Keep it away from the motors and from the motor
+        wires — and twist those wires together to cancel their magnetic field.
+      </p>
+    </li>
+    <li>
+      <h4>Mount the GO button on the back</h4>
+      <p>
+        On a stiff bracket, so pressing it pushes the robot <em>into</em> the start
+        wall rather than sideways off its line.
+      </p>
+    </li>
+    <li>
+      <h4>Solder the perfboard</h4>
+      <p>
+        Use the <strong>green perfboard, not the white breadboard</strong>. A
+        breadboard's spring contacts shake loose, and your robot is a vibrating
+        gearbox bolted to a plastic plate — a run ends the moment one 5 V jumper
+        lifts 0.3 mm. Rule §5.1 prohibits loose components and §11 checks secure
+        mounting; §2.2 names the breadboard as the one part you may remove, which
+        is the rulebook telling you it expects you to solder.
+      </p>
+      <p>
+        Lay out: one 5 V rail, one GND rail, three 4-pin headers for the
+        ultrasonics, one 4-pin header for the gyro, two 3-pin headers for the
+        encoders, one 2-pin for the GO button. Everything plugs into that.
+      </p>
+    </li>
+  </ol>
+</section>
+
+<!-- ============ 06 ============ -->
+<section class="phase" id="p6">
+  <div class="phase-head">
+    <span class="phase-num">PHASE 06</span>
+    <h2>Wiring, in this order</h2>
+    <div class="phase-meta"><span>~3 hours</span><span>Power off throughout</span></div>
+  </div>
+
+  <p>Every pin is spoken for. Do not improvise — the firmware assumes exactly this.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Pin</th><th>Connects to</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td class="pin">D0, D1</td><td>—</td><td>Leave alone. USB serial.</td></tr>
+        <tr><td class="pin">D2</td><td>LEFT encoder OUT</td><td>Interrupt 0</td></tr>
+        <tr><td class="pin">D3</td><td>RIGHT encoder OUT</td><td>Interrupt 1</td></tr>
+        <tr><td class="pin">D4</td><td>L298N IN1</td><td></td></tr>
+        <tr><td class="pin">D5</td><td>L298N ENA</td><td>PWM, RIGHT motor</td></tr>
+        <tr><td class="pin">D6</td><td>L298N ENB</td><td>PWM, LEFT motor</td></tr>
+        <tr><td class="pin">D7</td><td>L298N IN2</td><td></td></tr>
+        <tr><td class="pin">D8</td><td>L298N IN3</td><td></td></tr>
+        <tr><td class="pin">D9</td><td>HC-SR04 RIGHT TRIG</td><td></td></tr>
+        <tr><td class="pin">D10</td><td>HC-SR04 RIGHT ECHO</td><td></td></tr>
+        <tr><td class="pin">D11</td><td>L298N IN4</td><td></td></tr>
+        <tr><td class="pin">D12</td><td>GO button → GND</td><td>Two wires, no resistor</td></tr>
+        <tr><td class="pin">D13</td><td>Status LED (onboard) + buzzer</td><td>Output only</td></tr>
+        <tr><td class="pin">A0</td><td>HC-SR04 FRONT TRIG</td><td></td></tr>
+        <tr><td class="pin">A1</td><td>HC-SR04 FRONT ECHO</td><td></td></tr>
+        <tr><td class="pin">A2</td><td>HC-SR04 LEFT TRIG</td><td></td></tr>
+        <tr><td class="pin">A3</td><td>HC-SR04 LEFT ECHO</td><td></td></tr>
+        <tr><td class="pin">A4</td><td>MPU-6050 SDA</td><td>Do not reuse</td></tr>
+        <tr><td class="pin">A5</td><td>MPU-6050 SCL</td><td>Do not reuse</td></tr>
+        <tr><td class="pin">VIN</td><td>Battery +</td><td>Through the switch and fuse</td></tr>
+        <tr><td class="pin">GND</td><td>Common ground</td><td>Everything</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Wire in this order</h3>
+  <ol class="steps">
+    <li>
+      <h4>Ground first, everywhere</h4>
+      <p>
+        Arduino GND, L298N GND, battery −, and every sensor GND all to one rail.
+        <strong>If the sonar reads nonsense later, this is the first thing to
+        check.</strong>
+      </p>
+    </li>
+    <li>
+      <h4>Power</h4>
+      <div class="code">
+        <div class="code-cap">power path</div>
+        <pre><code>            [ SWITCH ]   [ 3A FUSE ]
+BATT+  ────────/ ──────────▭────────┬──── L298N +12V
+                                    └──── Arduino VIN
+
+BATT−  ─────────────────────────────┬──── L298N GND
+                                    ├──── Arduino GND
+                                    └──── sensor GND rail
+
+Arduino 5V ─────────────────────────┬──── HC-SR04 ×3  VCC
+                                    ├──── MPU-6050    VCC
+                                    └──── LM393 ×2    VCC</code></pre>
+      </div>
+      <ul>
+        <li>Leave the L298N <strong>5V-EN jumper fitted</strong> so the driver powers its own logic.</li>
+        <li><strong>Never</strong> join the L298N's 5 V output to the Arduino's 5 V pin.</li>
+        <li><strong>Remove the ENA and ENB jumpers</strong> on the L298N. Left fitted, the enable pins are tied high, PWM does nothing, and the robot has exactly one speed: flat out.</li>
+        <li>Never power the motors from USB. It cannot supply the current and you may damage the port.</li>
+      </ul>
+    </li>
+    <li>
+      <h4>Noise suppression — do this now, not later</h4>
+      <p>
+        <strong>1000 µF</strong> across the battery at the L298N terminals.
+        <strong>100 nF</strong> soldered across each motor's own two terminals, at
+        the motor. Skipping these produces symptoms that look exactly like software
+        bugs: random resets, a gyro that drifts only while driving.
+      </p>
+    </li>
+    <li>
+      <h4>Motors</h4>
+      <div class="tw">
+        <table>
+          <thead><tr><th>L298N</th><th>Goes to</th><th>Controlled by</th></tr></thead>
+          <tbody>
+            <tr><td class="pin">OUT1, OUT2</td><td>RIGHT motor</td><td>ENA (D5), IN1 (D4), IN2 (D7)</td></tr>
+            <tr><td class="pin">OUT3, OUT4</td><td>LEFT motor</td><td>ENB (D6), IN3 (D8), IN4 (D11)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note warn">
+        <span class="note-label">If a wheel spins the wrong way</span>
+        <p>
+          Do <strong>not</strong> swap the wires — set <code>MOTOR_L_SIGN</code> or
+          <code>MOTOR_R_SIGN</code> to <code>-1</code> in <code>config.h</code>.
+          Swapping wires <em>and</em> signs at the same time is how you lose an
+          afternoon.
+        </p>
+      </div>
+    </li>
+    <li><h4>Sensors</h4><p>Three ultrasonics, gyro on A4/A5, two encoders, GO button. Leave the MPU's AD0 pin unconnected.</p></li>
+    <li>
+      <h4>Tidy the loom</h4>
+      <p>
+        Cut every wire to length. Spiral wrap the bundle, zip-tie it down, and check
+        nothing can reach a wheel. Heat-shrink every joint — §5.1 forbids exposed
+        conductor and the inspector will look.
+      </p>
+    </li>
+  </ol>
+</section>
+
+<!-- ============ 07 ============ -->
+<section class="phase" id="p7">
+  <div class="phase-head">
+    <span class="phase-num">PHASE 07</span>
+    <h2>First power-up</h2>
+    <div class="phase-meta"><span>~30 min</span><span>Wheels still off the ground</span></div>
+  </div>
+
+  <ol class="steps">
+    <li>
+      <h4>Before power: continuity check</h4>
+      <p>
+        Multimeter on continuity. Check <strong>battery + to battery −</strong> is
+        <em>not</em> shorted, and that GND really is common between the Arduino,
+        the L298N and the sensor rail.
+      </p>
+    </li>
+    <li>
+      <h4>Open the firmware</h4>
+      <p>
+        In the Arduino IDE, open
+        <code>firmware/MazeRunner/MazeRunner.ino</code>. The other three files
+        (<code>config.h</code>, <code>nav_core.h</code>, <code>nav_core.cpp</code>)
+        appear automatically as tabs because they sit in the same folder.
+        <strong>No libraries to install</strong> — <code>Wire</code> and
+        <code>EEPROM</code> ship with the IDE.
+      </p>
+    </li>
+    <li>
+      <h4>Upload, then open the Serial Monitor at 115200</h4>
+      <div class="code">
+        <div class="code-cap">expected</div>
+        <pre><code># MazeRunner booting - hold still, calibrating gyro
+# gyro OK
+# ready. Press GO, or wave a hand in front of the nose.
+t_ms,state,dF,dL,dR,head,tgt,encL,encR,pwmL,pwmR,sect
+1240,WAIT_START,1850,1200,1300,0.0,0.0,0,0,0,0,0</code></pre>
+      </div>
+      <p>
+        <code># gyro NOT FOUND</code> means the MPU is answering on address 0x69
+        instead of 0x68 — that happens when AD0 is tied high. Leave AD0
+        unconnected.
+      </p>
+    </li>
+    <li>
+      <h4>Leave it alone for ten seconds</h4>
+      <p>It must stay in <code>WAIT_START</code> and it must not move.</p>
+      <div class="note danger">
+        <span class="note-label">Why this check exists</span>
+        <p>
+          An earlier version of this firmware started its own run about three
+          seconds after power-on, because the sonar filter's history was
+          zero-initialised and the first reading came out as 0 mm — which the
+          start logic read as a hand held up to the nose. The only symptom was the
+          robot driving off while somebody was still placing it. It is fixed and
+          there is a regression test (<code>make test</code>), but ten seconds of
+          watching costs nothing.
+        </p>
+      </div>
+    </li>
+    <li>
+      <h4>Press GO</h4>
+      <p>
+        Serial prints <code># GO pressed</code>, the LED blinks a 3-second
+        countdown, then the wheels spin. Hold a book in front of the nose and it
+        should go <code>CREEP</code> → <code>TURN</code>.
+      </p>
+      <div class="note pass">
+        <span class="note-label">Pass</span>
+        <p>All of that works on the block. Now it can go on the floor.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- ============ 08 ============ -->
+<section class="phase" id="p8">
+  <div class="phase-head">
+    <span class="phase-num">PHASE 08</span>
+    <h2>Measure your robot and calibrate</h2>
+    <div class="phase-meta"><span>~1 hour</span><span>The step most teams skip</span></div>
+  </div>
+
+  <p>
+    Every threshold in the firmware is derived from the robot's geometry. Put in
+    real measurements and the rest follows automatically; leave the defaults and
+    you are tuning against someone else's robot.
+  </p>
+
+  <p>Open <code>firmware/MazeRunner/config.h</code> and set these from a ruler:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Value</th><th>Measure</th><th>Default</th></tr></thead>
+      <tbody>
+        <tr><td class="pin">ROBOT_LENGTH_MM</td><td>Nose to tail, including anything that sticks out</td><td class="num">220.0</td></tr>
+        <tr><td class="pin">ROBOT_WIDTH_MM</td><td><strong>Tyre outside to tyre outside</strong> — not the chassis plate. The tyres are what sweep the circle and what the walls see.</td><td class="num">115.0</td></tr>
+        <tr><td class="pin">WHEEL_DIAM_MM</td><td>Wheel diameter</td><td class="num">65.0</td></tr>
+        <tr><td class="pin">US_F_X_MM</td><td>Front sonar, forward of the axle</td><td>derived</td></tr>
+        <tr><td class="pin">US_L_Y_MM</td><td>Left sonar, left of centreline</td><td>derived</td></tr>
+        <tr><td class="pin">ENC_TICKS_PER_REV</td><td><strong>Count the slots in your disc.</strong> Do not assume 20.</td><td class="num">20</td></tr>
+        <tr><td class="pin">PWM_MIN</td><td>Lowest PWM at which the wheels actually turn (from Phase 04)</td><td class="num">55</td></tr>
+        <tr><td class="pin">CORRIDOR_MM</td><td>The real passage width, measured at the venue</td><td class="num">305</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <span class="note-label">Then check it still fits</span>
+    <div class="code">
+      <div class="code-cap">terminal</div>
+      <pre><code>python3 tools/geometry_check.py</code></pre>
+    </div>
+    <p>
+      This prints the swept circle for <em>your</em> numbers and tells you the
+      minimum corridor it needs. Run it before you tune anything else — if the
+      geometry does not fit, no gain value will save it.
+    </p>
+  </div>
+
+  <h3>Then re-run the simulator with your robot</h3>
+  <div class="code">
+    <div class="code-cap">terminal</div>
+    <pre><code>cd sim
+python3 run.py --all --trials 10</code></pre>
+  </div>
+  <p>
+    If it still completes all three maps, your geometry is fine. If completion
+    drops, the geometry changed something and it is far cheaper to find that here
+    than on the track.
+  </p>
+</section>
+
+<!-- ============ 09 ============ -->
+<section class="phase" id="p9">
+  <div class="phase-head">
+    <span class="phase-num">PHASE 09</span>
+    <h2>Tuning on the real track</h2>
+    <div class="phase-meta"><span>Several sessions</span><span>Change one number at a time</span></div>
+  </div>
+
+  <p>
+    You have the competition track, which is a real advantage — use it
+    methodically rather than doing lap after lap and hoping.
+  </p>
+
+  <ol class="steps">
+    <li>
+      <h4>Measure the track before you drive on it</h4>
+      <p>
+        Passage width, wall height, overall size. If the passage is not 304.8 mm,
+        put the real number in <code>CORRIDOR_MM</code> and re-run
+        <code>geometry_check.py</code> immediately.
+      </p>
+    </li>
+    <li>
+      <h4>One straight corridor first</h4>
+      <p>
+        Does it drive down the middle without weaving or scraping? If it drifts
+        into a wall, the side sensors are not square. If it weaves, reduce
+        <code>KP_WALL</code> slightly.
+      </p>
+    </li>
+    <li>
+      <h4>One corner</h4>
+      <p>
+        Does it stop, pivot cleanly, and set off square? A turn that finishes
+        short is usually a loose gyro. A turn that hits the wall mid-pivot means
+        the body is too big — back to Phase 05.
+      </p>
+    </li>
+    <li>
+      <h4>Then whole maps, and record telemetry</h4>
+      <div class="code">
+        <div class="code-cap">terminal</div>
+        <pre><code>python3 tools/telemetry_log.py --port COM3 --out run1.csv</code></pre>
+      </div>
+      <p>
+        The real robot prints the same CSV format the simulator does, so you can
+        compare them directly and see where the model and reality diverge.
+      </p>
+    </li>
+    <li>
+      <h4>Adjust speed last</h4>
+      <p>
+        <code>PWM_CRUISE</code> is the one number that trades time for safety. It
+        ships at <strong>200</strong>. Measured across all three maps:
+      </p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>PWM_CRUISE</th><th>Total time</th><th>Completed</th><th>Wall contact, degraded hardware</th></tr></thead>
+          <tbody>
+            <tr><td class="num">110</td><td class="num">182 s</td><td class="num">100%</td><td>—</td></tr>
+            <tr><td class="num">140</td><td class="num">147 s</td><td class="num">100%</td><td>—</td></tr>
+            <tr><td class="num">170</td><td class="num">128 s</td><td class="num">100%</td><td class="num">100 episodes</td></tr>
+            <tr><td class="num"><strong>200</strong></td><td class="num"><strong>116 s</strong></td><td class="num"><strong>100%</strong></td><td><strong>none</strong></td></tr>
+            <tr><td class="num">230</td><td class="num">108 s</td><td class="num">100%</td><td>none</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        200 rather than 230 for a reason you can see in the code: steering is added
+        to cruise and then clamped at 255, so at 200 the robot can still swing 135
+        counts of left–right difference to save a bad corner; at 230 only 105. That
+        reserve is worth more than eight seconds. <strong>If the real track is
+        slipperier than the model, drop to 170</strong> — you lose 12 seconds and
+        every hard correction gets its full authority back.
+      </p>
+    </li>
+  </ol>
+
+  <div class="note warn">
+    <span class="note-label">Discipline</span>
+    <p>
+      Change <strong>one</strong> number, run it three times, write down what
+      happened. Changing three things at once and getting a better lap teaches you
+      nothing. Every value lives in <code>config.h</code>, and the simulator reads
+      that same file — so test a change in simulation first. It takes 30 seconds.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section class="phase" id="p10">
+  <div class="phase-head">
+    <span class="phase-num">PHASE 10</span>
+    <h2>Competition day</h2>
+    <div class="phase-meta"><span>Print this phase</span></div>
+  </div>
+
+  <h3>The bag</h3>
+  <ul class="check">
+    <li><input type="checkbox" id="c1"><label for="c1">Robot, assembled and working</label></li>
+    <li><input type="checkbox" id="c2"><label for="c2">Laptop + USB cable + charger</label></li>
+    <li><input type="checkbox" id="c3"><label for="c3"><strong>Three charged battery sets</strong> + charger</label></li>
+    <li><input type="checkbox" id="c4"><label for="c4">Spares: MPU-6050, HC-SR04 ×2, LM393, push button, jumper leads</label></li>
+    <li><input type="checkbox" id="c5"><label for="c5">Soldering iron, solder, cutters, screwdrivers, multimeter</label></li>
+    <li><input type="checkbox" id="c6"><label for="c6">M3 screws, nuts, nylon standoffs, zip ties</label></li>
+    <li><input type="checkbox" id="c7"><label for="c7">Black tape, marker, tape measure</label></li>
+    <li><input type="checkbox" id="c8"><label for="c8"><strong>The kit box with every original part, including the breadboard</strong> — for inspection</label></li>
+    <li><input type="checkbox" id="c9"><label for="c9">This guide, printed</label></li>
+  </ul>
+
+  <h3>Technical inspection (§11)</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>They check</th><th>You show / say</th></tr></thead>
+      <tbody>
+        <tr><td>Kit completeness</td><td>Here is the box with every original part</td></tr>
+        <tr><td>No replacements</td><td>Original Uno, original L298N, original motors, original chassis</td></tr>
+        <tr><td>Breadboard</td><td>§2.2 permits removing it. Here it is in the box — we soldered instead, for reliability</td></tr>
+        <tr><td>Add-ons</td><td>Three ultrasonics (§2.2 explicitly allows three), one gyro, two wheel encoders, one button. All sensors — <strong>no second microcontroller anywhere</strong></td></tr>
+        <tr><td>Battery</td><td>7.4 V — under the 12 V per-supply and 20 V total limits</td></tr>
+        <tr><td>Safety</td><td>No exposed conductor, no sharp edges, everything bolted, master switch here</td></tr>
+        <tr><td>Autonomy</td><td>No radio of any kind. It starts on its own — watch</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Then demonstrate the start. That is the strongest thing you can show them.</p>
+
+  <h3>Starting a run</h3>
+  <div class="code">
+    <div class="code-cap">the whole procedure</div>
+    <pre><code>1.  Switch on. It calibrates the gyro — KEEP IT STILL for ~3 s.
+2.  Place it in the Start Zone, pointing down the first corridor.
+3.  Watch it for ten seconds without touching it. It must NOT move.
+4.  Press the GO button on the back. Step back.
+5.  The LED blinks a 3-second countdown.
+6.  It goes. Do not touch it again (§3.4).</code></pre>
+  </div>
+  <p>
+    <strong>Backup start</strong>, if the button or its wire fails: hold a hand
+    about 5 cm in front of the nose for a second, then take it away. Same
+    countdown, same run, nothing to plug in. Practise it once so you are not
+    learning it at the table.
+  </p>
+
+  <h3>Between runs</h3>
+  <ul>
+    <li><strong>Swap the battery every run</strong>, not every third run. A tired battery is the most common cause of a bad second attempt.</li>
+    <li>Wipe the wheels — dust on the tyres makes turns inconsistent.</li>
+    <li>Check the sensors are still square. They get knocked.</li>
+    <li>Put it down flat and still for the gyro calibration. Do not hold it while it boots.</li>
+  </ul>
+
+  <h3>Strategy</h3>
+  <ul>
+    <li><strong>Points, not speed.</strong> One point per sector line all three wheels fully cross (§6.1); time only breaks ties (§6.3).</li>
+    <li><strong>Finishing is not required to score.</strong> A robot that keeps moving and keeps crossing lines beats one that solves two maps and jams on the third.</li>
+    <li><strong>Attempts:</strong> §3.3 gives 2–3 attempts only if you did <em>not</em> complete the map. Completing slowly beats failing quickly.</li>
+    <li><strong>Do not touch the robot during a run</strong> (§3.4, §6.2). If it is stuck, let the judge stop it. Touching it costs the run.</li>
+    <li>Appeals must be filed within 10 minutes (§7.3).</li>
+  </ul>
+</section>
+
+<!-- ============ 11 ============ -->
+<section class="phase" id="p11">
+  <div class="phase-head">
+    <span class="phase-num">PHASE 11</span>
+    <h2>When it goes wrong</h2>
+    <div class="phase-meta"><span>Fixes you can do at the table</span></div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>Curves into a wall on a straight</td><td>Gyro not calibrated — it moved during boot</td><td>Power cycle, keep it still</td></tr>
+        <tr><td>Turns short or long</td><td>Gyro loose, or mounted upside down</td><td>Tighten it; check <code>GYRO_Z_SIGN</code></td></tr>
+        <tr><td>Stops dead, motors humming</td><td>Battery flat, or wedged</td><td>New battery</td></tr>
+        <tr><td>Spins in place</td><td>Both side sensors reading "open" — one came loose</td><td>Check 5 V and GND on the side sonars</td></tr>
+        <tr><td>Ignores a turn</td><td>Side sensor not seeing the wall — mounted too far back or crooked</td><td>Re-square the sensor</td></tr>
+        <tr><td>Resets mid-run</td><td>Motor surge browning out the Arduino</td><td>Check the 1000 µF capacitor is fitted</td></tr>
+        <tr><td>Sonar reads nonsense</td><td>Grounds not common</td><td>One GND rail for everything</td></tr>
+        <tr><td>Only one speed, flat out</td><td>ENA/ENB jumpers still on the L298N</td><td>Remove them</td></tr>
+        <tr><td>Encoder counts jump 2–3 per slot</td><td>Disc rubbing or off-centre</td><td>Re-centre the disc in the sensor slot</td></tr>
+        <tr><td>Starts on its own</td><td>Old firmware</td><td>Update; run <code>make test</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note warn">
+    <span class="note-label">Between runs, do not edit code</span>
+    <p>
+      Nothing in that table needs a code change. Do not edit code between runs
+      unless you have a genuine, understood reason — and if you do, run it in the
+      simulator first, even at the venue. It takes 30 seconds and it has caught
+      more than one "obvious" fix that made things worse.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 12 ============ -->
+<section class="phase" id="p12">
+  <div class="phase-head">
+    <span class="phase-num">PHASE 12</span>
+    <h2>For other students using this</h2>
+    <div class="phase-meta"><span>What transfers, what does not</span></div>
+  </div>
+
+  <p>
+    The repository is at
+    <a href="https://github.com/Muzoka/Robotic-comp">github.com/Muzoka/Robotic-comp</a>.
+    Everything in it is reusable. Three things are worth understanding before you
+    adapt it.
+  </p>
+
+  <h3>The simulator runs the real firmware</h3>
+  <p>
+    <code>nav_core.cpp</code> contains all the navigation and <strong>no Arduino
+    code at all</strong>. It is compiled twice: by the Arduino IDE onto the Uno,
+    and by <code>g++</code> into a shared library that a Python simulator drives.
+    So a behaviour you see in simulation is the behaviour of the code you flash —
+    not a model of it. If you build anything like this, copy that idea before you
+    copy any of the tuning values.
+  </p>
+  <p>
+    The limit is worth knowing too: the guarantee covers the navigation brain, not
+    the hardware layer. Two of this project's real bugs lived in the hardware
+    layer, where the Python and the C++ had quietly drifted apart.
+  </p>
+
+  <h3>Your maze is not this maze</h3>
+  <p>
+    The three maps live in <code>sim/maps/build_maps.py</code> as 5×5 grids of
+    <code>P</code> (passage) and <code>X</code> (wall). Change them to yours,
+    re-run the script, and the simulator, the sector lines and the route all
+    follow. It also checks something you should check too: whether your maze has
+    a <strong>dead end</strong>. If it does, set <code>DEFAULT_MODE</code> to
+    <code>MODE_TREMAUX</code> — the straight-first rule alone can walk out of a
+    crossing that still has road behind it.
+  </p>
+
+  <h3>The one rule that mattered most</h3>
+  <p>
+    At a junction, <strong>go straight if the way ahead is open; only ask the
+    wall-following rule when it is not.</strong> One line. On the map with a 4-way
+    crossing it removed both pivots in the crossing — the worst place to turn,
+    because with no wall on either side there is nothing to square up against
+    afterwards. It also lifted the speed ceiling from 170 to 200 and made the
+    left-hand and right-hand rules produce identical routes, so choosing wrong at
+    the start line stopped being able to cost a map.
+  </p>
+
+  <h3>Things that measured worse than expected</h3>
+  <p>
+    Written down because they are the standard advice and they lost here, on a
+    robot with 20-tick encoders in a 1-foot corridor: trapezoidal turn profiles
+    (78% → 72% completion), yaw-rate damping (78% → 55%), PWM slew limiting
+    (78% → 67%), and laser rangefinders instead of ultrasonics. All are still in
+    the code, switched off, with the measurements beside them. Measure on your own
+    robot before adopting any of it — including this guide.
+  </p>
+
+  <hr>
+
+  <h3>Repository map</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Path</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td class="pin">firmware/MazeRunner/</td><td>The four files you flash. No libraries needed</td></tr>
+        <tr><td class="pin">wokwi/sketch.ino</td><td>All four merged into one, for browser testing</td></tr>
+        <tr><td class="pin">sim/run.py</td><td>The maze simulator — GIFs, CSV telemetry, scoreboards</td></tr>
+        <tr><td class="pin">tools/geometry_check.py</td><td>Can the robot turn in the corridor? Run first</td></tr>
+        <tr><td class="pin">tools/serial_check.md</td><td>Bench tests, one subsystem at a time</td></tr>
+        <tr><td class="pin">tools/test_start.py</td><td>Proves the robot never starts its own run</td></tr>
+        <tr><td class="pin">docs/</td><td>Rules, hardware, wiring, algorithm, competition day</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code">
+    <div class="code-cap">the four commands worth knowing</div>
+    <pre><code>make check     # geometry: can it turn in the corridor?
+make test      # start-up safety: it must never start itself
+make wokwi     # rebuild the single-file sketch and prove it compiles
+make all       # drive all three maps, make GIFs</code></pre>
+  </div>
+</section>
+
+<footer>
+  <p>
+    Built for the Robotics Navigation Challenge, Khobar. Firmware, simulator and
+    documentation:
+    <a href="https://github.com/Muzoka/Robotic-comp">github.com/Muzoka/Robotic-comp</a>.
+    Free to use and adapt — if it helps your team, that is what it is for.
+  </p>
+</footer>
+
+</main>
+</div>
+</div>
+
+<div class="progress">
+  <span><b id="done">0</b> of <b id="total">0</b> items checked</span>
+  <button type="button" id="reset">Clear all</button>
+</div>
+
+<script>
+  (function () {
+    var boxes = Array.prototype.slice.call(
+      document.querySelectorAll('.check input[type="checkbox"]'));
+    var done = document.getElementById('done');
+    var total = document.getElementById('total');
+    var reset = document.getElementById('reset');
+    total.textContent = boxes.length;
+
+    function save() {
+      try {
+        var on = boxes.filter(function (b) { return b.checked; })
+                      .map(function (b) { return b.id; });
+        localStorage.setItem('mazerunner-checked', JSON.stringify(on));
+      } catch (e) { /* storage unavailable, in-session only */ }
+    }
+    function count() {
+      done.textContent = boxes.filter(function (b) { return b.checked; }).length;
+    }
+    try {
+      var saved = JSON.parse(localStorage.getItem('mazerunner-checked') || '[]');
+      saved.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.checked = true;
+      });
+    } catch (e) { /* ignore */ }
+
+    boxes.forEach(function (b) {
+      b.addEventListener('change', function () { count(); save(); });
+    });
+    reset.addEventListener('click', function () {
+      boxes.forEach(function (b) { b.checked = false; });
+      count(); save();
+    });
+    count();
+  })();
+</script>
