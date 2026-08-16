@@ -23,7 +23,7 @@
 #endif
 
 /* ---------------- what the brain is told, every 20 ms ---------------- */
-typedef struct {
+struct NavIn {
     uint16_t dist_front_mm;   /* US_MAX_MM when nothing is in range        */
     uint16_t dist_left_mm;
     uint16_t dist_right_mm;
@@ -34,10 +34,10 @@ typedef struct {
     uint8_t  line_black;      /* 1 = floor sensor is over a black mark     */
     uint8_t  start_signal;    /* 1 = judge said go                         */
     uint16_t dt_ms;
-} NavIn;
+};
 
 /* ---------------- what the brain answers ---------------- */
-typedef struct {
+struct NavOut {
     int16_t pwm_left;         /* -255 .. +255                              */
     int16_t pwm_right;
     uint8_t state;            /* NavState                                  */
@@ -46,7 +46,7 @@ typedef struct {
     uint16_t sectors_seen;    /* black marks counted by the floor sensor    */
     float   dbg_target_deg;
     float   dbg_steer;
-} NavOut;
+};
 
 typedef enum {
     ST_BOOT = 0,

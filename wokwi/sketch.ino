@@ -22,6 +22,29 @@
 #include <Wire.h>
 #include <EEPROM.h>
 
+/* ---------------------------------------------------------------------
+ * Forward declarations - REQUIRED, and the reason is not obvious.
+ *
+ * The Arduino IDE (and Wokwi) generate a prototype for every function in a
+ * .ino and insert them all near the TOP of the file, above the point where
+ * the types are defined. A prototype like
+ *
+ *      static Junction *junction_at(float x, float y, uint8_t create);
+ *
+ * therefore gets compiled before "struct Junction" exists, and the build
+ * dies with "'Junction' does not name a type; did you mean 'union'?" -
+ * pointing at a line that is perfectly correct.
+ *
+ * Declaring the struct names up here fixes it. This is also why they are
+ * named structs in the firmware rather than anonymous typedefs: an
+ * anonymous "typedef struct {...} X;" cannot be forward-declared at all.
+ * --------------------------------------------------------------------- */
+struct NavIn;
+struct NavOut;
+struct Junction;
+struct Nav;
+struct Sonar;
+
 /* ================= config.h ================= */
 /*
  * config.h - ALL tunable numbers live here.
@@ -427,7 +450,7 @@
 #endif
 
 /* ---------------- what the brain is told, every 20 ms ---------------- */
-typedef struct {
+struct NavIn {
     uint16_t dist_front_mm;   /* US_MAX_MM when nothing is in range        */
     uint16_t dist_left_mm;
     uint16_t dist_right_mm;
@@ -438,10 +461,10 @@ typedef struct {
     uint8_t  line_black;      /* 1 = floor sensor is over a black mark     */
     uint8_t  start_signal;    /* 1 = judge said go                         */
     uint16_t dt_ms;
-} NavIn;
+};
 
 /* ---------------- what the brain answers ---------------- */
-typedef struct {
+struct NavOut {
     int16_t pwm_left;         /* -255 .. +255                              */
     int16_t pwm_right;
     uint8_t state;            /* NavState                                  */
@@ -450,7 +473,7 @@ typedef struct {
     uint16_t sectors_seen;    /* black marks counted by the floor sensor    */
     float   dbg_target_deg;
     float   dbg_steer;
-} NavOut;
+};
 
 typedef enum {
     ST_BOOT = 0,
@@ -548,16 +571,23 @@ static uint8_t dir_of_heading(float h)
 /* mirrored into the Uno's built-in 1 kB EEPROM by the .ino.            */
 /* ------------------------------------------------------------------ */
 /* 4 bytes each. Position is stored in units of 50 mm, which covers a 6 m
- * maze in a signed byte and is finer than we can navigate anyway. */
-typedef struct {
+ * maze in a signed byte and is finer than we can navigate anyway.
+ *
+ * A NAMED struct, not an anonymous "typedef struct {...} Junction;", and
+ * that matters for one specific reason: the Arduino IDE auto-generates a
+ * prototype for every function and inserts them ABOVE the type definitions.
+ * A prototype mentioning Junction then fails to compile unless Junction can
+ * be forward-declared - and an anonymous typedef cannot be. Same for Nav
+ * below and Sonar in the .ino. See tools/make_wokwi_sketch.py. */
+struct Junction {
     int8_t  qx, qy;      /* position / 50 mm                              */
     uint8_t marks;       /* 2 bits per direction, value 0..2              */
     uint8_t used;
-} Junction;
+};
 #define JUNC_UNIT_MM   50.0f
 #define JUNC_MATCH_MM 260.0f
 
-typedef struct {
+struct Nav {
     /* configuration */
     uint8_t mode;
     int8_t  hand;              /* +1 left-hand rule, -1 right-hand rule   */
@@ -633,7 +663,7 @@ typedef struct {
     uint8_t  start_armed;
     uint32_t arm_ms;
     uint8_t  done;
-} Nav;
+};
 
 static Nav g;
 
