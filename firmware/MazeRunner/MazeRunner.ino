@@ -49,9 +49,30 @@ static void sonarPing(Sonar &s)
   if (mm > US_MAX_MM) mm = US_MAX_MM;
 
   /* median-of-3 on the fly: cheap, kills the classic single-sample spike */
-  static uint16_t h[3][3]; static uint8_t hi[3];
+  static uint16_t h[3][3]; static uint8_t hi[3]; static uint8_t primed[3];
   uint8_t k = (&s == &sonarF) ? 0 : (&s == &sonarL) ? 1 : 2;
-  h[k][hi[k]] = mm; hi[k] = (hi[k] + 1) % 3;
+
+  /* PRIME ALL THREE SLOTS with the first real reading, do not let them
+   * start at zero.
+   *
+   * This mattered more than it looks. A zero-initialised history makes the
+   * first ping report median(602, 0, 0) = 0 - a wall zero millimetres from
+   * the nose. WAIT_START reads that as a hand held up to arm the start, and
+   * two pings later, when the history has filled and the reading jumps to
+   * its true value, it reads that as the hand being taken away. The robot
+   * then started its own run about three seconds after power-on, with
+   * nobody touching it. On the day that means it drives off the table while
+   * you are still placing it.
+   *
+   * Found in Wokwi, not in the simulator: the simulator primes its own
+   * history correctly, so the two disagreed. */
+  if (!primed[k]) {
+    h[k][0] = h[k][1] = h[k][2] = mm;
+    primed[k] = 1;
+  } else {
+    h[k][hi[k]] = mm; hi[k] = (hi[k] + 1) % 3;
+  }
+
   uint16_t a = h[k][0], b = h[k][1], c = h[k][2];
   uint16_t med = (a > b) ? ((b > c) ? b : ((a > c) ? c : a))
                          : ((a > c) ? a : ((b > c) ? c : b));

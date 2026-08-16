@@ -693,12 +693,24 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
      *      long hold  (> 1.5 s)  -> RIGHT-hand rule
      * The countdown then blinks slow for left, fast for right. */
     case ST_WAIT_START:
-        if (in->dist_front_mm < 80) {
-            g.start_armed = 1;
+        /* A hand is between US_MIN_MM and 80 mm away, and has to STAY there
+         * for START_ARM_MS before it counts.
+         *
+         * Both halves of that are guarding against a real failure. Anything
+         * below US_MIN_MM is not a distance an HC-SR04 can produce, so it
+         * means "no reading yet" - and treating it as a hand is what made
+         * the robot start its own run seconds after power-on. Requiring the
+         * hand to persist means no single glitched ping can ever start a
+         * run, which is worth far more than starting a fraction of a second
+         * sooner. */
+        if (in->dist_front_mm >= US_MIN_MM && in->dist_front_mm < 80) {
             g.arm_ms += in->dt_ms;
+            if (g.arm_ms >= START_ARM_MS) g.start_armed = 1;
         } else if (g.start_armed && in->dist_front_mm > 200) {
             g.hand = (g.arm_ms >= 1500) ? -1 : +1;
             g.state = ST_COUNTDOWN; g.state_t_ms = 0;
+        } else if (!g.start_armed) {
+            g.arm_ms = 0;          /* glitches must not accumulate into a start */
         }
         if (in->start_signal) { g.state = ST_COUNTDOWN; g.state_t_ms = 0; }
         break;

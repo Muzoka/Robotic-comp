@@ -1,8 +1,11 @@
 # Convenience targets. Everything also works by hand, see README.md
-.PHONY: check sim all compare sweep maps wokwi clean
+.PHONY: check test sim all compare sweep maps wokwi clean
 
 check:            ## can the robot turn in the corridor?
 	python3 tools/geometry_check.py
+
+test:             ## the robot must never start its own run
+	python3 tools/test_start.py
 
 wokwi:            ## rebuild wokwi/sketch.ino and prove it compiles
 	python3 tools/make_wokwi_sketch.py

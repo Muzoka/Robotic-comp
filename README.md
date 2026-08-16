@@ -55,6 +55,7 @@ tools/
     make_wokwi_sketch.py  regenerate wokwi/sketch.ino from the firmware
     check_wokwi_sketch.sh compile it the way ARDUINO does, not just g++
                           (`make wokwi` runs both)
+    test_start.py     the robot must never start its own run (`make test`)
     serial_check.md   bench tests, one subsystem at a time
 
 docs/
