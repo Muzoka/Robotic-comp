@@ -33,6 +33,8 @@ The GIFs land in `sim/runs/`.
 ```
 wokwi/
     diagram.json      drop into wokwi.com to test the firmware in a browser
+    sketch.ino        the whole firmware in ONE file - paste this, not the
+                      one in firmware/. Generated, never hand-edited
     README.md         setup, and what Wokwi can and cannot show you
 
 firmware/MazeRunner/
@@ -50,6 +52,7 @@ sim/
 tools/
     geometry_check.py can the robot turn in the corridor?  Run this first
     telemetry_log.py  record the real robot's serial output for comparison
+    make_wokwi_sketch.py  regenerate wokwi/sketch.ino from the firmware
     serial_check.md   bench tests, one subsystem at a time
 
 docs/

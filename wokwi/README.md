@@ -30,23 +30,44 @@ purpose and D12 is now a spare pin.
 
 ---
 
-## Setting it up (5 minutes)
+## Setting it up — two files, two minutes
 
 1. Go to **<https://wokwi.com>** and sign in (free).
 2. **New Project → Arduino Uno.**
 3. Click the **`diagram.json`** tab. Select everything, delete it, and paste
-   the contents of `wokwi/diagram.json` from this repo.
-4. Click the **`sketch.ino`** tab and paste
-   `firmware/MazeRunner/MazeRunner.ino`.
-5. Add three more files with the **+** button next to the tabs, named exactly:
-   - `config.h`
-   - `nav_core.h`
-   - `nav_core.cpp`
+   **`wokwi/diagram.json`** from this repo.
+4. Click the **`sketch.ino`** tab. Select everything, delete it, and paste
+   **`wokwi/sketch.ino`** — note: `wokwi/sketch.ino`, *not* the one in
+   `firmware/`.
+5. Press the green **play** button.
 
-   Paste the matching file from `firmware/MazeRunner/` into each.
-6. Press the green **play** button.
+That is it. Two tabs, two pastes, nothing to name.
 
-That is the same four files you will flash onto the real Uno. No changes.
+`wokwi/sketch.ino` is the whole firmware squashed into one file — every line
+of `config.h`, `nav_core.h`, `nav_core.cpp` and `MazeRunner.ino`, in
+dependency order. It is **generated** by `tools/make_wokwi_sketch.py`, never
+edited by hand, so it cannot drift from the real sources. Re-run that script
+after changing any firmware file.
+
+### If you get `fatal error: config.h: No such file or directory`
+
+You pasted `firmware/MazeRunner/MazeRunner.ino` instead of
+`wokwi/sketch.ino`. The firmware version is split across four files and says
+`#include "config.h"` at the top; Wokwi cannot find that file because you
+only gave it one. Paste `wokwi/sketch.ino` instead and it will build.
+
+### The four-file way (only if you want to edit the firmware in Wokwi)
+
+Wokwi's tab bar has `sketch.ino`, `diagram.json`, `Library Manager`, and a
+small **▼** arrow at the end. That arrow — *not* a plus button — is the file
+menu.
+
+1. Paste `firmware/MazeRunner/MazeRunner.ino` into the `sketch.ino` tab.
+2. **▼ → New File…**, name it exactly `config.h`, paste that file.
+3. Repeat for `nav_core.h` and `nav_core.cpp`.
+
+Names are case-sensitive and need their extensions. These are the same four
+files you flash to the real Uno, unchanged.
 
 ---
 
