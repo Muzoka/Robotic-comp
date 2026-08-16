@@ -114,35 +114,38 @@ third. Every tuning decision in this repository is made that way.
 
 ## Where it stands today
 
-Real robot size, real map dimensions, 30 cm passages, 3-minute limit:
+From the organisers' spreadsheet: 5 × 5 grid of 1 ft squares, passage
+**304.8 mm**, walls 19 mm thick and 190 mm tall, 3 minutes per run.
 
-| Map | Sector points | Time | Wall scrapes |
+| Section | Sector points | Time | Wall scrapes |
 | --- | --- | --- | --- |
-| Map 2 — island loop | **8 / 8** | 38 s | 11 |
-| Map 1 — serpentine | 3–4 / 8 | ran out of time | 100–270 |
-| Map 3 — spine snake | 1–2 / 8 | ran out of time | 18–230 |
+| Map 1 — U around a block, 2 turns | **3 / 3** | 63 s | 12 |
+| Map 2 — dog-leg with a loop, 3 turns | 3–4 / 5 | 36 s | 4 |
+| Map 3 — 1 ft zig-zag, 8 turns | 2.7 / 9 | ran out of time | 124 |
+| Combined course, 4.67 m, 36 ft route | 9 / 17 | ran out of time | 123 |
 
-Map 2 matches the photo and is solved cleanly. Maps 1 and 3 are best guesses
-at the shape and are where the tight-clearance problem shows up — see
-`docs/10_MAP_NOTES.md` for what would let us draw them exactly.
+Maps 1 and 2 are solved. **Map 3 is not, and it carries 9 of the 17 points**
+— see `docs/10_MAP_NOTES.md` for exactly why and what is being done.
 
 ---
 
 ## The maps
 
-`sim/maps/*.txt` are reconstructions from the photos — the *shapes* are
-right, the exact millimetres are a guess. They are plain characters:
+Generated straight from the organisers' spreadsheet by
+`sim/maps/build_maps.py`. Each section is the 5 × 5 grid off its sheet —
+`P` where the sheet is blue, `X` where it is white:
 
-```
-....................
-....##############..
-....#............#..
-........##########..
+```python
+"map3": {"grid": ["PPXPP",
+                  "XPXPX",
+                  "PPXPP",
+                  "PXXXP",
+                  "PPPPP"], ...}
 ```
 
-`#` is wall, `.` is floor, one character = 100 mm. When you get to see the
-real maze, trace it into these files and re-run. Fifteen minutes each, and it
-tells you which wall-following direction to use before your run.
+The combined course is one line — `COURSE = [("map1", False), ("map3", True),
+("map2", True)]`, where `True` mirrors that section so the gates line up.
+Change it, re-run, done.
 
 ---
 

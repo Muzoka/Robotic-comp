@@ -1,218 +1,276 @@
 #!/usr/bin/env python3
 """
-build_maps.py - the three competition maps, at the real measured sizes.
+build_maps.py - the three competition maps, straight out of the organisers'
+spreadsheet (Robotics_Competition_Maps_v2_5x5_grid.xlsx), plus the combined
+course.
 
-Dimensions come from the marked-up photos (all in cm):
+From the Specifications column of that file:
 
-  MAP 1  outer 120 x 90    inner walls 85 and 60, centre block 30 x 30,
-                           exit chute 30 x 30 on the right, 60 below it
-  MAP 2  outer 150 x 150   island 120 x 88, both gates on the left
-  MAP 3  outer 150 x 118   two 60-wide arms at the top, 88 tall body
+    Total dimension  = 5 ft x 5 ft  + total wall thickness
+    Each grid        = 1 ft x 1 ft          -> passage = 304.8 mm
+    Wall thickness   = 0.75 inch            -> 19.05 mm
+    Wall height      = 7.5 inches           -> 190.5 mm
 
-Every passage is 30 cm. Sector lines are black, straight across the
-passage, 30 cm long. Start and finish are always outside the maze.
+Each sheet is a 5 x 5 block of cells B2:F6. A blue cell is open floor, a
+white cell is a solid block. Entrance and exit are labelled on the sheet and
+are always on the LEFT and RIGHT walls.
 
-GRID: one character = 5 cm, so a passage is 6 characters and a wall is 1.
-Real walls are about 2 cm, so each map comes out a few cm larger than the
-tape measure says. The passage width - the number that decides whether the
-robot fits - is exact, and that is the one that matters.
+Sector counts are the ones printed on the sheets: 3, 5 and 9. They are laid
+out evenly along the route, because the sheet does not say where they go.
+
+GRID: one character = 1 inch = 25.4 mm, so one foot is exactly 12
+characters. Nothing is rounded.
 
 Re-run after any edit:   python3 build_maps.py
 """
 
 import os
+from collections import deque
 
-CELL = 30           # mm per character
-PAD = 14            # characters of open floor around the maze (start/finish)
+CELL = 25.4                  # mm per character = 1 inch
+FOOT = 12                    # characters per foot
+PAD = 14                     # open floor around the course (start / finish)
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-CORR = 10           # 30 cm passage = 10 characters; a wall is 1 = 3 cm
+# ---------------------------------------------------------------------- #
+# The three sheets. Rows run top (spreadsheet row 2) to bottom (row 6),
+# columns B..F. 'P' = blue = open floor, 'X' = white = solid block.
+# ---------------------------------------------------------------------- #
+SHEETS = {
+    "map1": {
+        "grid": ["PPPPP",
+                 "PXXXP",
+                 "PXXXP",
+                 "PXXXP",
+                 "PXXXP"],
+        "entrance": (4, 0),          # B6, on the left wall
+        "exit":     (4, 4),          # F6, on the right wall
+        "sectors":  3,
+        "title": "Map 1",
+    },
+    "map2": {
+        "grid": ["PPPPX",
+                 "XXXPX",
+                 "XPPPP",
+                 "XPXPX",
+                 "XPPPX"],
+        "entrance": (0, 0),          # B2
+        "exit":     (2, 4),          # F4
+        "sectors":  5,
+        "title": "Map 2",
+    },
+    "map3": {
+        "grid": ["PPXPP",
+                 "XPXPX",
+                 "PPXPP",
+                 "PXXXP",
+                 "PPPPP"],
+        "entrance": (0, 0),          # B2
+        "exit":     (0, 4),          # F2
+        "sectors":  9,
+        "title": "Map 3",
+    },
+}
+
+# ---------------------------------------------------------------------- #
+# How the three sections are joined into the final course.
+#
+# Each entry is (sheet name, mirror vertically?). Mirroring is what makes
+# the gates line up: read left to right, every exit lands on the same row as
+# the next entrance, so the shared wall has ONE opening in it.
+#
+#   map1            in left row 5  ->  out right row 5
+#   map3 mirrored   in left row 5  ->  out right row 5
+#   map2 mirrored   in left row 5  ->  out right row 3   (the finish)
+#
+# If the organisers butt the sections together in a different order, change
+# this one list and re-run. Nothing else needs touching.
+# ---------------------------------------------------------------------- #
+COURSE = [("map1", False), ("map3", True), ("map2", True)]
 
 
-def c(cm):
-    """centimetres -> characters"""
-    return int(round(cm * 10.0 / CELL))
+# ---------------------------------------------------------------------- #
+def mirror(sheet):
+    """Flip a sheet top-to-bottom."""
+    g = list(reversed(sheet["grid"]))
+    n = len(sheet["grid"]) - 1
+    out = dict(sheet)
+    out["grid"] = g
+    out["entrance"] = (n - sheet["entrance"][0], sheet["entrance"][1])
+    out["exit"] = (n - sheet["exit"][0], sheet["exit"][1])
+    return out
 
 
-class Grid:
-    """Coordinates are in CHARACTERS, measured from the maze's own
-    bottom-left corner. PAD is added when writing."""
+def route(grid, start, goal, joins=None):
+    """Shortest path between two cells, as a list of (row, col).
 
-    def __init__(self, w_cm, h_cm):
-        self.mw, self.mh = c(w_cm) + 2, c(h_cm) + 2      # +2 for outer walls
-        self.w, self.h = self.mw + 2 * PAD, self.mh + 2 * PAD
-        self.g = [["." for _ in range(self.w)] for _ in range(self.h)]
+    joins maps a section boundary (the column to its left) to the one row
+    where the wall between two sections is open. Without it the search
+    happily walks through the wall and the sector lines land inside it."""
+    joins = joins or {}
+    R, C = len(grid), len(grid[0])
+    prev = {start: None}
+    q = deque([start])
+    while q:
+        cur = q.popleft()
+        if cur == goal:
+            break
+        r, c = cur
+        for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+            nb = (r + dr, c + dc)
+            if not (0 <= nb[0] < R and 0 <= nb[1] < C):
+                continue
+            if grid[nb[0]][nb[1]] != "P" or nb in prev:
+                continue
+            if dc != 0:
+                left = min(c, nb[1])
+                if (left + 1) % 5 == 0 and joins.get(left) != r:
+                    continue          # that is a wall between two sections
+            prev[nb] = cur
+            q.append(nb)
+    if goal not in prev:
+        raise ValueError("no route from %s to %s" % (start, goal))
+    path, cur = [], goal
+    while cur is not None:
+        path.append(cur)
+        cur = prev[cur]
+    return list(reversed(path))
+
+
+class Canvas:
+    def __init__(self, w, h):
+        self.w, self.h = w, h
+        self.g = [["." for _ in range(w)] for _ in range(h)]
 
     def fill(self, x0, y0, x1, y1, ch="#"):
-        x0 += PAD; x1 += PAD; y0 += PAD; y1 += PAD
         for y in range(max(0, y0), min(self.h, y1 + 1)):
             for x in range(max(0, x0), min(self.w, x1 + 1)):
                 self.g[y][x] = ch
-
-    def border(self):
-        self.fill(0, 0, self.mw - 1, 0)
-        self.fill(0, self.mh - 1, self.mw - 1, self.mh - 1)
-        self.fill(0, 0, 0, self.mh - 1)
-        self.fill(self.mw - 1, 0, self.mw - 1, self.mh - 1)
 
     def text(self):
         return "\n".join("".join(r) for r in reversed(self.g))
 
 
-def X(ch):
-    """maze character coordinate -> world mm"""
-    return (ch + PAD) * CELL
+def build(name, title, sections, fname):
+    """sections: list of (sheet, mirrored). They sit side by side, sharing a
+    wall column, and the shared wall carries a single opening."""
+    rows = 5
+    cols_total = 5 * len(sections)
 
+    # character size: outer wall 1 char, then 5 cells of 12 chars per section
+    sec_w = 5 * FOOT + 1               # 61: five feet plus the wall on its right
+    W = 1 + sec_w * len(sections)
+    H = 1 + 5 * FOOT + 1
 
-def mid(ch):
-    return X(ch) + CELL / 2.0
+    cv = Canvas(W + 2 * PAD, H + 2 * PAD)
 
+    def cx(col):                        # left edge of a cell column
+        return PAD + 1 + col * FOOT + (col // 5)
 
-def write(fname, name, g, start, finish, sectors, gates):
+    def cy(row):                        # bottom edge of a cell row (row 0 = top)
+        return PAD + 1 + (rows - 1 - row) * FOOT
+
+    # outer wall of the whole course
+    cv.fill(PAD, PAD, PAD + W - 1, PAD)
+    cv.fill(PAD, PAD + H - 1, PAD + W - 1, PAD + H - 1)
+    cv.fill(PAD, PAD, PAD, PAD + H - 1)
+    cv.fill(PAD + W - 1, PAD, PAD + W - 1, PAD + H - 1)
+
+    # wall columns between sections
+    for i in range(1, len(sections)):
+        x = PAD + i * sec_w
+        cv.fill(x, PAD, x, PAD + H - 1)
+
+    # the solid blocks
+    for si, (sheet, _) in enumerate(sections):
+        for r in range(rows):
+            for c in range(5):
+                if sheet["grid"][r][c] == "X":
+                    col = si * 5 + c
+                    cv.fill(cx(col), cy(r), cx(col) + FOOT - 1, cy(r) + FOOT - 1)
+
+    # gates: the course entrance, the joins, and the finish
+    first, last = sections[0][0], sections[-1][0]
+    ent_row = first["entrance"][0]
+    fin_row = last["exit"][0]
+    cv.fill(PAD, cy(ent_row), PAD, cy(ent_row) + FOOT - 1, ".")
+    cv.fill(PAD + W - 1, cy(fin_row), PAD + W - 1, cy(fin_row) + FOOT - 1, ".")
+    for i in range(1, len(sections)):
+        x = PAD + i * sec_w
+        r = sections[i][0]["entrance"][0]
+        assert r == sections[i - 1][0]["exit"][0], \
+            "section %d exit row does not meet section %d entrance row" % (i - 1, i)
+        cv.fill(x, cy(r), x, cy(r) + FOOT - 1, ".")
+
+    # ---- route and sector lines ----
+    grid = ["".join(sheet["grid"][r][c] for (sheet, _) in sections for c in range(5))
+            for r in range(rows)]
+    joins = {}
+    for i in range(1, len(sections)):
+        joins[i * 5 - 1] = sections[i][0]["entrance"][0]
+    start = (ent_row, 0)
+    goal = (fin_row, cols_total - 1)
+    path = route(grid, start, goal, joins)
+
+    n_sect = sum(sheet["sectors"] for (sheet, _) in sections)
+
+    # A sector line is painted straight across a passage, so put each one in
+    # the MIDDLE of a cell the route passes straight through. Putting one on
+    # a corner is unfair to the robot and to the rulebook: "all three wheels
+    # completely passes the sector line" is hard to satisfy while pivoting.
+    straight = []
+    for i in range(1, len(path) - 1):
+        (ar, ac), (br, bc), (cr, cc) = path[i - 1], path[i], path[i + 1]
+        if (ar == br == cr) or (ac == bc == cc):
+            straight.append(i)
+    if len(straight) < n_sect:                     # short route: use corners too
+        straight = list(range(1, len(path) - 1))
+
+    sectors = []
+    for k in range(n_sect):
+        idx = straight[int(round(k * (len(straight) - 1) / float(max(1, n_sect - 1))))]
+        (pr, pc), (r, c) = path[idx - 1], path[idx]
+        if pr == r:                                # travelling sideways
+            x = (cx(c) + FOOT / 2.0) * CELL
+            sectors.append((x, cy(r) * CELL, x, (cy(r) + FOOT) * CELL))
+        else:                                      # travelling up or down
+            y = (cy(r) + FOOT / 2.0) * CELL
+            sectors.append((cx(c) * CELL, y, (cx(c) + FOOT) * CELL, y))
+
+    gates = [((PAD - 2) * CELL, cy(ent_row) * CELL,
+              PAD * CELL, (cy(ent_row) + FOOT) * CELL),
+             ((PAD + W - 1) * CELL, cy(fin_row) * CELL,
+              (PAD + W + 1) * CELL, (cy(fin_row) + FOOT) * CELL)]
+
+    start_mm = ((PAD - 9) * CELL, (cy(ent_row) + FOOT / 2.0) * CELL, 0)
+    finish_mm = ((PAD + W) * CELL, cy(fin_row) * CELL,
+                 (PAD + W + 16) * CELL, (cy(fin_row) + FOOT) * CELL)
+
     with open(os.path.join(HERE, fname), "w", encoding="utf-8") as fh:
-        fh.write("!name %s\n!cell %d\n" % (name, CELL))
-        fh.write("!start %.0f %.0f %.0f\n" % start)
-        fh.write("!finish %.0f %.0f %.0f %.0f\n" % finish)
+        fh.write("!name %s\n!cell %.4f\n" % (title, CELL))
+        fh.write("!start %.0f %.0f %.0f\n" % start_mm)
+        fh.write("!finish %.0f %.0f %.0f %.0f\n" % finish_mm)
         for s in sectors:
             fh.write("!sector %.0f %.0f %.0f %.0f\n" % s)
-        for gt in gates:
-            fh.write("!gate %.0f %.0f %.0f %.0f\n" % gt)
-        fh.write(g.text() + "\n")
-    print("wrote %-22s %5.0f x %-4.0f cm   %2d sector lines"
-          % (fname, (g.mw - 2) * CELL / 10.0, (g.mh - 2) * CELL / 10.0,
-             len(sectors)))
+        for g in gates:
+            fh.write("!gate %.0f %.0f %.0f %.0f\n" % g)
+        fh.write(cv.text() + "\n")
 
-
-# ===================================================================== #
-# MAP 1 - 120 x 90 outer, three 30 cm bands.
-# In at the top-left, east along the top, down on the right, west along
-# the middle, down on the left, east along the bottom, out on the right.
-# BEST GUESS from the photo - see docs/10_MAP_NOTES.md.
-# ===================================================================== #
-def map1():
-    g = Grid(120, 96)
-    g.border()
-    w, h = c(120), c(96)                       # 40 x 32 characters
-
-    # wall between the top and middle bands: gap on the RIGHT
-    g.fill(1, 1 + 2 * CORR + 1, w - CORR, 1 + 2 * CORR + 1)
-    # wall between the middle and bottom bands: gap on the LEFT
-    g.fill(1 + CORR, 1 + CORR, w, 1 + CORR)
-
-    g.fill(0, h - CORR + 1, 0, h, ".")                     # way in,  top-left
-    g.fill(w + 1, 1, w + 1, CORR, ".")                     # way out, bottom-right
-
-    start = (X(0) - 220, mid(h - CORR // 2), 0)
-    finish = (X(w + 1), X(1), X(w + 1) + 500, X(CORR))
-    sectors = [
-        (X(3),      X(h - CORR + 1), X(3),      X(h)),
-        (X(20),     X(h - CORR + 1), X(20),     X(h)),
-        (X(w - 14), X(h - CORR + 1), X(w - 14), X(h)),
-        (X(w - 4),  X(1 + CORR + 2), X(w - 4),  X(1 + 2 * CORR)),
-        (X(20),     X(1 + CORR + 2), X(20),     X(1 + 2 * CORR)),
-        (X(4),      X(1 + CORR + 2), X(4),      X(1 + 2 * CORR)),
-        (X(14),     X(1), X(14), X(CORR)),
-        (X(30),     X(1), X(30), X(CORR)),
-    ]
-    gates = [(X(0) - 60, X(h - CORR + 1), X(0), X(h)),
-             (X(w + 1), X(1), X(w + 2), X(CORR))]
-    write("map1.txt", "Map 1 - 120x90 serpentine", g, start, finish, sectors, gates)
-
-
-# ===================================================================== #
-# MAP 2 - 150 x 150, island 120 x 90 against the left wall.
-# In at the top-left, round the outside of the island, out at the
-# bottom-left. No dead ends.
-# ===================================================================== #
-def map2():
-    W, H = 150, 150
-    g = Grid(W, H)
-    g.border()
-    w, h = c(W), c(H)            # 30 x 30
-
-    # the island: 120 wide, 90 tall, flush against the left wall
-    g.fill(1, 1 + CORR, c(120), h - CORR)
-
-    g.fill(0, h - CORR + 1, 0, h, ".")     # way in,  top-left
-    g.fill(0, 1, 0, CORR, ".")             # way out, bottom-left
-
-    start = (X(0) - 220, mid(h - CORR // 2), 0)
-    finish = (X(0) - 500, X(1), X(0), X(CORR))
-    sectors = [
-        (X(2),  X(h - CORR + 1), X(2),  X(h)),
-        (X(12), X(h - CORR + 1), X(12), X(h)),
-        (X(22), X(h - CORR + 1), X(22), X(h)),
-        (X(w - CORR + 1), X(22), X(w), X(22)),
-        (X(w - CORR + 1), X(12), X(w), X(12)),
-        (X(22), X(1), X(22), X(CORR)),
-        (X(12), X(1), X(12), X(CORR)),
-        (X(2),  X(1), X(2),  X(CORR)),
-    ]
-    gates = [(X(0) - 60, X(h - CORR + 1), X(0), X(h)),
-             (X(0) - 60, X(1), X(0), X(CORR))]
-    write("map2.txt", "Map 2 - 150x150 island loop", g, start, finish, sectors, gates)
-
-
-# ===================================================================== #
-# MAP 3 - 150 x 120 outer. A spine hangs down from the top wall between
-# two 60 cm arms; blocks either side of it leave a snake, plus one
-# dead-end stub off the bottom passage.
-# BEST GUESS from the photo - see docs/10_MAP_NOTES.md.
-# ===================================================================== #
-def map3():
-    g = Grid(150, 120)
-    g.border()
-    w, h = c(150), c(120)                      # 50 x 40 characters
-
-    sp = 1 + 2 * CORR                          # spine starts 60 cm in
-    g.fill(sp, h - 2 * CORR, sp + CORR - 1, h)         # the central spine
-    g.fill(1 + CORR, 1 + CORR, sp - 1, h - 2 * CORR - 1)          # left block
-    g.fill(sp + CORR, 1 + CORR, w - CORR, h - 2 * CORR - 1)       # right block
-    g.fill(sp, 1 + CORR, sp + CORR - 1, h - 3 * CORR - 1)         # closes the stub
-
-    g.fill(0, h - CORR + 1, 0, h, ".")                 # way in,  top-left
-    g.fill(w + 1, h - CORR + 1, w + 1, h, ".")         # way out, top-right
-
-    start = (X(0) - 220, mid(h - CORR // 2), 0)
-    finish = (X(w + 1), X(h - CORR + 1), X(w + 1) + 500, X(h))
-    sectors = [
-        (X(3),      X(h - CORR + 1), X(3),      X(h)),
-        (X(1),      X(h - CORR - 4), X(CORR),   X(h - CORR - 4)),
-        (X(1),      X(6),  X(CORR), X(6)),
-        (X(18),     X(1),  X(18),   X(CORR)),
-        (X(32),     X(1),  X(32),   X(CORR)),
-        (X(w - CORR + 1), X(6), X(w), X(6)),
-        (X(w - CORR + 1), X(h - CORR - 4), X(w), X(h - CORR - 4)),
-        (X(w - 3),  X(h - CORR + 1), X(w - 3), X(h)),
-    ]
-    gates = [(X(0) - 60, X(h - CORR + 1), X(0), X(h)),
-             (X(w + 1), X(h - CORR + 1), X(w + 2), X(h))]
-    write("map3.txt", "Map 3 - 150x120 spine snake", g, start, finish, sectors, gates)
-
-
-# ===================================================================== #
-# Practice: one corner. Build this on your floor first.
-# ===================================================================== #
-def practice():
-    W, H = 120, 90
-    g = Grid(W, H)
-    g.border()
-    w, h = c(W), c(H)
-    g.fill(1 + CORR, 1 + CORR, w, h)          # one big block, leaving an L
-    g.fill(0, h - CORR + 1, 0, h, ".")
-    g.fill(1, 0, CORR, 0, ".")
-
-    start = (X(0) - 220, mid(h - CORR // 2), 0)
-    finish = (X(1), X(0) - 500, X(CORR), X(0))
-    sectors = [
-        (X(2), X(h - CORR + 1), X(2), X(h)),
-        (X(1), X(6), X(CORR), X(6)),
-    ]
-    gates = [(X(0) - 60, X(h - CORR + 1), X(0), X(h)),
-             (X(1), X(0) - 60, X(CORR), X(0))]
-    write("practice.txt", "Practice - one corner", g, start, finish, sectors, gates)
+    print("%-14s %5.2f x %-5.2f m   route %2d ft   %2d sector lines"
+          % (fname, W * CELL / 1000.0, H * CELL / 1000.0,
+             len(path) - 1, len(sectors)))
 
 
 if __name__ == "__main__":
-    map1(); map2(); map3(); practice()
-    print("\npassage width: %d cm everywhere" % (CORR * CELL / 10))
+    for key in ("map1", "map2", "map3"):
+        s = SHEETS[key]
+        build(key, "%s - 5x5 ft, %d sectors" % (s["title"], s["sectors"]),
+              [(s, False)], key + ".txt")
+
+    secs = [(mirror(SHEETS[k]) if m else SHEETS[k], m) for (k, m) in COURSE]
+    total = sum(SHEETS[k]["sectors"] for (k, _) in COURSE)
+    build("course", "Final course - %s, %d sectors"
+          % (" + ".join(k for (k, _) in COURSE), total),
+          secs, "course.txt")
+
+    print("\npassage 304.8 mm (1 ft)   wall 19 mm   wall height 190 mm")

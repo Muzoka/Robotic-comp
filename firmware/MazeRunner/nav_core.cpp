@@ -594,7 +594,7 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
         if (in->dist_front_mm < FRONT_BLOCKED_MM) {
             snapshot(in);
             g.creep_by_front = 1;
-            g.creep_target_mm = g.dist_total_mm + 400.0f;   /* safety stop */
+            g.creep_target_mm = g.dist_total_mm + 600.0f;   /* safety stop */
             g.state = ST_CREEP; g.state_t_ms = 0;
             break;
         }
@@ -634,10 +634,19 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
         if (edge_l) g.snap_left = 1;
         if (edge_r) g.snap_right = 1;
 
-        uint8_t there = g.creep_by_front
-                      ? (in->dist_front_mm <= FRONT_PIVOT_MM)
-                      : (g.dist_total_mm >= g.creep_target_mm);
-        if (there || g.dist_total_mm >= g.creep_target_mm || g.state_t_ms > 2500) {
+        /* Sonar gets us close, encoders finish the job. Once the wall is
+         * near enough to measure accurately, work out exactly how much
+         * further the axle has to travel and count it off the wheels. */
+        if (g.creep_by_front && in->dist_front_mm <= FRONT_HANDOVER_MM) {
+            float remain = (float)in->dist_front_mm + US_F_X_MM
+                         - ((float)CORRIDOR_MM * 0.5f + (float)PIVOT_BACKOFF_MM);
+            if (remain < 0.0f) remain = 0.0f;
+            g.creep_target_mm = g.dist_total_mm + remain;
+            g.creep_by_front = 0;
+        }
+
+        if ((!g.creep_by_front && g.dist_total_mm >= g.creep_target_mm)
+                || g.state_t_ms > 2500) {
             snapshot_merge(in);
             int8_t q = choose_turn();
             g.dist_since_decision_mm = 0.0f;
@@ -681,14 +690,24 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
             return;
         }
         float err = wrap180(g.target_deg - g.heading);
-        float cmd = KP_TURN * err - KD_TURN * in->gyro_rate_dps;
-        int16_t t = clamp16(cmd, -PWM_TURN, PWM_TURN);
-        t = deadband(t);
+        float ae  = err < 0 ? -err : err;
+        int16_t t;
+        if (ae < TURN_TOL_DEG) {
+            /* Inside tolerance: command nothing. The motor deadband would
+             * otherwise force 55 PWM here, the robot would hunt across the
+             * target forever, the settle window would never be met and the
+             * turn would time out a few degrees short - which is exactly how
+             * a robot ends up crabbing into the next wall. */
+            t = 0;
+        } else {
+            float cmd = KP_TURN * err - KD_TURN * in->gyro_rate_dps;
+            t = clamp16(cmd, -PWM_TURN, PWM_TURN);
+            t = deadband(t);
+        }
         g.last_cmd_mag = (t < 0) ? (int16_t)(-t) : t;
         out->pwm_left  = (int16_t)(-t);
         out->pwm_right = (int16_t)(+t);
 
-        float ae = err < 0 ? -err : err;
         if (ae < TURN_TOL_DEG) {
             g.turn_ok_ms += in->dt_ms;
         } else {

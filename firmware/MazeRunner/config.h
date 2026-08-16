@@ -50,19 +50,32 @@
 #define OPEN_DEBOUNCE         9
 /* A front reading smaller than this means "wall ahead, start setting up". */
 #define FRONT_BLOCKED_MM    200
-/* Creep forward until the front sensor reads this, THEN pivot. The number
- * puts the wheel axle in the middle of the junction square:
- *      CORRIDOR_MM / 2 - US_F_X_MM  =  150 - 95  =  55
- * Get this wrong and the robot pivots off-centre and clips the corner. */
-#define FRONT_PIVOT_MM       40
-/* Closer than this: reverse before doing anything else. */
-#define FRONT_TOOCLOSE_MM    40
+/* Lining up on a wall ahead.
+ *
+ * We want the wheel AXLE in the middle of the junction square before we
+ * pivot, which means the wall should end up CORRIDOR_MM/2 = 152 mm from the
+ * axle. The front sonar sits US_F_X_MM = 115 mm ahead of the axle, so it
+ * would have to read 37 mm - and an HC-SR04 is not trustworthy under about
+ * 40 mm.
+ *
+ * So we range off the wall down to a reading we can believe, then hand over
+ * to the wheel encoders for the last few centimetres. */
+#define FRONT_HANDOVER_MM   100     /* switch from sonar to encoders here   */
+/* Where to stop before a 90 degree pivot, measured back from the middle of
+ * the junction square. A full 360 pivot sweeps the same circle wherever you
+ * stand, but a QUARTER turn does not: sitting further back gives the front
+ * corner room to swing into. In a passage this tight that is worth real
+ * points, so the number is measured, not guessed - see docs/10_MAP_NOTES.md */
+#define PIVOT_BACKOFF_MM     40
+/* Closer than this: reverse before doing anything else. Must stay well
+ * below FRONT_HANDOVER_MM or the robot reverses out of its own approach. */
+#define FRONT_TOOCLOSE_MM    25
 
 /* ------------------------------------------------------------------ */
 /* 3. MAZE ASSUMPTIONS                                                 */
 /* ------------------------------------------------------------------ */
-#define CORRIDOR_MM         300     /* rulebook says 200..400 mm                    */
-#define CELL_MM             300     /* one "step" of the maze grid                  */
+#define CORRIDOR_MM         305     /* 1 ft grid, from the organisers' spreadsheet  */
+#define CELL_MM             305     /* one "step" of the maze grid = 1 ft           */
 #define TARGET_SIDE_MM       90     /* how far we try to stay off a wall we follow  */
 
 /* ------------------------------------------------------------------ */
@@ -70,7 +83,7 @@
 /* ------------------------------------------------------------------ */
 #define PWM_MIN              55     /* below this a TT motor just buzzes            */
 #define PWM_MAX             255
-#define PWM_CRUISE          150     /* straight-line speed                          */
+#define PWM_CRUISE          110     /* straight-line speed. Tuned: slower scores more */
 #define PWM_SLOW             95     /* creeping / approaching a wall                */
 #define PWM_TURN            110     /* pivot speed                                  */
 #define PWM_BACK             95     /* reversing                                    */
@@ -97,7 +110,7 @@
 #define BACKUP_MS           420
 /* Roll this far past a side opening before pivoting into it. Ideal value is
  *      CORRIDOR_MM / 2 + US_L_X_MM - (debounce lag, about 45 mm) = 145 */
-#define CREEP_AFTER_OPEN_MM 145
+#define CREEP_AFTER_OPEN_MM 147
 #define TURN_SETTLE_IN_MS   260     /* stop dead before pivoting; also the
                                        window used to re-measure gyro bias  */
 #define STUCK_WINDOW_MS     900     /* no encoder movement this long = stuck         */
