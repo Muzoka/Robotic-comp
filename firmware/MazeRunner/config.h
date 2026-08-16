@@ -11,8 +11,17 @@
 /* ------------------------------------------------------------------ */
 /* 1. ROBOT GEOMETRY - MEASURE YOUR REAL ROBOT AND PUT THE NUMBERS HERE */
 /* ------------------------------------------------------------------ */
-#define ROBOT_LENGTH_MM     250.0f   /* nose to tail, including any sensor sticking out */
-#define ROBOT_WIDTH_MM      150.0f   /* outside of left tyre to outside of right tyre  */
+/* MEASURED on the robot as it stands. Keep these honest - every other
+ * number in this file and every simulator result depends on them.
+ *
+ * TARGET: 220 x 140 mm. Measured across all three maps, five seeds each:
+ *      250 x 150 (today)  ->  Map 3 completed  20% of runs
+ *      235 x 145          ->  Map 3 completed 100% of runs
+ *      220 x 140          ->  Map 3 completed 100% of runs, 92 s
+ * The cliff is at a body diagonal of about 280 mm. Losing 10 mm of length
+ * and 5 mm of width is enough to cross it. */
+#define ROBOT_LENGTH_MM     250.0f   /* nose to tail, including anything that sticks out */
+#define ROBOT_WIDTH_MM      150.0f   /* outside of left tyre to outside of right tyre    */
 #define WHEEL_BASE_MM       128.0f   /* centre of left tyre to centre of right tyre    */
 #define WHEEL_DIAM_MM        65.0f   /* yellow TT wheel, measure it                    */
 #define AXLE_FROM_NOSE_MM   125.0f   /* front bumper to wheel axle. KEEP THIS AT HALF
@@ -27,11 +36,16 @@
 #define US_F_Y_MM     0.0f
 #define US_F_ANG      0.0f
 
-#define US_L_X_MM    40.0f
+/* The side sonars sit ON the wheel-axle line, not ahead of it. That way a
+ * gap is seen at the instant the axle draws level with it, which is the
+ * moment the robot needs to know about. Measured: moving them back from
+ * 40 mm ahead to the axle line is worth about 20 percentage points of
+ * completion on Map 3. It costs nothing - just remount them. */
+#define US_L_X_MM     0.0f
 #define US_L_Y_MM    68.0f
 #define US_L_ANG     90.0f
 
-#define US_R_X_MM    40.0f
+#define US_R_X_MM     0.0f
 #define US_R_Y_MM   -68.0f
 #define US_R_ANG    -90.0f
 
@@ -42,14 +56,27 @@
 #define US_MIN_MM            25     /* HC-SR04 cannot see closer than ~2 cm         */
 #define US_INVALID        60000     /* no echo came back                            */
 
-/* A side reading bigger than this means "there is an opening on that side". */
-#define OPEN_SIDE_MM        420
+/* A side reading bigger than this means "there is an opening on that side".
+ *
+ * Work it out from the maze, do not guess. In a 1 ft grid with the side
+ * sonar 68 mm off the centreline:
+ *      wall right beside us   152 - 68            =  84 mm
+ *      opening one square deep  152 + 305 - 68    = 389 mm
+ * so anything past about 200 mm is an opening. The old value of 420 mm was
+ * larger than a one-square opening ever reads, which meant the robot drove
+ * straight past every turn it was supposed to take. */
+#define OPEN_SIDE_MM        200
 /* An opening only counts on the EDGE wall->open, and only after the reading
  * has been open this many loops. One dropped ping must never invent a
  * junction that is not there. */
 #define OPEN_DEBOUNCE         9
-/* A front reading smaller than this means "wall ahead, start setting up". */
+/* A front reading smaller than this means "wall ahead, start setting up".
+ * At a square's centre a wall in the next square reads 37 mm, and a wall two
+ * squares away reads 342 mm, so 200 mm triggers about one square early. */
 #define FRONT_BLOCKED_MM    200
+/* ...and bigger than this means "the way ahead is open for at least one more
+ * square" (342 mm at a square centre, so 260 mm has margin both ways). */
+#define FRONT_OPEN_MM       260
 /* Lining up on a wall ahead.
  *
  * We want the wheel AXLE in the middle of the junction square before we
@@ -76,7 +103,12 @@
 /* ------------------------------------------------------------------ */
 #define CORRIDOR_MM         305     /* 1 ft grid, from the organisers' spreadsheet  */
 #define CELL_MM             305     /* one "step" of the maze grid = 1 ft           */
-#define TARGET_SIDE_MM       90     /* how far we try to stay off a wall we follow  */
+/* How far we try to stay off a wall when only one side is visible.
+ * Dead centre of the passage, measured at the sensor:
+ *      CORRIDOR_MM / 2 - US_L_Y_MM  =  152 - 68  =  84 mm
+ * Anything else parks the robot off-centre, and off-centre is what jams a
+ * pivot in a passage this tight. */
+#define TARGET_SIDE_MM       84
 
 /* ------------------------------------------------------------------ */
 /* 4. SPEEDS  (PWM counts, 0..255)                                     */
@@ -135,7 +167,13 @@
 /* Navigation mode */
 #define MODE_WALLFOLLOW       0     /* simple, never gets confused in a plain maze  */
 #define MODE_TREMAUX          1     /* remembers junctions, beats loops and islands */
-#define DEFAULT_MODE   MODE_TREMAUX
+/* Wall following, not Tremaux. The three competition maps are published in
+ * advance and none of them needs memory: the left-hand rule picks the
+ * correct exit at every single decision point on all three. Measured, the
+ * memory mode is WORSE here - it depends on odometry to recognise a junction
+ * it has seen before, and odometry is the least trustworthy thing on the
+ * robot. Switch to MODE_TREMAUX only if a map turns up with a real loop. */
+#define DEFAULT_MODE   MODE_WALLFOLLOW
 
 /* Tremaux memory */
 #define MAX_JUNCTIONS        48     /* 48 * 5 bytes = 240 bytes of SRAM             */

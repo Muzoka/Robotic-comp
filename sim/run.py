@@ -36,12 +36,23 @@ HANDS = {"left": 1, "right": -1}
 
 
 def simulate(map_path, mode=1, hand=1, seed=1, gif=True, csv_out=True,
-             max_seconds=240.0, gif_every=8, verbose=True, scale=1.0):
+             max_seconds=240.0, gif_every=8, verbose=True, scale=1.0,
+             robot=None):
     maze = Maze(map_path)
     if scale != 1.0:
         maze.scale(scale)
     rng = random.Random(seed)
-    bot = Robot(maze, Params(), rng)
+    prm = Params()
+    if robot:
+        L, W = robot
+        prm.length = L
+        prm.width = W
+        prm.wheel_base = W - 22
+        prm.axle_from_nose = L / 2.0
+        prm.sonar_mounts = [(L / 2.0 - 10, 0, 0),
+                            (0, W / 2.0 - 7, 90),
+                            (0, -(W / 2.0 - 7), -90)]
+    bot = Robot(maze, prm, rng)
     nav = NavCore(mode=mode, hand=hand)
 
     dt_ms = int(get("LOOP_DT_MS"))
@@ -191,12 +202,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--map", default=None)
     ap.add_argument("--all", action="store_true")
-    ap.add_argument("--mode", default="tremaux", choices=list(MODES))
+    ap.add_argument("--mode", default="wallfollow", choices=list(MODES))
     ap.add_argument("--hand", default="left", choices=list(HANDS))
     ap.add_argument("--trials", type=int, default=1)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--no-gif", action="store_true")
     ap.add_argument("--seconds", type=float, default=240.0)
+    ap.add_argument("--robot", default=None, metavar="LxW",
+                    help="try a different body size in mm, e.g. --robot 220x140")
     ap.add_argument("--scale", type=float, default=1.0,
                     help="stretch the maps; 1.0 = 300 mm corridors, 1.33 = 400 mm")
     ap.add_argument("--sweep-corridor", action="store_true",
@@ -204,6 +217,10 @@ def main():
     ap.add_argument("--compare", action="store_true",
                     help="try every mode/hand combination and rank them")
     args = ap.parse_args()
+    robot = None
+    if args.robot:
+        L, W = args.robot.lower().split("x")
+        robot = (float(L), float(W))
 
     maps = []
     if args.all or not args.map:
@@ -231,7 +248,7 @@ def main():
                 results.append(simulate(
                     mp, MODES[mode], HANDS[hand], args.seed + k,
                     gif=(not args.no_gif) and k == 0,
-                    max_seconds=args.seconds, scale=args.scale))
+                    max_seconds=args.seconds, scale=args.scale, robot=robot))
 
     # ---- scoreboard ----
     print("\n" + "=" * 78)

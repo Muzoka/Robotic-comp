@@ -182,6 +182,24 @@ static void mark_inc(Junction *j, uint8_t dir)
     j->marks = (uint8_t)((j->marks & ~(0x3 << (dir * 2))) | (v << (dir * 2)));
 }
 
+/* Everything that has to be forgotten when we start driving again.
+ *
+ * The opening flags in particular: they describe a junction we have already
+ * dealt with, and if a turn ends through the timeout or the jam-recovery
+ * path instead of the normal one, a stale flag makes the robot invent a
+ * junction a few centimetres later and turn off the route. */
+static void enter_drive(void)
+{
+    g.prev_side_err = 0.0f;
+    g.dist_since_decision_mm = 0.0f;
+    g.open_cnt_l = g.open_cnt_r = 0;
+    g.open_l = g.open_r = 0;
+    g.snap_left = g.snap_right = g.snap_front = 0;
+    g.creep_by_front = 0;
+    g.state = ST_DRIVE;
+    g.state_t_ms = 0;
+}
+
 /* ------------------------------------------------------------------ */
 NAV_API void nav_reset(uint8_t mode, int8_t hand)
 {
@@ -431,7 +449,7 @@ static void snapshot(const NavIn *in)
 {
     g.snap_left  = g.open_l;
     g.snap_right = g.open_r;
-    g.snap_front = (in->dist_front_mm > (uint16_t)(FRONT_BLOCKED_MM + 150)) ? 1 : 0;
+    g.snap_front = (in->dist_front_mm > (uint16_t)FRONT_OPEN_MM) ? 1 : 0;
 }
 
 /* Debounce the side readings into steady "there is a gap here" flags, and
@@ -460,7 +478,7 @@ static void snapshot_merge(const NavIn *in)
 {
     if (g.open_l) g.snap_left  = 1;
     if (g.open_r) g.snap_right = 1;
-    g.snap_front = (in->dist_front_mm > (uint16_t)(FRONT_BLOCKED_MM + 150)) ? 1 : 0;
+    g.snap_front = (in->dist_front_mm > (uint16_t)FRONT_OPEN_MM) ? 1 : 0;
 }
 
 /* ------------------------------------------------------------------ */
@@ -544,13 +562,8 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
             g.heading = 0.0f;
             g.target_deg = 0.0f;
             g.x_mm = g.y_mm = 0.0f;
-            g.dist_total_mm = g.dist_since_decision_mm = 0.0f;
-
-            /* The way we came in is the start gate, not the finish. Burn it
-             * into the memory as "already used twice" so the robot never
-             * turns round and drives back out of its own start line - which
-             * is exactly how a wrong-handed wall follower loses a run. */
-            g.state = ST_DRIVE; g.state_t_ms = 0;
+            g.dist_total_mm = 0.0f;
+            enter_drive();
         }
         break;
 
@@ -650,8 +663,7 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
             snapshot_merge(in);
             int8_t q = choose_turn();
             g.dist_since_decision_mm = 0.0f;
-            g.creep_by_front = 0;
-            if (q == 0) { g.state = ST_DRIVE; g.state_t_ms = 0; }
+            if (q == 0) { enter_drive(); }
             else        { enter_turn(q); }
         }
         break;
@@ -671,8 +683,7 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
             }
             snapshot_merge(in);
             int8_t q = choose_turn();
-            g.dist_since_decision_mm = 0.0f;
-            if (q == 0) { g.state = ST_DRIVE; g.state_t_ms = 0; }
+            if (q == 0) { enter_drive(); }
             else        { enter_turn(q); }
         }
         break;
@@ -725,9 +736,7 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
             } else {
                 g.turn_retries = 0;
                 g.target_deg = 90.0f * lroundf(g.heading / 90.0f);
-                g.prev_side_err = 0.0f;
-                g.dist_since_decision_mm = 0.0f;
-                g.state = ST_DRIVE; g.state_t_ms = 0;
+                enter_drive();
             }
         } else if (g.turn_ok_ms >= TURN_SETTLE_MS) {
             /* snap the target to the nearest quarter turn so gyro drift can
@@ -739,12 +748,7 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
              * and the gyro's error stops accumulating from corner to
              * corner - it only ever has to survive one turn. */
             g.heading = g.target_deg;
-            g.prev_side_err = 0.0f;
-            g.dist_since_decision_mm = 0.0f;
-            g.open_cnt_l = g.open_cnt_r = 0;
-            g.open_l = g.open_r = 0;
-            g.snap_left = g.snap_right = 0;
-            g.state = ST_DRIVE; g.state_t_ms = 0;
+            enter_drive();
         }
         out->state = g.state;
         out->done  = 0;
@@ -762,8 +766,7 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
         if (g.state_t_ms > 600) {
             g.stuck_tl = in->ticks_left;
             g.stuck_tr = in->ticks_right;
-            g.dist_since_decision_mm = 0.0f;
-            g.state = ST_DRIVE; g.state_t_ms = 0;
+            enter_drive();
         }
         break;
 

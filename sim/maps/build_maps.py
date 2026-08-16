@@ -29,7 +29,8 @@ from collections import deque
 
 CELL = 25.4                  # mm per character = 1 inch
 FOOT = 12                    # characters per foot
-PAD = 14                     # open floor around the course (start / finish)
+PAD = 26                     # open floor around the maze
+POCKET = 20                  # depth of the walled start / finish zones, chars
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # ---------------------------------------------------------------------- #
@@ -218,33 +219,49 @@ def build(name, title, sections, fname):
     # the MIDDLE of a cell the route passes straight through. Putting one on
     # a corner is unfair to the robot and to the rulebook: "all three wheels
     # completely passes the sector line" is hard to satisfy while pivoting.
-    straight = []
-    for i in range(1, len(path) - 1):
-        (ar, ac), (br, bc), (cr, cc) = path[i - 1], path[i], path[i + 1]
-        if (ar == br == cr) or (ac == bc == cc):
-            straight.append(i)
-    if len(straight) < n_sect:                     # short route: use corners too
-        straight = list(range(1, len(path) - 1))
-
+    # Put each sector line on a boundary the route crosses, so the robot
+    # always meets it square-on and all three wheels pass it cleanly. A line
+    # in the middle of a corner square would be crossed while pivoting, and
+    # "all three wheels completely passes the sector line" (SS6.1) is then a
+    # matter of luck.
+    nb = len(path) - 1
     sectors = []
     for k in range(n_sect):
-        idx = straight[int(round(k * (len(straight) - 1) / float(max(1, n_sect - 1))))]
-        (pr, pc), (r, c) = path[idx - 1], path[idx]
-        if pr == r:                                # travelling sideways
-            x = (cx(c) + FOOT / 2.0) * CELL
-            sectors.append((x, cy(r) * CELL, x, (cy(r) + FOOT) * CELL))
-        else:                                      # travelling up or down
-            y = (cy(r) + FOOT / 2.0) * CELL
-            sectors.append((cx(c) * CELL, y, (cx(c) + FOOT) * CELL, y))
+        i = int(round((k + 0.5) * nb / float(n_sect)))
+        i = max(0, min(nb - 1, i))
+        (r0, c0), (r1, c1) = path[i], path[i + 1]
+        if r0 == r1:                                   # crossing sideways
+            x = cx(max(c0, c1)) * CELL
+            sectors.append((x, cy(r0) * CELL, x, (cy(r0) + FOOT) * CELL))
+        else:                                          # crossing up or down
+            y = cy(min(r0, r1)) * CELL + FOOT * CELL
+            sectors.append((cx(c0) * CELL, y, (cx(c0) + FOOT) * CELL, y))
+
+    # Walled start and finish pockets. Without them the robot can reverse
+    # out of its own start gate, drive round the outside of the maze and
+    # walk into the finish zone - which the simulator would score as a
+    # completed run and a judge would score as nothing at all.
+    for (side, row) in (("L", ent_row), ("R", fin_row)):
+        y0, y1 = cy(row), cy(row) + FOOT - 1
+        if side == "L":
+            x0, x1 = PAD - POCKET, PAD - 1
+        else:
+            x0, x1 = PAD + W, PAD + W + POCKET - 1
+        cv.fill(x0, y0 - 1, x1, y0 - 1)          # below
+        cv.fill(x0, y1 + 1, x1, y1 + 1)          # above
+        end = x0 if side == "L" else x1
+        cv.fill(end, y0 - 1, end, y1 + 1)        # closed far end
+        cv.fill(x0 + (1 if side == "L" else 0), y0,
+                x1 - (0 if side == "L" else 1), y1, ".")
 
     gates = [((PAD - 2) * CELL, cy(ent_row) * CELL,
               PAD * CELL, (cy(ent_row) + FOOT) * CELL),
              ((PAD + W - 1) * CELL, cy(fin_row) * CELL,
               (PAD + W + 1) * CELL, (cy(fin_row) + FOOT) * CELL)]
 
-    start_mm = ((PAD - 9) * CELL, (cy(ent_row) + FOOT / 2.0) * CELL, 0)
-    finish_mm = ((PAD + W) * CELL, cy(fin_row) * CELL,
-                 (PAD + W + 16) * CELL, (cy(fin_row) + FOOT) * CELL)
+    start_mm = ((PAD - POCKET + 10) * CELL, (cy(ent_row) + FOOT / 2.0) * CELL, 0)
+    finish_mm = ((PAD + W + 2) * CELL, cy(fin_row) * CELL,
+                 (PAD + W + POCKET - 2) * CELL, (cy(fin_row) + FOOT) * CELL)
 
     with open(os.path.join(HERE, fname), "w", encoding="utf-8") as fh:
         fh.write("!name %s\n!cell %.4f\n" % (title, CELL))
@@ -267,10 +284,10 @@ if __name__ == "__main__":
         build(key, "%s - 5x5 ft, %d sectors" % (s["title"], s["sectors"]),
               [(s, False)], key + ".txt")
 
-    secs = [(mirror(SHEETS[k]) if m else SHEETS[k], m) for (k, m) in COURSE]
-    total = sum(SHEETS[k]["sectors"] for (k, _) in COURSE)
-    build("course", "Final course - %s, %d sectors"
-          % (" + ".join(k for (k, _) in COURSE), total),
-          secs, "course.txt")
+    # The three maps are run as three separate courses, so no combined
+    # course is generated. If that ever changes, uncomment this:
+    #
+    # secs = [(mirror(SHEETS[k]) if m else SHEETS[k], m) for (k, m) in COURSE]
+    # build("course", "Combined course", secs, "course.txt")
 
     print("\npassage 304.8 mm (1 ft)   wall 19 mm   wall height 190 mm")
