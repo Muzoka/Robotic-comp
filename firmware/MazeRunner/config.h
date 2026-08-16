@@ -226,6 +226,10 @@
 #define CREEP_AFTER_OPEN_MM 147
 #define TURN_SETTLE_IN_MS   260     /* stop dead before pivoting; also the
                                        window used to re-measure gyro bias  */
+/* How long a hand must stay in front of the nose before it arms the start.
+ * A single bad ping must never be able to launch a run - see ST_WAIT_START
+ * in nav_core.cpp for the power-on false start this prevents. */
+#define START_ARM_MS        300
 #define STUCK_WINDOW_MS     900     /* no encoder movement this long = stuck         */
 #define RUN_TIMEOUT_MS   240000UL   /* 4 minutes then stop, whatever happens         */
 

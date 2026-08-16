@@ -274,6 +274,10 @@ struct Sonar;
 #define CREEP_AFTER_OPEN_MM 147
 #define TURN_SETTLE_IN_MS   260     /* stop dead before pivoting; also the
                                        window used to re-measure gyro bias  */
+/* How long a hand must stay in front of the nose before it arms the start.
+ * A single bad ping must never be able to launch a run - see ST_WAIT_START
+ * in nav_core.cpp for the power-on false start this prevents. */
+#define START_ARM_MS        300
 #define STUCK_WINDOW_MS     900     /* no encoder movement this long = stuck         */
 #define RUN_TIMEOUT_MS   240000UL   /* 4 minutes then stop, whatever happens         */
 
@@ -1199,12 +1203,24 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
      *      long hold  (> 1.5 s)  -> RIGHT-hand rule
      * The countdown then blinks slow for left, fast for right. */
     case ST_WAIT_START:
-        if (in->dist_front_mm < 80) {
-            g.start_armed = 1;
+        /* A hand is between US_MIN_MM and 80 mm away, and has to STAY there
+         * for START_ARM_MS before it counts.
+         *
+         * Both halves of that are guarding against a real failure. Anything
+         * below US_MIN_MM is not a distance an HC-SR04 can produce, so it
+         * means "no reading yet" - and treating it as a hand is what made
+         * the robot start its own run seconds after power-on. Requiring the
+         * hand to persist means no single glitched ping can ever start a
+         * run, which is worth far more than starting a fraction of a second
+         * sooner. */
+        if (in->dist_front_mm >= US_MIN_MM && in->dist_front_mm < 80) {
             g.arm_ms += in->dt_ms;
+            if (g.arm_ms >= START_ARM_MS) g.start_armed = 1;
         } else if (g.start_armed && in->dist_front_mm > 200) {
             g.hand = (g.arm_ms >= 1500) ? -1 : +1;
             g.state = ST_COUNTDOWN; g.state_t_ms = 0;
+        } else if (!g.start_armed) {
+            g.arm_ms = 0;          /* glitches must not accumulate into a start */
         }
         if (in->start_signal) { g.state = ST_COUNTDOWN; g.state_t_ms = 0; }
         break;
@@ -1609,9 +1625,30 @@ static void sonarPing(Sonar &s)
   if (mm > US_MAX_MM) mm = US_MAX_MM;
 
   /* median-of-3 on the fly: cheap, kills the classic single-sample spike */
-  static uint16_t h[3][3]; static uint8_t hi[3];
+  static uint16_t h[3][3]; static uint8_t hi[3]; static uint8_t primed[3];
   uint8_t k = (&s == &sonarF) ? 0 : (&s == &sonarL) ? 1 : 2;
-  h[k][hi[k]] = mm; hi[k] = (hi[k] + 1) % 3;
+
+  /* PRIME ALL THREE SLOTS with the first real reading, do not let them
+   * start at zero.
+   *
+   * This mattered more than it looks. A zero-initialised history makes the
+   * first ping report median(602, 0, 0) = 0 - a wall zero millimetres from
+   * the nose. WAIT_START reads that as a hand held up to arm the start, and
+   * two pings later, when the history has filled and the reading jumps to
+   * its true value, it reads that as the hand being taken away. The robot
+   * then started its own run about three seconds after power-on, with
+   * nobody touching it. On the day that means it drives off the table while
+   * you are still placing it.
+   *
+   * Found in Wokwi, not in the simulator: the simulator primes its own
+   * history correctly, so the two disagreed. */
+  if (!primed[k]) {
+    h[k][0] = h[k][1] = h[k][2] = mm;
+    primed[k] = 1;
+  } else {
+    h[k][hi[k]] = mm; hi[k] = (hi[k] + 1) % 3;
+  }
+
   uint16_t a = h[k][0], b = h[k][1], c = h[k][2];
   uint16_t med = (a > b) ? ((b > c) ? b : ((a > c) ? c : a))
                          : ((a > c) ? a : ((b > c) ? c : b));

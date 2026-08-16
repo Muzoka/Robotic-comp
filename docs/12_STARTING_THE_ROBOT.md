@@ -19,6 +19,25 @@ it is running. Here is exactly how, and why it is built this way.
 
 No laptop, no radio, nothing touched once it is moving.
 
+## Check this before every run: it must sit still
+
+Switch the robot on, put it down, and **watch it for ten seconds without
+touching it.** It must not move, and the LED must not start its countdown
+blink.
+
+This is on the checklist because the firmware once failed it. On power-up
+the front sonar's median filter was primed with zeros, so its first reading
+came out as 0 mm — a wall against the nose. The start logic read that as a
+hand held up to arm the start, and read the next good reading as the hand
+being taken away. The robot began its run about three seconds after
+switch-on, with nobody near it.
+
+It is fixed twice over — the filter now primes with the first real reading,
+and a hand has to stay put for `START_ARM_MS` (300 ms) before it arms
+anything — and `make test` checks it against the real firmware. But it is a
+ten-second check that would have caught a lost run, so do it anyway.
+
+
 ## The GO button — and where it hides
 
 You asked for a button, so there is one. Every pin on the Uno was already

@@ -83,11 +83,19 @@ def simulate(map_path, mode=1, hand=1, seed=1, gif=True, csv_out=True,
             cached[2] = fresh[2]
         bot.sonar = list(cached)
 
+        # The GO button, pressed at 0.2 s. Held for 100 ms and then released,
+        # like a real finger - not asserted forever, or ST_WAIT_START never
+        # gets exercised and a false-start bug can hide there. One did: the
+        # firmware used to start its own run on power-up and the simulator
+        # could not see it, because this line held the button down from the
+        # first tick. See sonarPing() in MazeRunner.ino.
+        go = 1 if 0.2 <= t < 0.3 else 0
+
         out = nav.step(cached[0], cached[1], cached[2],
                        bot.gyro_heading, bot.gyro_rate,
                        bot.ticks_l, bot.ticks_r,
                        bot.read_line(),
-                       1 if t > 0.2 else 0,
+                       go,
                        dt_ms)
 
         bot.step(out.pwm_left, out.pwm_right, dt)
