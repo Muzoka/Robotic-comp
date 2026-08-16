@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "author": "MazeRunner",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-uno", "id": "uno", "top": 180, "left": 0, "attrs": {} },
+
+    { "type": "wokwi-hc-sr04", "id": "usF", "top": -110, "left": 250,
+      "attrs": { "distance": "60" } },
+    { "type": "wokwi-hc-sr04", "id": "usL", "top": -110, "left": 480,
+      "attrs": { "distance": "9" } },
+    { "type": "wokwi-hc-sr04", "id": "usR", "top": -110, "left": 710,
+      "attrs": { "distance": "9" } },
+
+    { "type": "wokwi-mpu6050", "id": "imu", "top": 60, "left": 480, "attrs": {} },
+
+    { "type": "wokwi-led", "id": "ledENA", "top": 400, "left": 260,
+      "attrs": { "color": "red",   "label": "ENA  R-PWM" } },
+    { "type": "wokwi-led", "id": "ledIN1", "top": 400, "left": 320,
+      "attrs": { "color": "orange","label": "IN1" } },
+    { "type": "wokwi-led", "id": "ledIN2", "top": 400, "left": 380,
+      "attrs": { "color": "orange","label": "IN2" } },
+    { "type": "wokwi-led", "id": "ledENB", "top": 400, "left": 460,
+      "attrs": { "color": "red",   "label": "ENB  L-PWM" } },
+    { "type": "wokwi-led", "id": "ledIN3", "top": 400, "left": 520,
+      "attrs": { "color": "orange","label": "IN3" } },
+    { "type": "wokwi-led", "id": "ledIN4", "top": 400, "left": 580,
+      "attrs": { "color": "orange","label": "IN4" } },
+
+    { "type": "wokwi-resistor", "id": "rENA", "top": 480, "left": 260, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "rIN1", "top": 480, "left": 320, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "rIN2", "top": 480, "left": 380, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "rENB", "top": 480, "left": 460, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "rIN3", "top": 480, "left": 520, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "rIN4", "top": 480, "left": 580, "attrs": { "value": "220" } },
+
+    { "type": "wokwi-pushbutton", "id": "btnLine", "top": 300, "left": 760,
+      "attrs": { "color": "black", "label": "hold = over a black line" } },
+
+    { "type": "wokwi-pushbutton", "id": "btnEncL", "top": 400, "left": 760,
+      "attrs": { "color": "blue", "label": "tap = left wheel tick" } },
+    { "type": "wokwi-pushbutton", "id": "btnEncR", "top": 480, "left": 760,
+      "attrs": { "color": "green", "label": "tap = right wheel tick" } }
+  ],
+
+  "connections": [
+    [ "usF:VCC",  "uno:5V",     "red",   [ "v-24", "*", "v0" ] ],
+    [ "usF:GND",  "uno:GND.1",  "black", [ "v-30", "*", "v0" ] ],
+    [ "usF:TRIG", "uno:A0",     "green", [ "v-36", "*", "v0" ] ],
+    [ "usF:ECHO", "uno:A1",     "green", [ "v-42", "*", "v0" ] ],
+
+    [ "usL:VCC",  "uno:5V",     "red",   [ "v-48", "*", "v0" ] ],
+    [ "usL:GND",  "uno:GND.1",  "black", [ "v-54", "*", "v0" ] ],
+    [ "usL:TRIG", "uno:A2",     "green", [ "v-60", "*", "v0" ] ],
+    [ "usL:ECHO", "uno:A3",     "green", [ "v-66", "*", "v0" ] ],
+
+    [ "usR:VCC",  "uno:5V",     "red",   [ "v-72", "*", "v0" ] ],
+    [ "usR:GND",  "uno:GND.1",  "black", [ "v-78", "*", "v0" ] ],
+    [ "usR:TRIG", "uno:9",      "green", [ "v-84", "*", "v0" ] ],
+    [ "usR:ECHO", "uno:10",     "green", [ "v-90", "*", "v0" ] ],
+
+    [ "imu:VCC",  "uno:5V",     "red",   [ "v-16", "*", "v0" ] ],
+    [ "imu:GND",  "uno:GND.2",  "black", [ "v-22", "*", "v0" ] ],
+    [ "imu:SDA",  "uno:A4",     "blue",  [ "v-28", "*", "v0" ] ],
+    [ "imu:SCL",  "uno:A5",     "blue",  [ "v-34", "*", "v0" ] ],
+
+    [ "uno:5",  "ledENA:A", "red",    [ "v20", "*", "v0" ] ],
+    [ "uno:4",  "ledIN1:A", "orange", [ "v26", "*", "v0" ] ],
+    [ "uno:7",  "ledIN2:A", "orange", [ "v32", "*", "v0" ] ],
+    [ "uno:6",  "ledENB:A", "red",    [ "v38", "*", "v0" ] ],
+    [ "uno:8",  "ledIN3:A", "orange", [ "v44", "*", "v0" ] ],
+    [ "uno:11", "ledIN4:A", "orange", [ "v50", "*", "v0" ] ],
+
+    [ "ledENA:C", "rENA:1", "black", [ "v0" ] ],
+    [ "ledIN1:C", "rIN1:1", "black", [ "v0" ] ],
+    [ "ledIN2:C", "rIN2:1", "black", [ "v0" ] ],
+    [ "ledENB:C", "rENB:1", "black", [ "v0" ] ],
+    [ "ledIN3:C", "rIN3:1", "black", [ "v0" ] ],
+    [ "ledIN4:C", "rIN4:1", "black", [ "v0" ] ],
+
+    [ "rENA:2", "uno:GND.3", "black", [ "v40", "*", "v0" ] ],
+    [ "rIN1:2", "uno:GND.3", "black", [ "v40", "*", "v0" ] ],
+    [ "rIN2:2", "uno:GND.3", "black", [ "v40", "*", "v0" ] ],
+    [ "rENB:2", "uno:GND.3", "black", [ "v40", "*", "v0" ] ],
+    [ "rIN3:2", "uno:GND.3", "black", [ "v40", "*", "v0" ] ],
+    [ "rIN4:2", "uno:GND.3", "black", [ "v40", "*", "v0" ] ],
+
+    [ "btnLine:1.l", "uno:12",    "gray",  [ "h-20", "*", "v0" ] ],
+    [ "btnLine:2.l", "uno:GND.3", "black", [ "h-26", "*", "v0" ] ],
+
+    [ "btnEncL:1.l", "uno:2",     "blue",  [ "h-20", "*", "v0" ] ],
+    [ "btnEncL:2.l", "uno:GND.3", "black", [ "h-26", "*", "v0" ] ],
+    [ "btnEncR:1.l", "uno:3",     "green", [ "h-20", "*", "v0" ] ],
+    [ "btnEncR:2.l", "uno:GND.3", "black", [ "h-26", "*", "v0" ] ]
+  ],
+
+  "dependencies": {}
+}

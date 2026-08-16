@@ -31,6 +31,10 @@ The GIFs land in `sim/runs/`.
 ## What is in here
 
 ```
+wokwi/
+    diagram.json      drop into wokwi.com to test the firmware in a browser
+    README.md         setup, and what Wokwi can and cannot show you
+
 firmware/MazeRunner/
     MazeRunner.ino    hardware only: pins, I2C, PWM, EEPROM
     nav_core.cpp/.h   ALL the navigation. No Arduino code. Shared with the sim
@@ -50,37 +54,40 @@ tools/
 
 docs/
     01_RULES.md            the rulebook, condensed to what changes decisions
-    02_HARDWARE.md         what to buy, where, and why  ← shopping list
+    02_HARDWARE.md         what to buy, where, and why
     03_WIRING.md           pin map, power, mounting, inspection checklist
+    wiring_diagram.svg     the picture to copy when you build it
     04_SIMULATION.md       which simulator to use, and what ours found
     05_ALGORITHM.md        how the robot thinks
-    06_PLAN.md             phase-by-phase plan  ← what to do next
+    06_PLAN.md             phase-by-phase plan
     07_COMPETITION_DAY.md  print this and take it
+    08_SOFTWARE_AND_STEPS.md  what to install, and every step  ← start here
+    09_CHECKLIST.md        every item, with alternatives  ← shopping list
+    10_MAP_NOTES.md        the three maps and what still needs checking
 ```
 
 ---
 
 ## The three things that matter most
 
-### 1. Ask the organisers how wide the passages are — today
+### 1. The robot has to get smaller
 
 `tools/geometry_check.py` prints:
 
-> turning on the spot sweeps a circle **269 mm** across
+> turning on the spot sweeps a circle **292 mm** across
 
-The rulebook allows passages of 200–400 mm and says the figure is still
-"tentative". Measured across 5 maps in simulation:
+Your robot is 25 × 15 cm and the passages are 30 cm, so it has **4 mm of
+clearance each side** while turning. Measured over the three real maps, both
+wall-following directions:
 
-| Passage | Can it turn? | Finished | Sector points |
-| --- | --- | --- | --- |
-| 200 mm | **no** | 0 % | 0 % |
-| 250 mm | **no** | 10 % | 33 % |
-| 300 mm | yes, 16 mm spare | 60 % | 72 % |
-| 350 mm | yes | 70 % | 71 % |
-| 400 mm | yes | 70 % | 78 % |
+| Robot | Swept circle | Maps solved | Sector points | Scrapes/run |
+| --- | --- | --- | --- | --- |
+| 250 × 150 mm *(today)* | 292 mm | 56 % | 63 % | 100 |
+| 210 × 130 mm | 247 mm | 56 % | 66 % | 84 |
+| **190 × 130 mm** | **230 mm** | **75 %** | **72 %** | 73 |
 
-At 200 mm no standard 2WD kit robot can turn around, whatever the code does.
-`docs/06_PLAN.md` has the email to send.
+Target about **21 × 13 cm**: sensors inside the wheel line, nothing hanging
+off the nose or tail, battery stacked on top, wheel axle exactly central.
 
 ### 2. Yes, add the gyro. No, you do not need a memory module.
 
@@ -107,22 +114,17 @@ third. Every tuning decision in this repository is made that way.
 
 ## Where it stands today
 
-5 maps × 4 random seeds, 350 mm passages, Trémaux memory, left-hand rule:
+Real robot size, real map dimensions, 30 cm passages, 3-minute limit:
 
-| Map | Finished | Sector points | Wall scrapes |
+| Map | Sector points | Time | Wall scrapes |
 | --- | --- | --- | --- |
-| Inward spiral (goal in the middle) | 0 % | 5.0 / 7 | 155 |
-| Serpentine | 75 % | 9.8 / 12 | 115 |
-| Island loop | 100 % | 9.0 / 9 | 2 |
-| Practice corner | 100 % | 2.2 / 3 | 108 |
-| Dead ends + loop | 100 % | 5.0 / 7 | 1 |
+| Map 2 — island loop | **8 / 8** | 38 s | 11 |
+| Map 1 — serpentine | 3–4 / 8 | ran out of time | 100–270 |
+| Map 3 — spine snake | 1–2 / 8 | ran out of time | 18–230 |
 
-The spiral is the honest weak spot: if the finish is a chamber in the
-*middle* of the maze, enclosed by its own ring of wall, **no wall-following
-robot can ever reach it** — that is maze theory, not a bug. The memory mode
-still collects 5–6 of the 7 sector points. If the real map 1 has its finish
-gate on the outer edge, as the striped marking in the photo suggests, the
-problem disappears. That is question 2 in the email.
+Map 2 matches the photo and is solved cleanly. Maps 1 and 3 are best guesses
+at the shape and are where the tight-clearance problem shows up — see
+`docs/10_MAP_NOTES.md` for what would let us draw them exactly.
 
 ---
 

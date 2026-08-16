@@ -11,11 +11,11 @@
 /* ------------------------------------------------------------------ */
 /* 1. ROBOT GEOMETRY - MEASURE YOUR REAL ROBOT AND PUT THE NUMBERS HERE */
 /* ------------------------------------------------------------------ */
-#define ROBOT_LENGTH_MM     215.0f   /* nose to tail, including any sensor sticking out */
-#define ROBOT_WIDTH_MM      160.0f   /* outside of left tyre to outside of right tyre  */
-#define WHEEL_BASE_MM       140.0f   /* centre of left tyre to centre of right tyre    */
+#define ROBOT_LENGTH_MM     250.0f   /* nose to tail, including any sensor sticking out */
+#define ROBOT_WIDTH_MM      150.0f   /* outside of left tyre to outside of right tyre  */
+#define WHEEL_BASE_MM       128.0f   /* centre of left tyre to centre of right tyre    */
 #define WHEEL_DIAM_MM        65.0f   /* yellow TT wheel, measure it                    */
-#define AXLE_FROM_NOSE_MM   108.0f   /* front bumper to wheel axle. KEEP THIS AT HALF
+#define AXLE_FROM_NOSE_MM   125.0f   /* front bumper to wheel axle. KEEP THIS AT HALF
                                        OF ROBOT_LENGTH_MM: a centred axle gives
                                        the smallest possible pivot circle, and
                                        the pivot circle is what decides whether
@@ -23,16 +23,16 @@
 
 /* Where each ultrasonic sits, relative to the wheel-axle centre.
  * x = forward (+), y = left (+), angle = 0 forward, +90 = pointing left. */
-#define US_F_X_MM    95.0f
+#define US_F_X_MM   115.0f
 #define US_F_Y_MM     0.0f
 #define US_F_ANG      0.0f
 
 #define US_L_X_MM    40.0f
-#define US_L_Y_MM    72.0f
+#define US_L_Y_MM    68.0f
 #define US_L_ANG     90.0f
 
 #define US_R_X_MM    40.0f
-#define US_R_Y_MM   -72.0f
+#define US_R_Y_MM   -68.0f
 #define US_R_ANG    -90.0f
 
 /* ------------------------------------------------------------------ */
@@ -54,7 +54,7 @@
  * puts the wheel axle in the middle of the junction square:
  *      CORRIDOR_MM / 2 - US_F_X_MM  =  150 - 95  =  55
  * Get this wrong and the robot pivots off-centre and clips the corner. */
-#define FRONT_PIVOT_MM       55
+#define FRONT_PIVOT_MM       40
 /* Closer than this: reverse before doing anything else. */
 #define FRONT_TOOCLOSE_MM    40
 
