@@ -74,10 +74,27 @@ smaller first.
 
 ## Part 4 — Prove the firmware in Wokwi (1 hour)
 
-Follow `wokwi/README.md`. You are checking that the pin map is right, the
-gyro talks over I2C, the state machine advances and the sketch fits in the
-Uno's memory. Do this before you own the parts; it costs nothing and it is
-the cheapest bug-finding you will ever do.
+Two pastes, on <https://wokwi.com> → New Project → Arduino Uno:
+
+- the **`diagram.json`** tab ← `wokwi/diagram.json`
+- the **`sketch.ino`** tab ← **`wokwi/sketch.ino`**
+
+Use `wokwi/sketch.ino`, **not** `firmware/MazeRunner/MazeRunner.ino`. The
+firmware version is split across four files and opens with
+`#include "config.h"`; paste it on its own and Wokwi stops with
+
+```
+sketch.ino:15:10: fatal error: config.h: No such file or directory
+```
+
+`wokwi/sketch.ino` is the same code with all four files already merged into
+one, so there is nothing to name and nothing to miss.
+
+Full details, and the four-file method if you want to edit firmware inside
+Wokwi, are in `wokwi/README.md`. You are checking that the pin map is right,
+the gyro talks over I2C, the state machine advances and the sketch fits in
+the Uno's memory. Do this before you own the parts; it costs nothing and it
+is the cheapest bug-finding you will ever do.
 
 ---
 
