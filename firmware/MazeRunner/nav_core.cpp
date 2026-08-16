@@ -65,16 +65,23 @@ static uint8_t dir_of_heading(float h)
 /* mirrored into the Uno's built-in 1 kB EEPROM by the .ino.            */
 /* ------------------------------------------------------------------ */
 /* 4 bytes each. Position is stored in units of 50 mm, which covers a 6 m
- * maze in a signed byte and is finer than we can navigate anyway. */
-typedef struct {
+ * maze in a signed byte and is finer than we can navigate anyway.
+ *
+ * A NAMED struct, not an anonymous "typedef struct {...} Junction;", and
+ * that matters for one specific reason: the Arduino IDE auto-generates a
+ * prototype for every function and inserts them ABOVE the type definitions.
+ * A prototype mentioning Junction then fails to compile unless Junction can
+ * be forward-declared - and an anonymous typedef cannot be. Same for Nav
+ * below and Sonar in the .ino. See tools/make_wokwi_sketch.py. */
+struct Junction {
     int8_t  qx, qy;      /* position / 50 mm                              */
     uint8_t marks;       /* 2 bits per direction, value 0..2              */
     uint8_t used;
-} Junction;
+};
 #define JUNC_UNIT_MM   50.0f
 #define JUNC_MATCH_MM 260.0f
 
-typedef struct {
+struct Nav {
     /* configuration */
     uint8_t mode;
     int8_t  hand;              /* +1 left-hand rule, -1 right-hand rule   */
@@ -150,7 +157,7 @@ typedef struct {
     uint8_t  start_armed;
     uint32_t arm_ms;
     uint8_t  done;
-} Nav;
+};
 
 static Nav g;
 

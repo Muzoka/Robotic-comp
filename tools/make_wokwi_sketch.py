@@ -13,9 +13,18 @@ So this script GENERATES wokwi/sketch.ino: every line of the real firmware,
 in one file, in dependency order. One paste, nothing to name.
 
 It is generated, never hand-edited, so it cannot drift from the firmware.
-Re-run it after any change:
+Re-run it after any change, and ALWAYS run the checker afterwards:
 
-    python3 tools/make_wokwi_sketch.py
+    make wokwi
+
+The checker is not optional. Compiling the generated file with plain g++
+passes on files the Arduino IDE rejects, because the IDE inserts
+auto-generated prototypes above the type definitions. A version of this
+script shipped once with only the g++ check and the Wokwi build failed on
+
+    error: 'Junction' does not name a type; did you mean 'union'?
+
+See tools/check_wokwi_sketch.sh.
 """
 import os
 import re
@@ -34,6 +43,14 @@ PARTS = ["config.h", "nav_core.h", "nav_core.cpp", "MazeRunner.ino"]
 # go. System includes are hoisted to the top instead.
 LOCAL_INC = re.compile(r'^\s*#\s*include\s*"([^"]+)"\s*$')
 SYS_INC = re.compile(r'^\s*#\s*include\s*<([^>]+)>\s*$')
+
+# Named struct definitions, so they can be forward-declared. See FORWARD
+# below for why this is load-bearing rather than tidiness.
+STRUCT_DEF = re.compile(r'^\s*struct\s+([A-Za-z_]\w*)\s*\{')
+# ...and the anonymous form, which CANNOT be forward-declared. Finding one
+# is a hard error rather than a warning: the build would fail in Wokwi with
+# a message that points at the wrong thing entirely.
+ANON_STRUCT = re.compile(r'^\s*typedef\s+struct\s*\{')
 
 HEADER = """\
 /* =====================================================================
@@ -57,16 +74,39 @@ HEADER = """\
 """
 
 
+FORWARD = """\
+/* ---------------------------------------------------------------------
+ * Forward declarations - REQUIRED, and the reason is not obvious.
+ *
+ * The Arduino IDE (and Wokwi) generate a prototype for every function in a
+ * .ino and insert them all near the TOP of the file, above the point where
+ * the types are defined. A prototype like
+ *
+ *      static Junction *junction_at(float x, float y, uint8_t create);
+ *
+ * therefore gets compiled before "struct Junction" exists, and the build
+ * dies with "'Junction' does not name a type; did you mean 'union'?" -
+ * pointing at a line that is perfectly correct.
+ *
+ * Declaring the struct names up here fixes it. This is also why they are
+ * named structs in the firmware rather than anonymous typedefs: an
+ * anonymous "typedef struct {...} X;" cannot be forward-declared at all.
+ * --------------------------------------------------------------------- */
+"""
+
+
 def main():
     sys_includes = []
     chunks = []
+    structs = []
 
     for name in PARTS:
         path = os.path.join(FW, name)
         if not os.path.exists(path):
             sys.exit("missing source file: %s" % path)
         kept = []
-        for line in open(path, encoding="utf-8").read().splitlines():
+        for n, line in enumerate(
+                open(path, encoding="utf-8").read().splitlines(), 1):
             if LOCAL_INC.match(line):
                 continue                      # satisfied by concatenation
             m = SYS_INC.match(line)
@@ -74,6 +114,16 @@ def main():
                 if m.group(1) not in sys_includes:
                     sys_includes.append(m.group(1))
                 continue                      # hoisted to the top
+            if ANON_STRUCT.match(line):
+                sys.exit(
+                    "%s:%d: anonymous 'typedef struct {' cannot be "
+                    "forward-declared, so the Arduino build will fail on a "
+                    "prototype that mentions it.\n"
+                    "  Write it as 'struct Name { ... };' instead."
+                    % (name, n))
+            m = STRUCT_DEF.match(line)
+            if m and m.group(1) not in structs:
+                structs.append(m.group(1))
             kept.append(line)
         body = "\n".join(kept).strip("\n")
         chunks.append("/* ================= %s ================= */\n%s"
@@ -81,6 +131,8 @@ def main():
 
     text = HEADER
     text += "\n".join("#include <%s>" % h for h in sys_includes) + "\n\n"
+    text += FORWARD
+    text += "\n".join("struct %s;" % s for s in structs) + "\n\n"
     text += "\n\n".join(chunks) + "\n"
 
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
@@ -104,9 +156,9 @@ def main():
         sys.exit("unbalanced preprocessor: %d block(s) left open" % depth)
 
     print("wrote %s" % os.path.relpath(OUT, ROOT))
-    print("  %d lines, %d KB, includes: %s"
-          % (len(text.splitlines()), len(text) // 1024,
-             ", ".join(sys_includes)))
+    print("  %d lines, %d KB" % (len(text.splitlines()), len(text) // 1024))
+    print("  includes:          %s" % ", ".join(sys_includes))
+    print("  forward-declared:  %s" % ", ".join(structs))
 
 
 if __name__ == "__main__":

@@ -53,6 +53,8 @@ tools/
     geometry_check.py can the robot turn in the corridor?  Run this first
     telemetry_log.py  record the real robot's serial output for comparison
     make_wokwi_sketch.py  regenerate wokwi/sketch.ino from the firmware
+    check_wokwi_sketch.sh compile it the way ARDUINO does, not just g++
+                          (`make wokwi` runs both)
     serial_check.md   bench tests, one subsystem at a time
 
 docs/
