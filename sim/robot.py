@@ -91,6 +91,8 @@ class Robot:
         self.score = 0
         self.trail = [(self.x, self.y)]
         self.sonar = [self.p.us_max] * 3
+        self._hist = [[self.p.us_max] * 3 for _ in range(3)]
+        self._miss = [0, 0, 0]
         self.prev_pts = self.contact_points()
 
         # a fresh mismatch every run - never tune against one lucky pairing
@@ -231,14 +233,24 @@ class Robot:
                 if best is None or d < best:
                     best = d
 
+            i = len(out)
             if best is None or self.rng.random() < p.dropout_p:
-                out.append(int(p.us_max))
+                # No echo. The firmware wants two misses in a row before it
+                # believes a wall has gone away, so one lost ping holds the
+                # last good reading instead of reading as open space.
+                self._miss[i] += 1
+                out.append(int(p.us_max) if self._miss[i] >= 2 else int(self.sonar[i]))
                 continue
+            self._miss[i] = 0
 
             d = best + self.rng.gauss(0, p.noise_sigma)
             d = max(p.us_min, min(p.us_max, d))
             d = round(d / p.quantise) * p.quantise
-            out.append(int(d))
+
+            # median of the last three pings, exactly as MazeRunner.ino does
+            h = self._hist[i]
+            h.pop(0); h.append(int(d))
+            out.append(sorted(h)[1])
 
         self.sonar = out
         return out

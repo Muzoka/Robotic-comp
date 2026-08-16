@@ -11,12 +11,42 @@ it is running. Here is exactly how, and why it is built this way.
 1.  Put the robot in the start pocket, pointing down the first passage.
 2.  Flip the MASTER SWITCH on.        LED blinks fast  = calibrating, keep off it
 3.  Wait until the fast blink stops.  LED steady on    = ready, waiting for you
-4.  Hold your hand about 5 cm in front of its nose, then take it away.
+4.  Press the GO button   -- or hold a hand 5 cm in front of the nose and
+                             take it away, if you would rather not touch it.
 5.  LED blinks a 3-second countdown.  Step back.
 6.  It goes. Do not touch it (SS3.4).
 ```
 
-Nothing is pressed, nothing is nudged, no laptop, no radio.
+No laptop, no radio, nothing touched once it is moving.
+
+## The GO button — and where it hides
+
+You asked for a button, so there is one. Every pin on the Uno was already
+spoken for, so it **shares D13 with the status LED**: D13 drives the LED
+almost all the time, and while the robot is waiting to start the firmware
+flips it to an input for 200 microseconds, reads the button, and flips it
+back. The LED does not visibly flicker, and no sensor had to be given up.
+
+```
+   D13 ──┬──── (onboard LED, already there)
+         │
+         └──[ 330 Ω ]──[ GO button ]──── GND
+```
+
+**The 330 Ω resistor is not optional.** Without it, pressing the button while
+D13 is driving the LED high is a dead short from the pin to ground and you
+will damage the Arduino.
+
+Mount the button on the **back** of the robot on a stiff bracket, so pressing
+it pushes the robot into the start wall rather than sideways. It is debounced
+in firmware (three consecutive reads, ~60 ms) and only ever sampled before
+the run starts — never while driving.
+
+The hand gesture still works and is still the gentler option: the passage is
+304.8 mm and the robot is 115 mm, so pressing anything on it gives away a few
+millimetres of a 95 mm margin. Use the button when you want certainty in
+front of a judge; use the gesture when you want the cleanest possible
+placement.
 
 ---
 
@@ -91,26 +121,6 @@ mount it so it cannot be knocked by a wall.
 
 An inline **3 A fuse** next to it is 5 SAR of insurance against a shorted
 motor lead.
-
-## If you would rather have a physical GO button
-
-You can, but it costs you the floor sensor. D12 is the only free pin, and the
-TCRT5000 is using it to count sector lines and spot the striped finish gate.
-
-If you decide the button is worth more:
-
-1. Wire a push button between **D12** and **GND**.
-2. In `MazeRunner.ino`, change `HAS_LINE_SENSOR` to `0` in `config.h`, and
-   replace the line-sensor read with:
-   ```cpp
-   pinMode(PIN_LINE, INPUT_PULLUP);            // in setup()
-   startPressed = (digitalRead(PIN_LINE) == LOW);   // in loop()
-   ```
-3. Mount the button on the **back** of the robot, on a stiff bracket, so
-   pressing it pushes the robot into the start wall rather than sideways.
-
-I would not do it. The hand gesture works, costs no pins, and does not move
-the robot.
 
 ## What NOT to do
 

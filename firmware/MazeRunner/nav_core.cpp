@@ -103,6 +103,12 @@ typedef struct {
     /* driving */
     float   target_deg;        /* heading we want to hold, multiple of 90 */
     float   prev_side_err;
+    float   par_ref_diff;      /* corridor-parallel estimator             */
+    float   par_ref_dist;
+    uint8_t par_valid;
+    float   last_decide_mm;    /* livelock guard                          */
+    float   no_decide_until_mm;
+    uint8_t decide_burst;
     float   creep_target_mm;
     float   backup_start_mm;
 
@@ -119,8 +125,8 @@ typedef struct {
 
     /* decision snapshot, captured the instant we spot a junction */
     uint8_t snap_left, snap_front, snap_right;
-    uint8_t open_cnt_l, open_cnt_r;   /* debounce integrators              */
-    uint8_t open_l, open_r;           /* debounced "there is a gap" flags  */
+    uint8_t open_cnt_l, open_cnt_r, open_cnt_f;   /* debounce integrators  */
+    uint8_t open_l, open_r, open_f;   /* debounced "there is a gap" flags  */
     uint8_t creep_by_front;           /* aligning on a wall, not on odometry */
 
     /* stuck detector */
@@ -203,17 +209,28 @@ static void mark_inc(Junction *j, uint8_t dir)
  * dealt with, and if a turn ends through the timeout or the jam-recovery
  * path instead of the normal one, a stale flag makes the robot invent a
  * junction a few centimetres later and turn off the route. */
-static void enter_drive(void)
+static void enter_drive_ex(uint8_t after_turn)
 {
     g.prev_side_err = 0.0f;
     g.dist_since_decision_mm = 0.0f;
-    g.open_cnt_l = g.open_cnt_r = 0;
-    g.open_l = g.open_r = 0;
     g.snap_left = g.snap_right = g.snap_front = 0;
     g.creep_by_front = 0;
+    if (after_turn) {
+        /* A pivot changes what "left" and "right" point at, so the running
+         * measurements are meaningless and have to start again. */
+        g.open_cnt_l = g.open_cnt_r = g.open_cnt_f = 0;
+        g.open_l = g.open_r = g.open_f = 0;
+    }
     g.state = ST_DRIVE;
     g.state_t_ms = 0;
 }
+
+/* Straight on through a junction: the latched decision is finished with, but
+ * the live sensor picture is still valid and throwing it away leaves the
+ * robot blind for the next 200 ms - which is exactly long enough to miss the
+ * turn that comes immediately afterwards. */
+static void enter_drive(void)       { enter_drive_ex(0); }
+static void enter_drive_turned(void){ enter_drive_ex(1); }
 
 /* ------------------------------------------------------------------ */
 NAV_API void nav_reset(uint8_t mode, int8_t hand)
@@ -321,6 +338,48 @@ static void line_update(const NavIn *in)
 }
 
 /* ------------------------------------------------------------------ */
+/* Corridor-parallel correction.
+ *
+ * A pivot that finishes three degrees short is invisible to the robot: the
+ * gyro was re-zeroed onto the target, so as far as it knows it is straight.
+ * Three degrees is 16 mm of drift per foot travelled, and two corners later
+ * it is scraping a wall or turning the wrong way at a junction.
+ *
+ * With both walls in view the maze itself will tell us. As the robot drives,
+ *      d(left gap)/ds = -tan(phi)    d(right gap)/ds = +tan(phi)
+ * so the difference between them changes at 2*tan(phi) per millimetre. That
+ * is an absolute angle measured against the walls, not against the gyro, and
+ * it is what lets the heading estimate be pulled back onto the truth.
+ * ------------------------------------------------------------------ */
+static void wall_align(const NavIn *in, uint8_t have_l, uint8_t have_r)
+{
+    if (!(have_l && have_r)) { g.par_valid = 0; return; }
+
+    float diff = (float)in->dist_left_mm - (float)in->dist_right_mm;
+    if (!g.par_valid) {
+        g.par_ref_diff = diff;
+        g.par_ref_dist = g.dist_total_mm;
+        g.par_valid = 1;
+        return;
+    }
+    float ds = g.dist_total_mm - g.par_ref_dist;
+    if (ds < WALL_ALIGN_MM) return;
+
+    float slope = (diff - g.par_ref_diff) / ds;          /* mm per mm      */
+    float phi   = -RAD2DEG * atanf(slope * 0.5f);        /* degrees crooked */
+    if (phi >  12.0f) phi =  12.0f;
+    if (phi < -12.0f) phi = -12.0f;
+
+    /* If we are phi degrees off the corridor, then our heading really is
+     * target + phi. Blend towards that rather than jumping, because one
+     * noisy pair of readings should not rewrite the heading. */
+    g.heading += WALL_ALIGN_GAIN * (wrap180(g.target_deg + phi - g.heading));
+
+    g.par_ref_diff = diff;
+    g.par_ref_dist = g.dist_total_mm;
+}
+
+/* ------------------------------------------------------------------ */
 /* straight-line steering: centre in the corridor, hug one wall if only  */
 /* one is there, and always let the gyro veto long-term drift.           */
 /* ------------------------------------------------------------------ */
@@ -328,6 +387,7 @@ static float steer_command(const NavIn *in, float dt_s)
 {
     uint8_t have_l = (in->dist_left_mm  < OPEN_SIDE_MM);
     uint8_t have_r = (in->dist_right_mm < OPEN_SIDE_MM);
+    wall_align(in, have_l, have_r);
 
     /* Sign convention, and it matters: side_err > 0 means "we are too far
      * to the LEFT and need to move right". All three cases below have to
@@ -455,6 +515,23 @@ static int8_t choose_turn(void)
 }
 
 /* ------------------------------------------------------------------ */
+/* Called at every decision point. Returns 1 if we are clearly livelocked. */
+static uint8_t decision_burst(void)
+{
+    if ((g.dist_total_mm - g.last_decide_mm) < DECIDE_BURST_MM) {
+        if (g.decide_burst < 255) g.decide_burst++;
+    } else {
+        g.decide_burst = 0;
+    }
+    g.last_decide_mm = g.dist_total_mm;
+    if (g.decide_burst >= DECIDE_BURST_MAX) {
+        g.decide_burst = 0;
+        g.no_decide_until_mm = g.dist_total_mm + DECIDE_LOCKOUT_MM;
+        return 1;
+    }
+    return 0;
+}
+
 static void enter_turn(int8_t quarters)
 {
     float total = (quarters == 2) ? 180.0f : 90.0f * (float)quarters;
@@ -471,9 +548,14 @@ static void enter_turn(int8_t quarters)
 
 static void snapshot(const NavIn *in)
 {
+    (void)in;
     g.snap_left  = g.open_l;
     g.snap_right = g.open_r;
-    g.snap_front = (in->dist_front_mm > (uint16_t)FRONT_OPEN_MM) ? 1 : 0;
+    /* Debounced, NOT the raw reading. One dropped ping - and ultrasound
+     * drops pings all the time - used to read as "the way ahead is clear",
+     * which sent the robot straight into the wall it was standing in front
+     * of, and from there into a U-turn and off the route entirely. */
+    g.snap_front = g.open_f;
 }
 
 /* Debounce the side readings into steady "there is a gap here" flags, and
@@ -485,24 +567,31 @@ static void openings_update(const NavIn *in)
     uint8_t raw_l = (in->dist_left_mm  > OPEN_SIDE_MM);
     uint8_t raw_r = (in->dist_right_mm > OPEN_SIDE_MM);
 
+    uint8_t raw_f = (in->dist_front_mm > FRONT_OPEN_MM);
+
     if (raw_l) { if (g.open_cnt_l < 12) g.open_cnt_l++; }
     else       { if (g.open_cnt_l > 0)  g.open_cnt_l--; }
     if (raw_r) { if (g.open_cnt_r < 12) g.open_cnt_r++; }
     else       { if (g.open_cnt_r > 0)  g.open_cnt_r--; }
+    if (raw_f) { if (g.open_cnt_f < 12) g.open_cnt_f++; }
+    else       { if (g.open_cnt_f > 0)  g.open_cnt_f--; }
 
     if (g.open_cnt_l >= OPEN_DEBOUNCE) g.open_l = 1;
     else if (g.open_cnt_l <= 3)        g.open_l = 0;
     if (g.open_cnt_r >= OPEN_DEBOUNCE) g.open_r = 1;
     else if (g.open_cnt_r <= 3)        g.open_r = 0;
+    if (g.open_cnt_f >= OPEN_DEBOUNCE) g.open_f = 1;
+    else if (g.open_cnt_f <= 3)        g.open_f = 0;
 }
 
 /* An opening seen on the way in stays remembered, because by the time the
  * axle reaches the junction the side sensor may already be past the gap. */
 static void snapshot_merge(const NavIn *in)
 {
+    (void)in;
     if (g.open_l) g.snap_left  = 1;
     if (g.open_r) g.snap_right = 1;
-    g.snap_front = (in->dist_front_mm > (uint16_t)FRONT_OPEN_MM) ? 1 : 0;
+    g.snap_front = g.open_f;
 }
 
 /* ------------------------------------------------------------------ */
@@ -616,6 +705,16 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
         }
         if (g.run_t_ms > RUN_TIMEOUT_MS) { g.state = ST_FINISH; g.state_t_ms = 0; break; }
 
+        /* --- livelock guard ---
+         * Deciding three times inside 250 mm means the robot is turning on
+         * the spot arguing with itself, which is how a run quietly burns
+         * three minutes without moving. Back out and drive on regardless. */
+        if (g.dist_total_mm < g.no_decide_until_mm) {
+            base = PWM_SLOW;
+            steer = steer_command(in, dt_s);
+            break;
+        }
+
         /* --- junction? ---
          * Two ways to notice one: a wall appears ahead, or a side wall
          * that was there a moment ago is suddenly not. Either way we do
@@ -714,6 +813,7 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
                 break;
             }
             snapshot_merge(in);
+            if (decision_burst()) { enter_drive(); break; }
             int8_t q = choose_turn();
             if (q == 0) { enter_drive(); }
             else        { enter_turn(q); }
@@ -810,7 +910,7 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
             } else {
                 g.turn_retries = 0;
                 g.target_deg = 90.0f * lroundf(g.heading / 90.0f);
-                enter_drive();
+                enter_drive_turned();
             }
         } else if (g.turn_ok_ms >= TURN_SETTLE_MS) {
             /* snap the target to the nearest quarter turn so gyro drift can
@@ -822,7 +922,7 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
              * and the gyro's error stops accumulating from corner to
              * corner - it only ever has to survive one turn. */
             g.heading = g.target_deg;
-            enter_drive();
+            enter_drive_turned();
         }
         out->state = g.state;
         out->done  = 0;
@@ -840,7 +940,7 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
         if (g.state_t_ms > 600) {
             g.stuck_tl = in->ticks_left;
             g.stuck_tr = in->ticks_right;
-            enter_drive();
+            enter_drive_turned();
         }
         break;
 

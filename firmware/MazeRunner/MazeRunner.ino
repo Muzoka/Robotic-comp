@@ -192,6 +192,29 @@ static void memoryClear()
 }
 
 /* ===================================================================== */
+/* GO button - shares the LED pin, so it costs no extra pin                */
+/*                                                                        */
+/* Every pin on the Uno is already spoken for, so the button lives on D13
+ * alongside the status LED. D13 is an OUTPUT driving the LED almost all of
+ * the time; to read the button we flip it to INPUT_PULLUP for 200 us, take
+ * a sample, and flip it straight back. The LED does not visibly flicker.
+ *
+ * WIRING:  button between D13 and GND, THROUGH A 330 ohm RESISTOR.
+ * The resistor matters: without it, pressing the button while D13 is
+ * driving the LED high is a dead short from the pin to ground.
+ *
+ * Only read while waiting to start - never while driving.
+ * ===================================================================== */
+static bool goButtonPressed()
+{
+  pinMode(PIN_LED, INPUT_PULLUP);
+  delayMicroseconds(200);                 /* let the pull-up settle       */
+  bool pressed = (digitalRead(PIN_LED) == LOW);
+  pinMode(PIN_LED, OUTPUT);
+  return pressed;
+}
+
+/* ===================================================================== */
 /* main                                                                   */
 /* ===================================================================== */
 static NavIn  nin;
@@ -231,7 +254,7 @@ void setup()
    * For a fresh map, leave it commented so the robot starts clean. */
   /* memoryLoad(); */
 
-  Serial.println(F("# ready. Wave a hand in front of the nose to arm."));
+  Serial.println(F("# ready. Press GO, or wave a hand in front of the nose."));
   Serial.println(F("t_ms,state,dF,dL,dR,head,tgt,encL,encR,pwmL,pwmR,sect"));
   lastLoop = millis();
 }
@@ -253,7 +276,19 @@ void loop()
 
   gyroUpdate(dt / 1000.0f);
 
-  /* Serial 'g' also starts a run, handy on the bench. */
+  /* Three ways to say go, all of them hands-off once it moves:
+   *   - the GO button on D13
+   *   - a hand held in front of the nose and taken away (see nav_core)
+   *   - 'g' over the serial port, handy on the bench
+   * The button is only sampled before the run starts. */
+  if (!startPressed && nout.state <= ST_WAIT_START) {
+    static uint8_t btnCount = 0;
+    if (goButtonPressed()) {
+      if (++btnCount >= 3) startPressed = true;    /* ~60 ms debounce */
+    } else {
+      btnCount = 0;
+    }
+  }
   if (Serial.available()) { if (Serial.read() == 'g') startPressed = true; }
 
   noInterrupts();

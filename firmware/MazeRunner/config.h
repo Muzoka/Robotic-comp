@@ -118,7 +118,7 @@
 /* ------------------------------------------------------------------ */
 #define PWM_MIN              55     /* below this a TT motor just buzzes            */
 #define PWM_MAX             255
-#define PWM_CRUISE          110     /* straight-line speed. Tuned: slower scores more */
+#define PWM_CRUISE          170     /* straight-line speed. Tuned: slower scores more */
 #define PWM_SLOW             95     /* creeping / approaching a wall                */
 #define PWM_TURN            110
 #define PWM_BACK             95     /* reversing                                    */
@@ -172,6 +172,26 @@
 #define TURN_TOL_DEG       3.0f     /* pivot is finished inside this error          */
 #define TURN_SETTLE_MS      120     /* ...and must stay inside it this long         */
 #define TURN_TIMEOUT_MS    2600     /* give up and move on                          */
+
+
+/* ------------------------------------------------------------------ */
+/* 5b. STAYING SQUARE WITH THE MAZE                                    */
+/* ------------------------------------------------------------------ */
+/* How hard to trust the walls over the gyro when both walls are in view.
+ * A pivot that finishes three degrees short is invisible to the gyro,
+ * because the heading was re-zeroed onto the target - but three degrees is
+ * 16 mm of drift per foot, and two corners later it is a wall. The walls
+ * themselves are the only absolute reference the robot has. See
+ * "corridor-parallel correction" in nav_core.cpp. */
+#define WALL_ALIGN_GAIN    0.35f
+#define WALL_ALIGN_MM      70.0f    /* travel between angle estimates       */
+
+/* Livelock guard. Deciding this many times inside this little travel means
+ * the robot is turning on the spot arguing with itself, which is how a run
+ * quietly burns three minutes without going anywhere. */
+#define DECIDE_BURST_MAX      3
+#define DECIDE_BURST_MM   250.0f
+#define DECIDE_LOCKOUT_MM 350.0f
 
 /* ------------------------------------------------------------------ */
 /* 6. TIMING                                                           */

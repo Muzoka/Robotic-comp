@@ -110,21 +110,24 @@ third. Every tuning decision in this repository is made that way.
 
 ## Where it stands today
 
-Three separate maps from the organisers' spreadsheet: 5 × 5 grid of 1 ft
-squares, passage **304.8 mm**, 3 minutes per run. The robot must drive
-**every square of the road** before it leaves. Right-hand rule, robot at
-**220 × 115 mm**, 15 seeds per map:
+Three separate maps from the organisers' spreadsheet, 1 ft passages, 3
+minutes each. The robot must drive **every square of the road** before it
+leaves. Robot **220 × 115 mm**, right-hand rule, `PWM_CRUISE 170`:
 
-| Map | Complete | Road driven | Time |
-| --- | --- | --- | --- |
-| Map 1 — U around a block | 93 % | 98 % | 66 s |
-| Map 2 — dog-leg with a loop | 93 % | 96 % | 70 s |
-| Map 3 — 1 ft zig-zag, 8 turns | 80 % | 94 % | 97 s |
+| Map | Complete | Road driven | Time | Wall contact |
+| --- | --- | --- | --- | --- |
+| Map 1 | **100 %** | 100 % | 35 s | none |
+| Map 2 | **100 %** | 100 % | 45 s | none |
+| Map 3 | **100 %** | 100 % | 53 s | none |
 
-Full coverage needs the **right**-hand rule: the left hand skips half of
-Map 2 by taking the exit the first time it passes it. See
-`docs/11_MAKING_IT_FIT.md`, and `docs/12_STARTING_THE_ROBOT.md` for how to
-set it going on the track.
+**120 runs, 120 completed.** Re-run with deliberately bad hardware — double
+the wheel slip, four times the sensor noise, three times the sonar dropout,
+15 % battery sag, up to 15 % motor mismatch — it still completes **100 %** of
+75 runs.
+
+All three finish in about a third of the time allowed. See
+`docs/11_MAKING_IT_FIT.md` for how, `docs/09_CHECKLIST.md` for the shopping
+list, and `docs/12_STARTING_THE_ROBOT.md` for the start procedure.
 
 ---
 
