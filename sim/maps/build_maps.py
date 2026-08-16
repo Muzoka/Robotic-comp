@@ -102,6 +102,44 @@ def mirror(sheet):
     return out
 
 
+DIRS = [(0, 1), (1, 0), (0, -1), (-1, 0)]      # E, S, W, N  (row, col)
+
+
+def coverage_walk(grid, ent, goal, hand=-1, limit=600):
+    """Walk the maze exactly as the robot does - keeping one hand on the
+    wall - and return every square it steps on, in order.
+
+    This is what the route really is. The robot is required to drive the
+    WHOLE road before it leaves, not the shortest way across, so the sector
+    lines and the length estimate have to follow the same walk."""
+    R, C = len(grid), len(grid[0])
+
+    def is_open(r, c):
+        return 0 <= r < R and 0 <= c < C and grid[r][c] == "P"
+
+    r, c = ent
+    d = 0                                       # entering heading east
+    path = [(r, c)]
+    seen = {(r, c)}
+    for _ in range(limit):
+        if (r, c) == goal and len(seen) == sum(row.count("P") for row in grid):
+            break
+        order = ([(d + 3) % 4, d, (d + 1) % 4, (d + 2) % 4] if hand > 0
+                 else [(d + 1) % 4, d, (d + 3) % 4, (d + 2) % 4])
+        for nd in order:
+            dr, dc = DIRS[nd]
+            if is_open(r + dr, c + dc):
+                d = nd
+                r += dr
+                c += dc
+                path.append((r, c))
+                seen.add((r, c))
+                break
+        else:
+            break
+    return path
+
+
 def route(grid, start, goal, joins=None):
     """Shortest path between two cells, as a list of (row, col).
 
@@ -206,12 +244,11 @@ def build(name, title, sections, fname):
     # ---- route and sector lines ----
     grid = ["".join(sheet["grid"][r][c] for (sheet, _) in sections for c in range(5))
             for r in range(rows)]
-    joins = {}
-    for i in range(1, len(sections)):
-        joins[i * 5 - 1] = sections[i][0]["entrance"][0]
     start = (ent_row, 0)
     goal = (fin_row, cols_total - 1)
-    path = route(grid, start, goal, joins)
+    path = coverage_walk(grid, start, goal, hand=-1)
+    n_open = sum(row.count("P") for row in grid)
+    covered = len(set(path))
 
     n_sect = sum(sheet["sectors"] for (sheet, _) in sections)
 
@@ -265,6 +302,9 @@ def build(name, title, sections, fname):
 
     with open(os.path.join(HERE, fname), "w", encoding="utf-8") as fh:
         fh.write("!name %s\n!cell %.4f\n" % (title, CELL))
+        fh.write("!grid %.1f %.1f %.1f %d %d\n"
+                 % (cx(0) * CELL, cy(rows - 1) * CELL, FOOT * CELL,
+                    cols_total, rows))
         fh.write("!start %.0f %.0f %.0f\n" % start_mm)
         fh.write("!finish %.0f %.0f %.0f %.0f\n" % finish_mm)
         for s in sectors:
@@ -273,9 +313,10 @@ def build(name, title, sections, fname):
             fh.write("!gate %.0f %.0f %.0f %.0f\n" % g)
         fh.write(cv.text() + "\n")
 
-    print("%-14s %5.2f x %-5.2f m   route %2d ft   %2d sector lines"
-          % (fname, W * CELL / 1000.0, H * CELL / 1000.0,
-             len(path) - 1, len(sectors)))
+    print("%-10s %4.2f x %-4.2f m  road %2d squares  walk %2d ft  covers %2d/%-2d %s  %2d sectors"
+          % (fname, W * CELL / 1000.0, H * CELL / 1000.0, n_open,
+             len(path) - 1, covered, n_open,
+             "OK " if covered == n_open else "!! ", len(sectors)))
 
 
 if __name__ == "__main__":

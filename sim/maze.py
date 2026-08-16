@@ -42,6 +42,9 @@ class Maze:
         self.finish = None
         self.sectors = []
         self.gates = []
+        self.grid = None         # (x0, y0, cell_mm, ncols, nrows) of the road squares
+        self.open_cells = set()  # squares that are road
+        self.visited = set()     # squares the robot has actually driven on
         self.solid = []          # solid[gy][gx], gy = 0 is the BOTTOM row
         self._load(path)
 
@@ -73,6 +76,7 @@ class Maze:
             self.solid.append([c == "#" for c in r])
         self.h = len(self.solid)
         self.w = w
+        self._index_cells()
 
     def _header(self, s):
         if not s:
@@ -92,6 +96,41 @@ class Maze:
             self.sectors.append(Sector(v[0], v[1], v[2], v[3]))
         elif key == "gate":
             self.gates.append((v[0], v[1], v[2], v[3]))
+        elif key == "grid":
+            self.grid = (v[0], v[1], v[2], int(v[3]), int(v[4]))
+
+    # ------------------------------------------------------------------
+    def _index_cells(self):
+        """Which grid squares are road? Sample the middle of each one."""
+        if not self.grid:
+            return
+        x0, y0, c, nx, ny = self.grid
+        for r in range(ny):
+            for q in range(nx):
+                if not self.solid_at(x0 + (q + 0.5) * c, y0 + (r + 0.5) * c):
+                    self.open_cells.add((q, r))
+
+    def cell_of(self, x, y):
+        if not self.grid:
+            return None
+        x0, y0, c, nx, ny = self.grid
+        q = int(math.floor((x - x0) / c))
+        r = int(math.floor((y - y0) / c))
+        return (q, r) if (q, r) in self.open_cells else None
+
+    def mark_visited(self, x, y):
+        cell = self.cell_of(x, y)
+        if cell is not None:
+            self.visited.add(cell)
+
+    @property
+    def coverage(self):
+        """Fraction of the road actually driven. The rules want the whole
+        road covered before the robot leaves, so this - not the shortest
+        path - is the thing to maximise."""
+        if not self.open_cells:
+            return 1.0
+        return len(self.visited) / float(len(self.open_cells))
 
     # ------------------------------------------------------------------
     def scale(self, k):

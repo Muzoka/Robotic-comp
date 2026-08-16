@@ -91,6 +91,7 @@ def simulate(map_path, mode=1, hand=1, seed=1, gif=True, csv_out=True,
                        dt_ms)
 
         bot.step(out.pwm_left, out.pwm_right, dt)
+        maze.mark_visited(bot.x, bot.y)
         t += dt
 
         if csv_out:
@@ -115,13 +116,16 @@ def simulate(map_path, mode=1, hand=1, seed=1, gif=True, csv_out=True,
             break
 
     scored = sum(1 for s in maze.sectors if s.scored)
+    coverage = maze.coverage
     result = {
+        "coverage": coverage,
         "map": os.path.basename(map_path),
         "name": maze.name,
         "mode": "tremaux" if mode == 1 else "wallfollow",
         "hand": "left" if hand > 0 else "right",
         "seed": seed,
-        "finished": finished,
+        "finished": finished and coverage > 0.999,
+        "reached_exit": finished,
         "reason": finish_reason,
         "sectors": scored,
         "sectors_total": len(maze.sectors),
@@ -152,10 +156,15 @@ def simulate(map_path, mode=1, hand=1, seed=1, gif=True, csv_out=True,
         result["csv"] = os.path.join("sim", "runs", stem + ".csv")
 
     if verbose:
-        flag = "FINISHED" if finished else "did not finish"
-        print("  %-28s %-10s %-5s seed %-3d  %2d/%-2d sectors  %6.1fs  %s"
-              % (maze.name, result["mode"], result["hand"], seed,
-                 scored, len(maze.sectors), t, flag))
+        if result["finished"]:
+            flag = "COMPLETE"
+        elif finished:
+            flag = "left early - only %.0f%% of the road" % (100 * coverage)
+        else:
+            flag = "did not finish"
+        print("  %-26s %-10s %-5s seed %-3d %2d/%-2d sect  road %3.0f%%  %6.1fs  %s"
+              % (maze.name[:26], result["mode"], result["hand"], seed,
+                 scored, len(maze.sectors), 100 * coverage, t, flag))
     return result
 
 
@@ -203,7 +212,7 @@ def main():
     ap.add_argument("--map", default=None)
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--mode", default="wallfollow", choices=list(MODES))
-    ap.add_argument("--hand", default="left", choices=list(HANDS))
+    ap.add_argument("--hand", default="right", choices=list(HANDS))
     ap.add_argument("--trials", type=int, default=1)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--no-gif", action="store_true")
@@ -258,20 +267,22 @@ def main():
     for r in results:
         key = (r["map"], r["mode"], r["hand"])
         a = agg.setdefault(key, {"n": 0, "fin": 0, "sec": 0, "tot": r["sectors_total"],
-                                 "t": 0.0, "bumps": 0})
+                                 "t": 0.0, "bumps": 0, "cov": 0.0})
         a["n"] += 1
         a["fin"] += 1 if r["finished"] else 0
         a["sec"] += r["sectors"]
         a["t"] += r["time_s"]
         a["bumps"] += r["bumps"]
+        a["cov"] += r["coverage"]
 
-    print("%-22s %-11s %-6s %7s %9s %8s %7s" %
-          ("map", "mode", "hand", "finish%", "sectors", "time", "bumps"))
+    print("%-16s %-11s %-6s %7s %6s %9s %8s %7s" %
+          ("map", "mode", "hand", "complete", "road", "sectors", "time", "bumps"))
     for key in sorted(agg):
         a = agg[key]
-        print("%-22s %-11s %-6s %6.0f%% %6.1f/%-2d %7.1fs %7.1f" %
-              (key[0][:22], key[1], key[2],
-               100.0 * a["fin"] / a["n"], a["sec"] / a["n"], a["tot"],
+        print("%-16s %-11s %-6s %6.0f%% %5.0f%% %6.1f/%-2d %7.1fs %7.1f" %
+              (key[0][:16], key[1], key[2],
+               100.0 * a["fin"] / a["n"], 100.0 * a["cov"] / a["n"],
+               a["sec"] / a["n"], a["tot"],
                a["t"] / a["n"], a["bumps"] / a["n"]))
 
     os.makedirs(RUNS, exist_ok=True)
@@ -283,7 +294,7 @@ def main():
                         a["sec"] / a["n"], a["tot"], a["t"] / a["n"], a["bumps"] / a["n"]))
     total_runs = len(results)
     total_fin = sum(1 for r in results if r["finished"])
-    print("\n%d runs, %d finished (%.0f%%)"
+    print("\n%d runs, %d completed the whole road and left (%.0f%%)"
           % (total_runs, total_fin, 100.0 * total_fin / max(1, total_runs)))
     print("artefacts in sim/runs/")
 

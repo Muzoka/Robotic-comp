@@ -6,22 +6,43 @@ Everything here is measured. Every number can be reproduced with one command.
 
 ## Result
 
-Robot **220 × 115 mm**, wall-following, left hand, 12 random seeds per map:
+Robot **220 × 115 mm**, wall-following, **right hand**, 15 random seeds per
+map. "Complete" means the robot drove **every square of the road** and then
+left — not that it merely reached the exit.
 
-| Map | Completed | Time | Sector points | Wall scrapes |
+| Map | Complete | Road driven | Time | Sector points |
 | --- | --- | --- | --- | --- |
-| Map 1 — U around a block, 2 turns | **92 %** | 64 s | 3 / 3 | 7 |
-| Map 2 — dog-leg with a loop, 3 turns | **100 %** | 31 s | 4 / 5 | **0** |
-| Map 3 — 1 ft zig-zag, 8 turns | **92 %** | 87 s | 6.7 / 9 | 25 |
+| Map 1 — U around a block | **93 %** | 98 % | 66 s | 2.9 / 3 |
+| Map 2 — dog-leg with a loop | **93 %** | 96 % | 70 s | 3.9 / 5 |
+| Map 3 — 1 ft zig-zag | **80 %** | 94 % | 97 s | 6.4 / 9 |
 
-Every completed run is inside half the 3-minute allowance. §3.3 gives 2–3
-attempts whenever a map is *not* completed, so a 92 % per-attempt rate is
-better than 99 % across three tries.
+Every completed run is inside about half the 3-minute allowance. §3.3 gives
+2–3 attempts whenever a map is not completed, so 80 % per attempt is better
+than 99 % across three tries.
 
 ```bash
 cd sim
-python3 run.py --all --trials 12
+python3 run.py --all --trials 15
 ```
+
+## Driving the WHOLE road, not the shortest way across
+
+The robot has to cover every square before it leaves. That is a different
+problem from finding the exit, and only one wall-following direction does it:
+
+| | Map 1 | Map 2 | Map 3 |
+| --- | --- | --- | --- |
+| Left-hand rule | 100 % | **50 %** | 100 % |
+| **Right-hand rule** | **100 %** | **100 %** | **100 %** |
+
+On Map 2 the left hand reaches the junction, sees the exit on its left and
+takes it, skipping the whole lower loop — 7 of the 14 squares. The right hand
+turns into the loop first and only leaves once there is nothing else to
+drive. `WALL_HAND` is now `-1`.
+
+The simulator scores this directly: every run reports **road %**, and a run
+that reaches the exit early is reported as *"left early — only 50 % of the
+road"* rather than as a finish.
 
 ---
 

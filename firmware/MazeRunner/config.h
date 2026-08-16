@@ -200,8 +200,21 @@
 #define HAS_ENCODERS          1     /* LM393 slot sensors fitted                    */
 #define HAS_LINE_SENSOR       1     /* TCRT5000 looking at the floor                */
 
-/* Which hand do we keep on the wall?  +1 = LEFT hand, -1 = RIGHT hand. */
-#define WALL_HAND            (+1)
+/* Which hand do we keep on the wall?  +1 = LEFT hand, -1 = RIGHT hand.
+ *
+ * RIGHT, and it is not a coin toss. The rules want the robot to drive the
+ * WHOLE road before it leaves, not the shortest way across, and only one
+ * hand does that on these three maps:
+ *
+ *              road covered     left hand    right hand
+ *      Map 1                       100%         100%
+ *      Map 2                        50%         100%
+ *      Map 3                       100%         100%
+ *
+ * On Map 2 the left hand turns straight out of the exit the first time it
+ * reaches the junction and skips the entire loop. The right hand takes the
+ * loop first and only leaves once there is nothing else to drive. */
+#define WALL_HAND            (-1)
 
 /* Navigation mode */
 #define MODE_WALLFOLLOW       0     /* simple, never gets confused in a plain maze  */

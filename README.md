@@ -65,6 +65,7 @@ docs/
     09_CHECKLIST.md        every item, with alternatives  ← shopping list
     10_MAP_NOTES.md        the three maps, straight from the spreadsheet
     11_MAKING_IT_FIT.md    how all three maps got inside 3 minutes  ← read this
+    12_STARTING_THE_ROBOT.md  the start procedure on the day
 ```
 
 ---
@@ -110,25 +111,20 @@ third. Every tuning decision in this repository is made that way.
 ## Where it stands today
 
 Three separate maps from the organisers' spreadsheet: 5 × 5 grid of 1 ft
-squares, passage **304.8 mm**, 3 minutes per run. Wall-following, left hand,
-robot at the target **220 × 140 mm**:
+squares, passage **304.8 mm**, 3 minutes per run. The robot must drive
+**every square of the road** before it leaves. Right-hand rule, robot at
+**220 × 115 mm**, 15 seeds per map:
 
-| Map | Completed | Time | Sector points |
+| Map | Complete | Road driven | Time |
 | --- | --- | --- | --- |
-| Map 1 — U around a block, 2 turns | **100 %** | 65 s | 3 / 3 |
-| Map 2 — dog-leg with a loop, 3 turns | 75–100 % | 42 s | 4 / 5 |
-| Map 3 — 1 ft zig-zag, 8 turns | **100 %** | 92 s | 7 / 9 |
+| Map 1 — U around a block | 93 % | 98 % | 66 s |
+| Map 2 — dog-leg with a loop | 93 % | 96 % | 70 s |
+| Map 3 — 1 ft zig-zag, 8 turns | 80 % | 94 % | 97 s |
 
-All three inside the limit with roughly half the time to spare. **This needs
-the robot to come down from 250 × 150 mm to about 220 × 140 mm** — at its
-current size Map 3 completes 12 % of the time. See
-`docs/11_MAKING_IT_FIT.md`.
-
-```bash
-cd sim
-python3 run.py --all --trials 5                    # the robot as it is today
-python3 run.py --all --trials 5 --robot 220x140    # after shrinking it
-```
+Full coverage needs the **right**-hand rule: the left hand skips half of
+Map 2 by taking the exit the first time it passes it. See
+`docs/11_MAKING_IT_FIT.md`, and `docs/12_STARTING_THE_ROBOT.md` for how to
+set it going on the track.
 
 ---
 

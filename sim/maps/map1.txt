@@ -1,5 +1,6 @@
 !name Map 1 - 5x5 ft, 3 sectors
 !cell 25.4000
+!grid 685.8 685.8 304.8 5 5
 !start 406 838 0
 !finish 2286 686 2692 991
 !sector 686 1905 991 1905
