@@ -36,8 +36,6 @@
 
     { "type": "wokwi-pushbutton", "id": "btnGo", "top": 300, "left": 760,
       "attrs": { "color": "red", "label": "GO  (press to start the run)" } },
-    { "type": "wokwi-resistor", "id": "rGo", "top": 350, "left": 860,
-      "attrs": { "value": "330" } },
 
     { "type": "wokwi-pushbutton", "id": "btnEncL", "top": 400, "left": 760,
       "attrs": { "color": "blue", "label": "tap = left wheel tick" } },
@@ -87,9 +85,8 @@
     [ "rIN3:2", "uno:GND.3", "black", [ "v40", "*", "v0" ] ],
     [ "rIN4:2", "uno:GND.3", "black", [ "v40", "*", "v0" ] ],
 
-    [ "btnGo:1.l",   "uno:13",    "red",   [ "h-20", "*", "v0" ] ],
-    [ "btnGo:2.l",   "rGo:1",     "black", [ "h8",   "*", "v0" ] ],
-    [ "rGo:2",       "uno:GND.3", "black", [ "v20",  "*", "v0" ] ],
+    [ "btnGo:1.l",   "uno:12",    "red",   [ "h-20", "*", "v0" ] ],
+    [ "btnGo:2.l",   "uno:GND.3", "black", [ "h-26", "*", "v0" ] ],
 
     [ "btnEncL:1.l", "uno:2",     "blue",  [ "h-20", "*", "v0" ] ],
     [ "btnEncL:2.l", "uno:GND.3", "black", [ "h-26", "*", "v0" ] ],

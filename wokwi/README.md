@@ -26,7 +26,7 @@ forward, reverse, PWM brightness — all visible.
 
 There is **no floor line sensor** in the diagram any more, because there is
 no longer one on the robot. See `docs/09_CHECKLIST.md` — it was removed on
-purpose and D12 is now a spare pin.
+purpose, and the pin it used to occupy (D12) now carries the GO button.
 
 ---
 
@@ -79,7 +79,7 @@ see:
 ```
 # MazeRunner booting - hold still, calibrating gyro
 # gyro OK
-# ready. Wave a hand in front of the nose to arm.
+# ready. Press GO, or wave a hand in front of the nose.
 t_ms,state,dF,dL,dR,head,tgt,encL,encR,pwmL,pwmR,sect
 ```
 
@@ -87,7 +87,7 @@ Now drive it by hand:
 
 | Do this | Should happen |
 | --- | --- |
-| Press the **red GO button** (D13) | State goes `WAIT_START → COUNTDOWN`, D13 blinks for 3 s, then `DRIVE`. This is exactly how you will start it on the day |
+| Press the **red GO button** (D12) | Serial prints `# GO pressed`, state goes `WAIT_START → COUNTDOWN`, D13 blinks for 3 s, then `DRIVE`. This is exactly how you will start it on the day |
 | *or* click the **front HC-SR04** and drag its distance slider down to ~5 cm, then back up to 60 cm | Same thing, hands-free. The button and the hand-wave both work |
 | Watch the LEDs after `DRIVE` | ENA and ENB light up, IN1 and IN3 on, IN2 and IN4 off — both motors forward |
 | Drag the **front** sensor down to 15 cm | State goes to `CREEP`, then `TURN`. IN1/IN2 or IN3/IN4 swap — the robot is pivoting |

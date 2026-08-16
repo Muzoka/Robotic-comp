@@ -226,13 +226,11 @@ static void memoryClear()
  *
  * Only read while waiting to start - never while driving.
  * ===================================================================== */
+/* The GO button has its own pin with the internal pull-up on, so a press is
+ * simply a LOW. Nothing to share, nothing to fit, nothing to time. */
 static bool goButtonPressed()
 {
-  pinMode(PIN_LED, INPUT_PULLUP);
-  delayMicroseconds(200);                 /* let the pull-up settle       */
-  bool pressed = (digitalRead(PIN_LED) == LOW);
-  pinMode(PIN_LED, OUTPUT);
-  return pressed;
+  return digitalRead(PIN_GO) == LOW;
 }
 
 /* ===================================================================== */
@@ -255,6 +253,7 @@ void setup()
 #if HAS_LINE_SENSOR
   pinMode(PIN_LINE, INPUT);
 #endif
+  pinMode(PIN_GO, INPUT_PULLUP);   /* GO button to GND, no resistor needed */
   pinMode(PIN_LED, OUTPUT);
 
   motorsBegin();
@@ -307,7 +306,13 @@ void loop()
   if (!startPressed && nout.state <= ST_WAIT_START) {
     static uint8_t btnCount = 0;
     if (goButtonPressed()) {
-      if (++btnCount >= 3) startPressed = true;    /* ~60 ms debounce */
+      /* Two consecutive reads, 40 ms apart. Longer than any switch bounce,
+       * short enough that an ordinary click registers - 3 reads needed a
+       * deliberate press-and-hold and felt broken. */
+      if (++btnCount >= 2) {
+        startPressed = true;
+        Serial.println(F("# GO pressed"));
+      }
     } else {
       btnCount = 0;
     }

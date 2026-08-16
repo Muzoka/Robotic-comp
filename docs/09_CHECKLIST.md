@@ -33,8 +33,8 @@ nothing.** Where the two conflict, buy reliable.
 | ☐ | **MPU-6050 / GY-521 gyro** | حساس جيروسكوب | **2** | 15–25 ea | Only 3 g — no trade-off. Buy two; a dead gyro on the day ends your event. Substitutes: MPU-9250, MPU-6500, any GY-521 clone. **Not** a compass module (HMC5883L/QMC5883) — the motors fool it |
 | ☐ | **LM393 slot encoder** | حساس سرعة العجلة | **2** (+2 spare) | 8–12 ea | 5 g each. No alternative worth having — the slotted discs in your kit only fit these |
 | ~~☒~~ | ~~**TCRT5000 line sensor**~~ | ~~حساس خط~~ | **0** | — | **DO NOT BUY — removed from the design.** It steered nothing, and its one job (spotting the finish) had a failure mode that could stop the robot in the middle of a map. Details below |
-| ☐ | **Push button, momentary** | زر ضغط | **2** | 2 ea | The GO button. Any 6 mm tactile switch or a panel-mount push button |
-| ☐ | **330 Ω resistor** | مقاومة ٣٣٠ أوم | 5 | 1 | **Goes in series with the GO button — not optional.** Without it, pressing the button shorts the LED pin to ground |
+| ☐ | **Push button, momentary** | زر ضغط | **2** | 2 ea | The GO button, on D12. Two wires: pin to button, button to GND. Any 6 mm tactile switch or panel-mount push button |
+| ☐ | **330 Ω resistor** | مقاومة ٣٣٠ أوم | 5 | 1 | Handy to have, but **no longer needed for the GO button** — it moved to D12 and wires straight to GND |
 | ☐ | **2 × 18650 Li-ion + 2-cell holder + charger** | بطاريات ١٨٦٥٠ + بيت + شاحن | 1 set | ~60 | **RELIABLE choice, buy this.** 7.4 V, ~95 g, rechargeable, holds voltage under load |
 | ☐ | *or* 2S LiPo 850–1500 mAh + balance charger | بطارية ليبو ٢ خلية | 1 | ~90 | **LIGHTER choice, ~55 g.** Saves 40 g and gives a stiffer voltage — genuinely faster. Only if someone on the team has used LiPo before: they need a fireproof bag and never to over-discharge |
 | ☐ | *fallback* 6 × AA holder + alkalines | بيت بطاريات ٦ حبات | 1 | ~15 | Works, but ~140 g and it sags. Last resort |

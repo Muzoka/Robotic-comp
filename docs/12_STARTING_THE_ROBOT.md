@@ -38,28 +38,31 @@ anything — and `make test` checks it against the real firmware. But it is a
 ten-second check that would have caught a lost run, so do it anyway.
 
 
-## The GO button — and where it hides
+## The GO button
 
-You asked for a button, so there is one. Every pin on the Uno was already
-spoken for, so it **shares D13 with the status LED**: D13 drives the LED
-almost all the time, and while the robot is waiting to start the firmware
-flips it to an input for 200 microseconds, reads the button, and flips it
-back. The LED does not visibly flicker, and no sensor had to be given up.
+Two wires, on **D12**:
 
 ```
-   D13 ──┬──── (onboard LED, already there)
-         │
-         └──[ 330 Ω ]──[ GO button ]──── GND
+   D12 ──[ GO button ]──── GND
 ```
 
-**The 330 Ω resistor is not optional.** Without it, pressing the button while
-D13 is driving the LED high is a dead short from the pin to ground and you
-will damage the Arduino.
+That is the entire circuit. The pin runs with the AVR's internal pull-up, so
+it sits HIGH until the button connects it to ground. No resistor to fit, and
+no way to wire it back to front.
+
+It was not always this simple. The button first went on **D13, sharing the
+status LED**, because the floor sensor owned D12 — which meant a 330 Ω
+resistor in series to stop a press shorting the LED drive, and firmware that
+flipped D13 between output and input a hundred times a second to sample it.
+In Wokwi it never registered a press at all. Dropping the floor sensor freed
+D12, so the button now has a pin to itself and all of that went away.
 
 Mount the button on the **back** of the robot on a stiff bracket, so pressing
 it pushes the robot into the start wall rather than sideways. It is debounced
-in firmware (three consecutive reads, ~60 ms) and only ever sampled before
-the run starts — never while driving.
+in firmware (two consecutive reads, ~40 ms — longer than any switch bounce,
+short enough that an ordinary click registers) and only ever sampled before
+the run starts, never while driving. When it takes, the serial monitor prints
+`# GO pressed`.
 
 The hand gesture still works and is still the gentler option: the passage is
 304.8 mm and the robot is 115 mm, so pressing anything on it gives away a few
