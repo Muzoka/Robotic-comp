@@ -14,6 +14,11 @@ flash.
 
 ## Start here
 
+**[→ The Build Guide](docs/build_guide.html)** — one document covering
+everything: what to buy, how to wire it, what to test at each stage, and the
+competition-day procedure. Open it in a browser. If you are building this,
+start there and ignore the rest of this page.
+
 ```bash
 pip install pillow
 
@@ -59,6 +64,7 @@ tools/
     serial_check.md   bench tests, one subsystem at a time
 
 docs/
+    build_guide.html       EVERYTHING, start to finish  <- start here
     01_RULES.md            the rulebook, condensed to what changes decisions
     02_HARDWARE.md         what to buy, where, and why
     03_WIRING.md           pin map, power, mounting, inspection checklist
@@ -67,7 +73,7 @@ docs/
     05_ALGORITHM.md        how the robot thinks
     06_PLAN.md             phase-by-phase plan
     07_COMPETITION_DAY.md  print this and take it
-    08_SOFTWARE_AND_STEPS.md  what to install, and every step  ← start here
+    08_SOFTWARE_AND_STEPS.md  what to install, and every step
     09_CHECKLIST.md        every item, with alternatives  ← shopping list
     10_MAP_NOTES.md        the three maps, straight from the spreadsheet
     11_MAKING_IT_FIT.md    how all three maps got inside 3 minutes  ← read this
@@ -83,13 +89,15 @@ docs/
 Turning on the spot sweeps a circle as wide as the body diagonal. The passage
 is one foot, 304.8 mm.
 
-| Robot | Diagonal | Clearance | Map 3 completed |
+| Robot | Diagonal | Clearance | Completes all three |
 | --- | --- | --- | --- |
-| 250 × 150 mm *(today)* | 292 mm | 6.4 mm | 12 % |
-| **220 × 140 mm** | **261 mm** | **22 mm** | **100 %** |
+| 250 × 150 mm *(a kit build)* | 292 mm | 6.4 mm | 12 % |
+| **220 × 115 mm** | **248 mm** | **28 mm** | **100 %** |
 
 There is a cliff at about 280 mm of diagonal. Most builds find the whole 3 cm
-in the front ultrasonic bracket alone.
+in the front ultrasonic bracket alone. Narrower is not automatically better —
+110 mm wide drops to 83 %, because a shorter wheelbase makes the robot
+twitchy.
 
 ### 2. Yes, add the gyro. No, you do not need a memory module.
 

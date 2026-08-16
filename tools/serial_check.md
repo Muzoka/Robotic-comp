@@ -167,16 +167,19 @@ A4, SCL on A5, and that it has 5 V and GND.
 
 ---
 
-## 5. Line sensor
+## 5. GO button
 
 ```cpp
-void setup() { Serial.begin(115200); pinMode(12, INPUT); }
+void setup() { Serial.begin(115200); pinMode(12, INPUT_PULLUP); }
 void loop() { Serial.println(digitalRead(12)); delay(50); }
 ```
 
-**Pass:** clean `1` over white floor, clean `0` over black tape, changing
-right at the edge. Adjust the trimmer on the module until it does. Set the
-height at 5–10 mm and do not change it afterwards.
+**Pass:** steady `1` when you are not touching it, `0` while held down, back
+to `1` the moment you let go. If it reads `0` all the time the button is
+wired to the wrong pin or shorted; if it never reads `0`, one of its two
+wires is not making contact.
+
+Two wires only — D12 to one leg, GND to the other. No resistor.
 
 ---
 
@@ -188,14 +191,17 @@ open the Serial Monitor at **115200**, and watch:
 ```
 # MazeRunner booting - hold still, calibrating gyro
 # gyro OK
-# ready. Wave a hand in front of the nose to arm.
+# ready. Press GO, or wave a hand in front of the nose.
 t_ms,state,dF,dL,dR,head,tgt,encL,encR,pwmL,pwmR,sect
 1240,WAIT_START,1850,1200,1300,0.0,0.0,0,0,0,0,0
 ```
 
-Wave a hand in front of the nose and take it away. The state should go
+First, **leave it alone for ten seconds.** It must stay in `WAIT_START`.
+A robot that starts itself is a lost run.
+
+Then press GO. Serial should print `# GO pressed`, the state should go
 `WAIT_START → COUNTDOWN` (LED blinking) `→ DRIVE`, and the wheels should
 spin. Put a book in front of the nose and it should go to `CREEP` and then
 `TURN`.
 
-If that all works on the block, put it on the practice track.
+If that all works on the block, it is ready for the real track.

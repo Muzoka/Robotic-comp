@@ -114,22 +114,21 @@ Subtotal: **240–300 SAR**
 | ☐ | Double-sided foam tape (3M VHB if stocked) | لاصق وجهين | Mounting the gyro flat and rigid |
 | ☐ | Electrical tape | شريط عازل | |
 
-### Practice track — do not skip this
+### Practice track — NOT NEEDED, you have the real one
 
-| ✓ | Item | Arabic | Qty |
+You have the competition track to practise on, so the 14 sheets of foam
+board and everything that went with them are off this list. That is about
+**120 SAR saved** and a Saturday you get back.
+
+Two small things are still worth having, because they are about *measuring*
+the real track rather than building a fake one:
+
+| ✓ | Item | Arabic | Why |
 | --- | --- | --- | --- |
-| ☐ | **Foam board 5 mm, ~50 × 70 cm** | فوم بورد | **14 sheets** |
-| ☐ | White poster board / paper roll for the floor | كرتون أبيض | 4 |
-| ☐ | **Black gaffer or electrical tape, 30 mm wide** | شريط لاصق أسود عريض | 3 rolls |
-| ☐ | Masking tape | شريط ورقي | 2 |
-| ☐ | Right-angle brackets, or use the hot glue | زوايا تثبيت | 20 |
-| ☐ | Tape measure + long steel ruler | متر + مسطرة | 1 |
+| ☐ | **Tape measure + long steel ruler** | متر + مسطرة | Measure the real passage width the first time you see it. Every number in `config.h` assumes 304.8 mm; if the real one differs, that is the first thing to change |
+| ☐ | **Black electrical tape, 30 mm wide** | شريط لاصق أسود عريض | One roll, only to repair a sector line if one lifts. Not for building anything |
 
-Cut the walls **19 cm tall** (7.5 in, as the spreadsheet says), stand them
-**30.5 cm apart** (1 ft), and lay black tape **30 cm straight across the
-passage** for the sector lines.
-
-Subtotal: **~420 SAR**
+Subtotal: **~300 SAR**
 
 ---
 

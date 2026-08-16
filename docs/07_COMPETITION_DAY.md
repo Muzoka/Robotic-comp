@@ -59,29 +59,32 @@ Then demonstrate the start. That is the strongest thing you can show.
 
 ---
 
-## Starting the robot — no laptop, no touching
-
-The robot arms itself from the front sensor. There is nothing to press and
-nothing to plug in.
+## Starting the robot — no laptop
 
 ```
 1.  Switch on. It calibrates the gyro — KEEP IT COMPLETELY STILL for ~3 s.
 2.  Place it in the Start Zone, pointing down the first corridor.
-3.  Hold your hand about 5 cm in front of the nose:
-
-       a quick tap (under 1.5 s)  →  LEFT-hand rule
-       hold it there (over 1.5 s) →  RIGHT-hand rule
-
-4.  Take your hand away and step back.
+3.  Watch it for ten seconds without touching it. It must NOT move.
+4.  Press the GO button on the back. Step back.
 5.  The LED blinks a 3-second countdown.
-       slow blink = left-hand rule
-       fast blink = right-hand rule
-    Check the blink matches what you wanted. If not, switch off and redo.
-6.  It goes. Do not touch it (§3.4).
+6.  It goes. Do not touch it again (§3.4).
 ```
 
-Being able to pick the direction at the start line, after looking at the map,
-without opening a laptop, is worth real points. Use step 3 deliberately.
+Step 3 is not padding. The firmware once had a fault that made it start its
+own run about three seconds after power-on, and the only symptom was the
+robot driving off while somebody was still placing it. It is fixed and
+tested, but ten seconds of watching costs nothing.
+
+**Backup start, if the button or its wire fails:** hold a hand about 5 cm in
+front of the nose for a second, then take it away. Same countdown, same run.
+Nothing to plug in. Worth practising once so you are not learning it at the
+table.
+
+The hand-wave also picks which wall the robot follows — a quick tap for
+left, a longer hold for right, and the countdown blinks slow or fast to tell
+you which it chose. **This no longer matters:** since the straight-first
+rule went in, left and right drive the identical route on all three maps.
+Do not spend attention on it.
 
 ---
 
