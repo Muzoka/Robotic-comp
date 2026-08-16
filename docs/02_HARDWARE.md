@@ -94,7 +94,7 @@ Fahd Street, or any similar shop.
 | --- | --- | --- | --- | --- |
 | **MPU-6050 (GY-521) gyro module** | حساس جيروسكوب MPU-6050 | 2 | 15–25 ea | **The single most valuable thing you can add.** See §5. Buy two — they are cheap and one dead module on competition day ends your event. |
 | **LM393 slot / speed encoder module** | حساس سرعة العجلة LM393 | 2–4 | 8–12 ea | Measures how far each wheel actually turned. The black slotted discs are already in your kit. |
-| **TCRT5000 IR line sensor module** | حساس خط TCRT5000 | 2 | 8–12 ea | Looks at the floor, counts the black sector lines, detects the striped gates. See §6. |
+| ~~TCRT5000 IR line sensor~~ | ~~حساس خط~~ | **0** | — | **Do not buy.** Removed from the design — see §6 for the measurement that killed it. |
 | **6×AA battery holder** *or* 2× 18650 cells + holder + charger | بيت بطاريات ٦ حبات | 1 | 15 / 60 | 4×AA is not enough — see §3. |
 | **Rocker or toggle switch, 3 A** | مفتاح تشغيل | 2 | 5 | Master power switch. Required for a sane inspection. |
 | **Male + female pin header strips** | هيدر ذكر وأنثى | few | 10 | So sensors plug in instead of being soldered permanently. |
@@ -149,7 +149,7 @@ Battery − ──┬── L298N  GND
             ├── Arduino GND          <-- one common ground, always
             └── sensor GND rail
 
-Arduino 5V ──── sensor 5V rail (HC-SR04 ×3, MPU-6050, encoders, line sensor)
+Arduino 5V ──── sensor 5V rail (HC-SR04 ×3, MPU-6050, encoders)
 ```
 
 - Leave the L298N **5V-EN jumper fitted** (it powers the driver's own logic).
@@ -231,27 +231,38 @@ slate.
 
 ---
 
-## 6. The line sensor — the cheap trick most teams will miss
+## 6. The line sensor — removed, and why that was the right call
 
-Scoring (§6.1) is **one point per black sector line that all three wheels
-completely cross**. The robot has no idea it crossed one — unless you give it
-a sensor pointing at the floor.
+An earlier version of this document recommended a TCRT5000 under the nose.
+**Do not fit one.** The reasoning changed after it was measured, and the
+change is worth reading because it is a good example of a part that looks
+free and is not.
 
-A TCRT5000 module costs about 10 SAR, mounts under the nose about 5 mm off
-the floor, and gives you:
+What it was supposed to buy:
 
-- **A live score count.** The robot knows how many points it has.
-- **Free odometry correction.** Sector lines are at known places. Crossing
-  one is a position fix that costs nothing.
-- **Gate detection.** Look at the photos of the maps: the start and finish
-  are marked with **black-and-white stripes**. A floor sensor crossing them
-  sees a rapid burst of black/white edges — a signature nothing else in the
-  maze produces. That is how the robot knows it has finished and should stop,
-  instead of wandering back into the maze. This is already implemented
-  (`edge_burst` in `nav_core.cpp`).
+- a live score count — nice to have, steers nothing;
+- an odometry fix at each known line — real, but the corridor-parallel
+  correction and the loop closure at junctions already cover this;
+- **gate detection**: the start and finish are painted with black-and-white
+  stripes, so four black/white edges inside 350 ms meant "I am out".
 
-Mount two of them, ~60 mm apart, if you want to also detect crossing a line
-at an angle. One is enough to start.
+That last one is where it went wrong. A TCRT5000 is a comparator with a
+trim pot. Crossing a strip of tape at an angle, its output **chatters**
+around the threshold — four edges is easy to produce by accident, in the
+middle of the maze, over an ordinary sector line. The robot would then stop
+and declare itself finished with half the road undriven.
+
+So the only thing it did for navigation was give the run a way to end early,
+and it was the single sensor on the robot capable of ending a run by itself.
+
+Measured with it removed: **24 runs, 24 complete, times identical to a tenth
+of a second, every sector line still crossed.** The finish is detected by
+driving into open space on all three sonars — which is what fired on every
+run in this project even when the stripe detector was fitted.
+
+Removed: ~8 g, one solder job, one calibration against a floor colour you
+have not seen, one shopping item, and one way to lose a map. D12 is now
+free. The code survives behind `HAS_LINE_SENSOR` in `config.h`.
 
 ---
 
@@ -324,7 +335,7 @@ of guessing.
 
 | Where | What | Budget |
 | --- | --- | --- |
-| Electronics shop | 2× MPU-6050, 2–4× LM393 encoders, 2× TCRT5000, battery + holder, switches, headers, wire, caps, heat-shrink, spare HC-SR04 | 250–350 SAR |
+| Electronics shop | 2× MPU-6050, 2–4× LM393 encoders, 2× push buttons, 5× 330 Ω, battery + holder, switches, headers, wire, caps, heat-shrink, spare HC-SR04 | 240–330 SAR |
 | SACO — fasteners | M3/M2 screws, nuts, washers, standoffs, zip ties | ~60 SAR |
 | SACO — tools | screwdrivers, pliers, cutters, strippers, **soldering iron + solder**, **multimeter**, glue gun, tapes | ~250 SAR |
 | SACO — practice maze | foam board, black tape, white board, masking tape | ~150 SAR |

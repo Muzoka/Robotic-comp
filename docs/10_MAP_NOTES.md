@@ -33,14 +33,49 @@ in →  P X X X P  → out      X P P P X             P P P P P
                        in ↗                  in ↗            ↘ out
 ```
 
-| Section | Shape | Route | Turns |
-| --- | --- | --- | --- |
-| Map 1 | A single U around a 3 × 4 ft block | 12 ft | 2 |
-| Map 2 | A short dog-leg, with a loop hanging off it as a distractor | 6 ft | 3 |
-| Map 3 | A 1-ft zig-zag, up and down twice | 16 ft | **8** |
+| Section | Shape | Road | Route driven | Pivots |
+| --- | --- | --- | --- | --- |
+| Map 1 | A single U around a 3 × 4 ft block | 13 sq | 12 ft | 2 |
+| Map 2 | A dog-leg with a loop hanging off a 4-way crossing | 14 sq | 14 ft | 4 |
+| Map 3 | A 1-ft zig-zag, up and down twice | 17 sq | 16 ft | **8** |
 
 Map 3 is the one that decides the competition: it carries 9 of the 17 sector
 points, and it asks for a 90° turn in almost every square.
+
+### Map 2 and the crossing — the route the robot drives
+
+Map 2 is the only one with a genuine choice in it. The middle-right square
+is a **4-way crossing**, and the exit is one square east of it. A robot that
+simply turns towards the exit the first time it arrives there leaves with
+half the road undriven.
+
+The route driven now — and it is the one drawn by hand on the photo:
+
+```
+  00 → 01 → 02 → 03        east along the top
+                 ↓
+                13 → 23     south, straight THROUGH the crossing
+                     ↓
+                    33 → 43     ...and on down to the bottom row
+                         ↓
+      41 ← 42 ← 43           west along the bottom
+       ↓
+      31 → 21               north up the left column
+            ↓
+           22 → 23 → 24     east through the crossing again, and out
+```
+
+It enters and leaves the crossing **going straight both times**, and never
+pivots in it. That is the whole point: the crossing is the one square on the
+course with no wall on either side, so a pivot finishing a few degrees short
+there has nothing to correct itself against. Every livelock this project
+ever had started in that square.
+
+The rule that produces this is `STRAIGHT_FIRST` in `config.h` — go straight
+whenever the way ahead is open, ask the hand rule only when it is not. It is
+worth two pivots and about 4 seconds here, and it also means the left-hand
+and right-hand rules now drive the identical route, so the hand setting can
+no longer cost you a map.
 
 ## The combined course
 
@@ -71,28 +106,36 @@ Nothing else needs touching. Tell me the arrangement and I will set it.
 ## Sector line positions — an assumption
 
 The spreadsheet gives the *count* per section (3, 5, 9) but not the
-positions. They are laid out evenly along the route, each one in the middle
-of a square the route passes straight through — never on a corner, because
-"all three wheels completely passes the sector line" (§6.1) is hard to
-satisfy while pivoting.
+positions. They are laid out evenly along the route, each one on a **square
+boundary the route crosses head-on** — never in the middle of a corner,
+because "all three wheels completely passes the sector line" (§6.1) is a
+matter of luck while pivoting.
 
-If you can get the real positions, they go in
-`sim/maps/build_maps.py`. They do not change how the robot drives — it
-cannot see them except with the floor sensor — only how the score is counted
-in simulation.
+`build_maps.py` now asserts this: every generated line has to sit on a
+boundary between two squares the route drives one after the other. That
+check found a real bug — horizontal lines were being placed a whole cell too
+high, so on Map 3 two of them sat **inside a solid block** and one sat
+outside the maze entirely. Three of the nine points were unscoreable by any
+robot, and the only symptom was a scoreboard quietly reading 7/9.
+
+If you can get the real positions, they go in `sim/maps/build_maps.py`. They
+do not change how the robot drives — it cannot see them at all now the floor
+sensor is gone — only how the score is counted in simulation.
 
 ## What the simulator says today
 
-Robot as measured (250 × 150 mm), passage 304.8 mm, 3-minute limit:
+Robot 220 × 115 mm, passage 304.8 mm, `PWM_CRUISE 200`, 3-minute limit,
+8 seeds × 4 strategy combinations per map:
 
-| Section | Sector points | Time | Wall scrapes |
-| --- | --- | --- | --- |
-| Map 1 | 3 / 3 | 51 s | 12 |
-| Map 2 | 4 / 5 | 28 s | 5 |
-| Map 3 | 1 / 9 | ran out of time | 261 |
+| Section | Complete | Road driven | Sector points | Time | Wall contact |
+| --- | --- | --- | --- | --- | --- |
+| Map 1 | 100 % | 100 % | 3 / 3 | 32 s | none |
+| Map 2 | 100 % | 100 % | 5 / 5 | 36 s | none |
+| Map 3 | 100 % | 100 % | 9 / 9 | 48 s | none |
 
-Maps 1 and 2 are solved. **Map 3 is not**, and it is worth more than the
-other two put together.
+All three are solved, with every sector point taken, in about a third of the
+time allowed. Map 3 — the one that used to run out of time — is still the
+hardest, and it is the one to practise on physically.
 
 ## Why map 3 is hard, and what to do about it
 

@@ -50,7 +50,7 @@ Have these ready to say:
 | No replacements | Original Arduino Uno, original L298N, original motors, original chassis |
 | Nothing disabled | All present and working |
 | Breadboard | §2.2 permits removing it. Here it is in the box; we soldered instead for reliability |
-| Add-ons | 3 ultrasonics (§2.2 explicitly allows 3), one gyro, two wheel encoders, one floor sensor. All sensors — no extra microcontroller anywhere |
+| Add-ons | 3 ultrasonics (§2.2 explicitly allows 3), one gyro, two wheel encoders, one GO button. All sensors — no extra microcontroller anywhere |
 | Battery | 7.4 V (or 9 V). Under the 12 V per-supply and 20 V total limits |
 | Safety | No exposed conductor, no sharp edges, everything bolted, master switch here |
 | Autonomy | No radio of any kind. It starts on its own — watch |

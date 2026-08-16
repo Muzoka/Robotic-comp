@@ -19,10 +19,14 @@ So you get two things instead, and together they do the whole job:
 | **Copying the wiring physically** | The wiring drawing | `docs/wiring_diagram.svg` and `docs/03_WIRING.md` |
 
 The Wokwi diagram wires up everything Wokwi *does* have — the Uno, all three
-ultrasonics, the MPU-6050, the floor sensor and the encoders — and replaces
+ultrasonics, the MPU-6050, the GO button and the encoders — and replaces
 the six L298N control lines with six LEDs. That turns out to be genuinely
 useful: you can watch the motor commands as light. Left turn, right turn,
 forward, reverse, PWM brightness — all visible.
+
+There is **no floor line sensor** in the diagram any more, because there is
+no longer one on the robot. See `docs/09_CHECKLIST.md` — it was removed on
+purpose and D12 is now a spare pin.
 
 ---
 
@@ -62,11 +66,12 @@ Now drive it by hand:
 
 | Do this | Should happen |
 | --- | --- |
-| Click the **front HC-SR04** and drag its distance slider down to ~5 cm, then back up to 60 cm | State goes `WAIT_START → COUNTDOWN`, D13 blinks, then `DRIVE` |
+| Press the **red GO button** (D13) | State goes `WAIT_START → COUNTDOWN`, D13 blinks for 3 s, then `DRIVE`. This is exactly how you will start it on the day |
+| *or* click the **front HC-SR04** and drag its distance slider down to ~5 cm, then back up to 60 cm | Same thing, hands-free. The button and the hand-wave both work |
 | Watch the LEDs after `DRIVE` | ENA and ENB light up, IN1 and IN3 on, IN2 and IN4 off — both motors forward |
 | Drag the **front** sensor down to 15 cm | State goes to `CREEP`, then `TURN`. IN1/IN2 or IN3/IN4 swap — the robot is pivoting |
 | Drag the **left** sensor up to 100 cm while the front stays clear | It should spot a left opening, `CREEP`, then turn left |
-| Hold the **black button** (D12) | The `sect` column at the end of the telemetry line goes up by one when you release — that is a sector line being counted |
+| Drag **front, left and right all above 60 cm** at once | Nothing should happen for a moment, then `DRIVE` continues straight — this is the straight-through-a-crossing rule, the one that gives Map 2 the route you drew |
 | Tap the **blue / green buttons** | `encL` / `encR` count up — these stand in for the wheel encoders |
 
 If all of that works in Wokwi, your firmware is correct and the pin map is

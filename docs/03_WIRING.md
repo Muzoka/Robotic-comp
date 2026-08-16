@@ -20,8 +20,9 @@ firmware assume exactly this.
   │ D9  ───── HC-SR04 RIGHT  TRIG                 │
   │ D10 ───── HC-SR04 RIGHT  ECHO                 │
   │ D11 ───── L298N IN4                           │
-  │ D12 ───── TCRT5000 line sensor  DO            │
+  │ D12 ───── spare  (leave empty, handy test pt) │
   │ D13 ───── status LED (onboard) + buzzer       │
+  │           + GO button to GND VIA 330 Ω        │  see below
   │ A0  ───── HC-SR04 FRONT  TRIG                 │
   │ A1  ───── HC-SR04 FRONT  ECHO                 │
   │ A2  ───── HC-SR04 LEFT   TRIG                 │
@@ -48,8 +49,7 @@ BATT−  ──┬───────────────────► L
  Arduino 5V ──────────────────► sensor 5V rail
                                  ├─ HC-SR04 ×3   VCC
                                  ├─ MPU-6050     VCC
-                                 ├─ LM393 ×2     VCC
-                                 └─ TCRT5000     VCC
+                                 └─ LM393 ×2     VCC
 
  1000 µF across the battery at the L298N terminals
  100 nF soldered across each motor's own two terminals
@@ -106,9 +106,26 @@ field.
 
 If you mount it upside down, set `GYRO_Z_SIGN = -1.0f` in `MazeRunner.ino`.
 
-**TCRT5000.** Under the nose, pointing straight down, **5–10 mm off the
-floor**. Adjust the trimmer until the LED changes state cleanly between white
-floor and black tape. Test it on your practice track before you trust it.
+**GO button — D13, and the 330 Ω is not optional.** D13 already drives the
+onboard status LED, so the pin spends most of its life as an *output*. A
+plain button from D13 to ground would short that output straight to ground
+every time you pressed it. The 330 Ω resistor sits in series with the button
+and limits that to a few milliamps.
+
+```
+   D13 ──┬──── onboard LED (already on the board)
+         │
+         └──[ 330 Ω ]──[ GO button ]──── GND
+```
+
+The firmware flips D13 to an input with the pull-up on for 200 µs, reads it,
+and flips it straight back to an output — so the LED keeps working and the
+button still reads. It is only sampled before the run starts, so a knock
+mid-run cannot restart anything. Full procedure in
+`docs/12_STARTING_THE_ROBOT.md`.
+
+**No floor sensor.** There is deliberately nothing under the nose any more —
+see `docs/09_CHECKLIST.md`. D12 is free; it makes a convenient scope point.
 
 **Encoders.** The LM393 slot sensor straddles the black slotted disc on the
 inside of each wheel. Get the disc centred in the slot — if it rubs, it

@@ -118,7 +118,29 @@
 /* ------------------------------------------------------------------ */
 #define PWM_MIN              55     /* below this a TT motor just buzzes            */
 #define PWM_MAX             255
-#define PWM_CRUISE          170     /* straight-line speed. Tuned: slower scores more */
+/* Straight-line speed. Measured over 6 seeds x 3 maps nominal, then 13
+ * seeds x 2 hands x 3 maps with deliberately bad hardware (2.5x wheel slip,
+ * 4x sonar noise, 3x dropout, 2.3x gyro bias, 15% battery sag):
+ *
+ *      cruise   total time   complete   wall contact, degraded
+ *        110       182 s       100%       -
+ *        140       147 s       100%       -
+ *        170       128 s       100%       100 episodes
+ *        200       116 s       100%         0 episodes     <- shipped
+ *        230       108 s       100%         0 episodes
+ *
+ * 170 used to be the ceiling because Map 2 fell apart above it. That was
+ * never really about speed: it was the two pivots in the open crossing, and
+ * STRAIGHT_FIRST deleted them. With those gone the whole curve moved.
+ *
+ * 200 rather than 230 for one reason you can see in the mixer: steering is
+ * added to cruise and then clamped at 255, so a cruise of 200 with
+ * STEER_LIMIT 80 can still swing 135 counts of differential, and 230 only
+ * 105. That headroom is what corrects a bad approach to a corner.
+ *
+ * If the real track is slippier than the model, drop to 170 - you lose 12
+ * seconds and every hard correction gets its full authority back. */
+#define PWM_CRUISE          200
 #define PWM_SLOW             95     /* creeping / approaching a wall                */
 #define PWM_TURN            110
 #define PWM_BACK             95     /* reversing                                    */
@@ -218,33 +240,107 @@
 /* ------------------------------------------------------------------ */
 #define HAS_GYRO              1     /* MPU-6050 fitted                              */
 #define HAS_ENCODERS          1     /* LM393 slot sensors fitted                    */
-#define HAS_LINE_SENSOR       1     /* TCRT5000 looking at the floor                */
+/* Floor line sensor: REMOVED. Do not fit one, do not buy one.
+ *
+ * You asked whether dropping it would make things work better. It does, and
+ * not because it was useless - because it was dangerous.
+ *
+ * What it did:  counted the black sector lines for telemetry, and watched
+ * for the striped start/finish gate as a second way to notice the run was
+ * over.
+ *
+ * What it cost:  the gate detector fires on four black-to-white edges
+ * arriving inside 350 ms. A TCRT5000 is a comparator with a trim pot, and
+ * when it crosses a strip of tape at an angle its output CHATTERS around
+ * the threshold - four edges is easy. The robot would then declare itself
+ * finished in the middle of the maze and stop. That is a whole map lost, to
+ * a sensor that was never steering anything.
+ *
+ * Measured with it off: 24 runs, 24 complete, same times to a tenth of a
+ * second, every sector line still crossed. The robot notices the finish by
+ * driving into open space on all three sonars, which is what actually fired
+ * on every single run in this repository anyway.
+ *
+ * The code is still here behind this switch. Set it back to 1 only if you
+ * fit a sensor and can show it does something the sonars cannot. */
+#define HAS_LINE_SENSOR       0     /* TCRT5000 looking at the floor - NOT FITTED   */
 
 /* Which hand do we keep on the wall?  +1 = LEFT hand, -1 = RIGHT hand.
  *
- * RIGHT, and it is not a coin toss. The rules want the robot to drive the
- * WHOLE road before it leaves, not the shortest way across, and only one
- * hand does that on these three maps:
+ * This used to be the most dangerous number in the file. It is now very
+ * nearly a free choice, and that is worth understanding.
+ *
+ * BEFORE straight-first (below), the hand decided whether you scored:
  *
  *              road covered     left hand    right hand
  *      Map 1                       100%         100%
- *      Map 2                        50%         100%
+ *      Map 2                        50%         100%     <-- half a map
  *      Map 3                       100%         100%
  *
- * On Map 2 the left hand turns straight out of the exit the first time it
- * reaches the junction and skips the entire loop. The right hand takes the
- * loop first and only leaves once there is nothing else to drive. */
+ * On Map 2 the left hand turned straight out of the exit the first time it
+ * reached the crossing and skipped the entire lower loop.
+ *
+ * AFTER straight-first, both hands drive the IDENTICAL route on all three
+ * maps - same squares, same order, same time to a tenth of a second, 8 seeds
+ * each. The robot goes straight through the crossing rather than turning at
+ * it, so there is no longer a turn there for the hand to get wrong.
+ *
+ * Left as RIGHT because it is the one that was right before as well: if a
+ * future map does put a real choice back in, the right hand is the one with
+ * the measurements behind it. */
 #define WALL_HAND            (-1)
+
+/* Go STRAIGHT through a crossing whenever the way ahead is open, and only
+ * consult the hand rule when it is not.
+ *
+ * This is the single highest-value line in the file, for three reasons.
+ *
+ * 1. It is the route you drew on Map 2. Straight down the middle to the
+ *    bottom row, round the lower loop, back along the middle and out.
+ *
+ * 2. It never pivots in the open crossing. Map 2 has one 4-way crossing,
+ *    and a pivot there is the worst pivot on the whole course: with no wall
+ *    on either side there is nothing to square up against, so a turn that
+ *    finishes a few degrees short stays short. Every livelock this project
+ *    ever had started in that square. Straight-first drives through it
+ *    twice without turning at all - 6 pivots on Map 2 become 4.
+ *
+ * 3. It makes WALL_HAND stop mattering. Measured at grid level, left hand
+ *    and right hand now produce the IDENTICAL route on all three maps. The
+ *    old left-hand rule turned straight out of the Map 2 exit and skipped
+ *    the whole loop; it cannot any more. Picking the wrong hand at the
+ *    start line used to cost a map. Now it costs nothing.
+ *
+ * The catch, stated honestly: straight-first on its own is NOT a complete
+ * coverage rule. In a maze with a dead-end stub it can walk out of a
+ * crossing that still has road left in it (measured: 5 squares of 11 on a
+ * test maze built to provoke exactly that). None of the three competition
+ * maps has a dead end - every square of road is on a through route, checked
+ * by build_maps.py - so it is safe here. MODE_TREMAUX is what closes the
+ * hole for good, and it costs nothing to run: see DEFAULT_MODE below. */
+#define STRAIGHT_FIRST        1
 
 /* Navigation mode */
 #define MODE_WALLFOLLOW       0     /* simple, never gets confused in a plain maze  */
 #define MODE_TREMAUX          1     /* remembers junctions, beats loops and islands */
-/* Wall following, not Tremaux. The three competition maps are published in
- * advance and none of them needs memory: the left-hand rule picks the
- * correct exit at every single decision point on all three. Measured, the
- * memory mode is WORSE here - it depends on odometry to recognise a junction
- * it has seen before, and odometry is the least trustworthy thing on the
- * robot. Switch to MODE_TREMAUX only if a map turns up with a real loop. */
+/* Wall following, not Tremaux - but only just, and here is the honest
+ * comparison so you can flip it with your eyes open.
+ *
+ * On the three competition maps the two modes are now INDISTINGUISHABLE:
+ * 8 seeds x 3 maps x both hands, every combination completes 100% of runs,
+ * covers 100% of the road, scores every sector line, and finishes within a
+ * tenth of a second of the others. Straight-first is what made them agree.
+ *
+ * Wall following is the default because it is the simpler machine: it has no
+ * dependence on odometry at all, and odometry is the least trustworthy thing
+ * on the robot.
+ *
+ * Switch to MODE_TREMAUX if a future map has a DEAD END in it. That is the
+ * one case straight-first cannot handle on its own - it can walk out of a
+ * crossing that still has undriven road behind it. Measured on a test maze
+ * built to provoke exactly that: wall following alone covers 5 squares of
+ * 11, Tremaux covers 11 of 11. It costs 4 bytes of SRAM per junction and
+ * nothing to buy. build_maps.py prints a dead-end warning per map. */
 #define DEFAULT_MODE   MODE_WALLFOLLOW
 
 /* Tremaux memory */
@@ -265,7 +361,9 @@
 #define PIN_TRIG_R     9
 #define PIN_ECHO_R    10
 #define PIN_IN4       11
-#define PIN_LINE      12   /* TCRT5000 digital out (LOW = black line)  */
+#define PIN_LINE      12   /* SPARE. Was the TCRT5000 - not fitted any
+                              more, see HAS_LINE_SENSOR above. Leave the
+                              pin empty; it is a handy test point.      */
 #define PIN_LED       13   /* onboard LED + optional buzzer            */
 #define PIN_TRIG_F   A0
 #define PIN_ECHO_F   A1

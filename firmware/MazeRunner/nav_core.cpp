@@ -445,6 +445,19 @@ static int8_t choose_turn(void)
     uint8_t openF = g.snap_front;
     uint8_t openR = g.snap_right;
 
+    /* Straight beats everything. Not turning is always cheaper and always
+     * safer than turning: a pivot costs a second, and a pivot in an open
+     * crossing has no wall to square up against afterwards. See
+     * STRAIGHT_FIRST in config.h for what this is worth on Map 2.
+     *
+     * In MODE_TREMAUX this is only the PREFERENCE order, further down - the
+     * marks still get the final say, which is what keeps coverage safe in a
+     * maze with dead ends. Here it is an outright rule, because plain wall
+     * following has no marks to consult. */
+#if STRAIGHT_FIRST
+    if (g.mode == MODE_WALLFOLLOW && openF) return 0;
+#endif
+
     if (g.mode == MODE_WALLFOLLOW) {
         if (g.hand > 0) {                       /* left-hand rule */
             if (openL) return +1;
@@ -482,24 +495,39 @@ static int8_t choose_turn(void)
         mark_inc(j, (uint8_t)((here + 2) & 3));
     }
 
-    /* candidates, in hand-rule preference order so ties break the way a
-     * plain wall follower would - that keeps the path short and tidy */
+    /* Candidates, in preference order. The marks decide; this list only
+     * breaks ties - but on a maze the robot has not seen before, nearly
+     * every decision IS a tie, so the order is what the route looks like.
+     *
+     * Straight goes first (STRAIGHT_FIRST), then the hand rule. That gives
+     * the tidy path of a plain wall follower without the pivots in the
+     * middle of open crossings, and the marks are still there underneath to
+     * stop it walking away from road it has not driven yet. */
     int8_t  order[4];
     uint8_t opn[4];
+    uint8_t k = 0;
+#if STRAIGHT_FIRST
+    order[k] =  0; opn[k] = openF; k++;
+#endif
     if (g.hand > 0) {
-        order[0] = +1; opn[0] = openL;
-        order[1] =  0; opn[1] = openF;
-        order[2] = -1; opn[2] = openR;
+        order[k] = +1; opn[k] = openL; k++;
+#if !STRAIGHT_FIRST
+        order[k] =  0; opn[k] = openF; k++;
+#endif
+        order[k] = -1; opn[k] = openR; k++;
     } else {
-        order[0] = -1; opn[0] = openR;
-        order[1] =  0; opn[1] = openF;
-        order[2] = +1; opn[2] = openL;
+        order[k] = -1; opn[k] = openR; k++;
+#if !STRAIGHT_FIRST
+        order[k] =  0; opn[k] = openF; k++;
+#endif
+        order[k] = +1; opn[k] = openL; k++;
     }
-    order[3] = 2; opn[3] = 1;       /* turning round is always possible */
+    order[k] = 2; opn[k] = 1;       /* turning round is always possible */
+    k++;
 
     int8_t  best = 2;
     uint8_t best_marks = 99;
-    for (uint8_t i = 0; i < 4; i++) {
+    for (uint8_t i = 0; i < k; i++) {
         if (!opn[i]) continue;
         uint8_t d;
         if (order[i] == 2) d = (uint8_t)((here + 2) & 3);
@@ -699,10 +727,14 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
         } else {
             g.dist_open_mm = 0.0f;
         }
-        /* a burst of stripes under the nose is the finish gate */
+#if HAS_LINE_SENSOR
+        /* A burst of stripes under the nose is the finish gate.
+         * Compiled out by default - see HAS_LINE_SENSOR in config.h for why
+         * this particular shortcut is a good way to lose a map. */
         if (g.edge_burst >= 4 && from_origin > 800.0f) {
             g.state = ST_FINISH; g.state_t_ms = 0; break;
         }
+#endif
         if (g.run_t_ms > RUN_TIMEOUT_MS) { g.state = ST_FINISH; g.state_t_ms = 0; break; }
 
         /* --- livelock guard ---

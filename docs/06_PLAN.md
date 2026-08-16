@@ -40,7 +40,7 @@ Questions 1 and 2 change what you build. Question 5 changes your strategy.
 | 1.1 | Shopping trip — electronics shop then SACO (`docs/02_HARDWARE.md` §8) | Parts on the bench |
 | 1.2 | Build the **practice track** first, before touching the robot | 2 m × 2 m, foam board walls 120 mm tall, corridors at the confirmed width, black tape sector lines, striped gates |
 | 1.3 | Assemble the chassis with the **wheel axle centred** | Smallest possible turning circle |
-| 1.4 | Solder the perfboard: 5 V rail, GND rail, headers for 3 sonars, gyro, 2 encoders, line sensor | No breadboard on the robot |
+| 1.4 | Solder the perfboard: 5 V rail, GND rail, headers for 3 sonars, gyro, 2 encoders, GO button + 330 Ω | No breadboard on the robot |
 | 1.5 | Wire per `docs/03_WIRING.md`. Check every rail with the multimeter **before** plugging in the Arduino | No smoke |
 | 1.6 | Mount sensors. Measure where they actually ended up; update `config.h` | Code and metal agree |
 

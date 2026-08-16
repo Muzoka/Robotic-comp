@@ -13,7 +13,7 @@ too; this is only the parts that affect what we build.
 | 2.2 | **No additional microcontrollers** (ESP32, Raspberry Pi…) | One Uno. Not even an unused module on the board |
 | 2.2 | Exactly one Arduino Uno R3 | ✔ |
 | 2.2 | Each battery ≤ 12 V, total ≤ 20 V | 7.4 V (2×18650) or 9 V (6×AA) is fine |
-| 2.2 | **Multiple sensors allowed** — "example. Use of 3 Ultra-sonic sensors" | 3 sonars, a gyro, 2 encoders and a floor sensor are all legal |
+| 2.2 | **Multiple sensors allowed** — "example. Use of 3 Ultra-sonic sensors" | 3 sonars, a gyro and 2 wheel encoders are all legal |
 | 2.2 | Additional motors allowed (servo, stepper) | We do not need any |
 | 2.3 | Add-ons must not replace originals, must be safe and securely mounted, within size/weight limits | Bolt everything down |
 | 2.4 / 11 | Technical inspection before competing | Checklist in `docs/03_WIRING.md` |

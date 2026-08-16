@@ -105,13 +105,18 @@ def mirror(sheet):
 DIRS = [(0, 1), (1, 0), (0, -1), (-1, 0)]      # E, S, W, N  (row, col)
 
 
-def coverage_walk(grid, ent, goal, hand=-1, limit=600):
-    """Walk the maze exactly as the robot does - keeping one hand on the
-    wall - and return every square it steps on, in order.
+def coverage_walk(grid, ent, goal, hand=-1, straight_first=True, limit=600):
+    """Walk the maze exactly as the robot does and return every square it
+    steps on, in order.
 
     This is what the route really is. The robot is required to drive the
     WHOLE road before it leaves, not the shortest way across, so the sector
-    lines and the length estimate have to follow the same walk."""
+    lines and the length estimate have to follow the same walk.
+
+    straight_first mirrors STRAIGHT_FIRST in config.h: go straight ahead
+    whenever the way ahead is open, and only fall back to the hand rule when
+    it is not. Keep the two in step or the sector lines get painted on a
+    route the robot no longer drives."""
     R, C = len(grid), len(grid[0])
 
     def is_open(r, c):
@@ -126,6 +131,8 @@ def coverage_walk(grid, ent, goal, hand=-1, limit=600):
             break
         order = ([(d + 3) % 4, d, (d + 1) % 4, (d + 2) % 4] if hand > 0
                  else [(d + 1) % 4, d, (d + 3) % 4, (d + 2) % 4])
+        if straight_first:
+            order = [d] + [x for x in order if x != d]
         for nd in order:
             dr, dc = DIRS[nd]
             if is_open(r + dr, c + dc):
@@ -249,6 +256,24 @@ def build(name, title, sections, fname):
     path = coverage_walk(grid, start, goal, hand=-1)
     n_open = sum(row.count("P") for row in grid)
     covered = len(set(path))
+    pivots = sum(1 for i in range(1, len(path) - 1)
+                 if (path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1])
+                 != (path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]))
+
+    # STRAIGHT_FIRST is only safe on a map with no dead-end stubs - see the
+    # comment on it in config.h. A stub is an open square with one open
+    # neighbour. Check rather than assume: if the organisers ever hand over a
+    # map with one in it, this is the line that says so.
+    stubs = []
+    for r in range(rows):
+        for c in range(cols_total):
+            if grid[r][c] != "P":
+                continue
+            n = sum(1 for dr, dc in DIRS
+                    if 0 <= r + dr < rows and 0 <= c + dc < cols_total
+                    and grid[r + dr][c + dc] == "P")
+            if n <= 1 and (r, c) not in (start, goal):
+                stubs.append((r, c))
 
     n_sect = sum(sheet["sectors"] for (sheet, _) in sections)
 
@@ -271,8 +296,34 @@ def build(name, title, sections, fname):
             x = cx(max(c0, c1)) * CELL
             sectors.append((x, cy(r0) * CELL, x, (cy(r0) + FOOT) * CELL))
         else:                                          # crossing up or down
-            y = cy(min(r0, r1)) * CELL + FOOT * CELL
+            # cy(r) is the BOTTOM edge of row r, and rows are numbered from
+            # the top, so the boundary between rows r0 and r1 is the bottom
+            # edge of the upper one - cy(min(r0, r1)), with nothing added.
+            # Adding FOOT here put every horizontal line a whole cell too
+            # high: on map 3 two of them landed inside a solid block and one
+            # landed outside the maze, where no robot could ever cross them.
+            y = cy(min(r0, r1)) * CELL
             sectors.append((cx(c0) * CELL, y, (cx(c0) + FOOT) * CELL, y))
+
+    # Every line must sit on a boundary between two squares the route really
+    # drives, one straight after the other. A line the robot cannot cross is
+    # a point nobody can score, and it is invisible on the picture - the only
+    # symptom is a scoreboard quietly reading 7/9. Check it here.
+    for (k, s) in enumerate(sectors):
+        x1, y1, x2, y2 = s
+        mx, my = (x1 + x2) / 2.0, (y1 + y2) / 2.0
+        if abs(x2 - x1) < 1.0:                      # vertical: splits columns
+            a = (int((cy(0) * CELL + FOOT * CELL - my) // (FOOT * CELL)),
+                 int((mx - 4 - cx(0) * CELL) // (FOOT * CELL)))
+            b = (a[0], a[1] + 1)
+        else:                                       # horizontal: splits rows
+            a = (int((cy(0) * CELL + FOOT * CELL - my - 4) // (FOOT * CELL)),
+                 int((mx - cx(0) * CELL) // (FOOT * CELL)))
+            b = (a[0] + 1, a[1])
+        assert any((path[i], path[i + 1]) in ((a, b), (b, a))
+                   for i in range(len(path) - 1)), \
+            "%s sector %d is on a boundary the route never crosses: %s|%s" \
+            % (fname, k, a, b)
 
     # Walled start and finish pockets. Without them the robot can reverse
     # out of its own start gate, drive round the outside of the maze and
@@ -313,10 +364,12 @@ def build(name, title, sections, fname):
             fh.write("!gate %.0f %.0f %.0f %.0f\n" % g)
         fh.write(cv.text() + "\n")
 
-    print("%-10s %4.2f x %-4.2f m  road %2d squares  walk %2d ft  covers %2d/%-2d %s  %2d sectors"
+    print("%-10s %4.2f x %-4.2f m  road %2d sq  walk %2d ft  %2d pivots  "
+          "covers %2d/%-2d %s  %2d sectors  dead ends: %s"
           % (fname, W * CELL / 1000.0, H * CELL / 1000.0, n_open,
-             len(path) - 1, covered, n_open,
-             "OK " if covered == n_open else "!! ", len(sectors)))
+             len(path) - 1, pivots, covered, n_open,
+             "OK " if covered == n_open else "!! ", len(sectors),
+             "none" if not stubs else "%s  <-- SET STRAIGHT_FIRST 0" % stubs))
 
 
 if __name__ == "__main__":

@@ -18,10 +18,11 @@ Scoring is §6.1 sector points first, §6.3 time only as a tie-breaker. So:
    momentum into a wall, and longer battery life — all free speed with no
    loss of reliability.
 
-Right now the robot finishes the three maps in **35 s, 45 s and 53 s** of the
-180 s allowed, with zero wall contact across 120 simulated runs. There is a
-lot of margin. **Buy from the reliable column; take the light option only
-where it costs nothing.** Where the two conflict, buy reliable.
+Right now the robot finishes the three maps in **32 s, 36 s and 48 s** of the
+180 s allowed, scoring **every sector line on every map** (3/3, 5/5, 9/9),
+with zero wall contact across 96 simulated runs. There is a lot of margin.
+**Buy from the reliable column; take the light option only where it costs
+nothing.** Where the two conflict, buy reliable.
 
 ---
 
@@ -31,7 +32,7 @@ where it costs nothing.** Where the two conflict, buy reliable.
 | --- | --- | --- | --- | --- | --- |
 | ☐ | **MPU-6050 / GY-521 gyro** | حساس جيروسكوب | **2** | 15–25 ea | Only 3 g — no trade-off. Buy two; a dead gyro on the day ends your event. Substitutes: MPU-9250, MPU-6500, any GY-521 clone. **Not** a compass module (HMC5883L/QMC5883) — the motors fool it |
 | ☐ | **LM393 slot encoder** | حساس سرعة العجلة | **2** (+2 spare) | 8–12 ea | 5 g each. No alternative worth having — the slotted discs in your kit only fit these |
-| ☐ | **TCRT5000 line sensor** | حساس خط | **2** | 8–12 ea | Optional but cheap. Counts sector lines and spots the striped finish gate |
+| ~~☒~~ | ~~**TCRT5000 line sensor**~~ | ~~حساس خط~~ | **0** | — | **DO NOT BUY — removed from the design.** It steered nothing, and its one job (spotting the finish) had a failure mode that could stop the robot in the middle of a map. Details below |
 | ☐ | **Push button, momentary** | زر ضغط | **2** | 2 ea | The GO button. Any 6 mm tactile switch or a panel-mount push button |
 | ☐ | **330 Ω resistor** | مقاومة ٣٣٠ أوم | 5 | 1 | **Goes in series with the GO button — not optional.** Without it, pressing the button shorts the LED pin to ground |
 | ☐ | **2 × 18650 Li-ion + 2-cell holder + charger** | بطاريات ١٨٦٥٠ + بيت + شاحن | 1 set | ~60 | **RELIABLE choice, buy this.** 7.4 V, ~95 g, rechargeable, holds voltage under load |
@@ -56,7 +57,30 @@ distance sensors** — I modelled VL53L0X/VL53L1X and they measured *worse*
 than your HC-SR04s on this maze, because a wide sonar cone averages a whole
 square of wall and that is what a wall-follower wants.
 
-Subtotal: **250–320 SAR**
+### Why the line sensor is off the list
+
+You asked whether removing it would help. It does — and not because it was
+useless, but because it was **dangerous**.
+
+Its only navigation job was a shortcut for noticing the run was over: four
+black-to-white edges inside 350 ms means "I am crossing the striped finish
+gate". A TCRT5000 is a comparator with a trim pot, and when it crosses a
+strip of tape at an angle its output chatters around the threshold. Four
+edges is easy to produce by accident. The robot would then declare itself
+finished **in the middle of the maze** and stop — a whole map lost, to a
+sensor that was not steering anything.
+
+Measured with it removed: **24 runs, 24 complete, identical times to a tenth
+of a second, every sector line still crossed.** The robot notices the finish
+by driving into open space on all three sonars, which is what actually fired
+on every run in this project anyway.
+
+So: one less thing to buy, one less thing to solder, one less thing to
+calibrate against a floor colour you have not seen yet, ~8 g saved, and D12
+is now a free pin. The code is still in the firmware behind a switch if you
+ever want it back.
+
+Subtotal: **240–300 SAR**
 
 ---
 
@@ -131,18 +155,35 @@ one of the 8 turns on Map 3.
 `PWM_CRUISE` in `config.h` is the one number that trades time for safety.
 Measured, 15 seeds per map, complete + full road coverage each time:
 
-| `PWM_CRUISE` | Map 1 | Map 2 | Map 3 | Total | Wall contact |
-| --- | --- | --- | --- | --- | --- |
-| 110 | 52 s | 63 s | 72 s | 187 s | none |
-| 140 | 41 s | 51 s | 60 s | 152 s | none |
-| **170 — shipped** | **35 s** | **45 s** | **53 s** | **133 s** | none |
-| 200 | 32 s | — | 48 s | — | Map 2 drops to 93 % |
-| 230 | 29 s | — | 45 s | — | Map 2 drops to 67 % |
+| `PWM_CRUISE` | Map 1 | Map 2 | Map 3 | Total | Complete | Wall contact, bad hardware |
+| --- | --- | --- | --- | --- | --- | --- |
+| 110 | 52 s | 58 s | 72 s | 182 s | 100 % | — |
+| 140 | 41 s | 46 s | 60 s | 147 s | 100 % | — |
+| 170 | 35 s | 40 s | 53 s | 128 s | 100 % | 100 episodes |
+| **200 — shipped** | **32 s** | **36 s** | **48 s** | **116 s** | **100 %** | **none** |
+| 230 | 29 s | 33 s | 45 s | 108 s | 100 % | none |
 
-**170 is shipped** because it is the fastest setting that still completes
-every run, verified over 120 runs and again over 75 runs with deliberately
-bad hardware. 200 and above starts losing Map 2, and losing a map costs far
-more than 15 seconds gains.
+Two things changed here since the last version of this list, and both are
+worth understanding before you tune anything on the day.
+
+**The speed ceiling moved.** 170 used to be the limit because Map 2 started
+failing above it. That was never really about speed — it was the two pivots
+in the open crossing, and the route you drew deletes them. With those gone,
+every speed on the table completes every run.
+
+**Faster measured *cleaner*, which is not what you would guess.** At 170 the
+robot logged 100 wall-contact episodes across 78 deliberately-degraded runs;
+at 200 and 230 it logged none. The reason is that a slower run is a *longer*
+run, and the gyro drifts with time, not with distance. Getting out of the
+maze sooner means less accumulated error to fight.
+
+**200 rather than 230** because steering is added to cruise and then clamped
+at 255. At 200 the robot can still swing 135 counts of left-right
+difference to save a bad corner; at 230 only 105. That reserve is worth more
+than 8 seconds.
+
+If the real track turns out slipperier than the model, drop to 170 — you
+lose 12 seconds and every hard correction gets its full authority back.
 
 If the real track turns out slipperier than the model, drop to 140 — you
 lose 19 seconds and buy back a lot of margin.
@@ -156,7 +197,7 @@ lose 19 seconds and buy back a lot of margin.
 | ☐ | Robot, assembled and tested |
 | ☐ | Laptop + USB-B cable + charger |
 | ☐ | **3 charged battery sets + charger** |
-| ☐ | Spares: MPU-6050, HC-SR04 ×2, LM393, TCRT5000, push button, jumper leads |
+| ☐ | Spares: MPU-6050, HC-SR04 ×2, LM393, push button, 330 Ω resistors, jumper leads |
 | ☐ | Soldering iron, solder, cutters, screwdrivers, multimeter |
 | ☐ | M3 screws, nuts, nylon standoffs, zip ties |
 | ☐ | Black tape + marker + tape measure |

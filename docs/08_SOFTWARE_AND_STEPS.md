@@ -97,7 +97,7 @@ Then the robot, in this order:
    Solder a 5 V rail, a GND rail, and the headers.
 5. Arduino on standoffs. L298N on standoffs.
 6. Sensors: front sonar at the nose, side sonars square to the walls,
-   MPU-6050 flat and rigid near the centre, TCRT5000 under the nose 5–10 mm
+   MPU-6050 flat and rigid near the centre, GO button somewhere you can reach
    off the floor.
 7. Battery on **top**, retained mechanically. Master switch where you can
    reach it.

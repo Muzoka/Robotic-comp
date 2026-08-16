@@ -231,7 +231,9 @@ void setup()
   pinMode(sonarF.trig, OUTPUT); pinMode(sonarF.echo, INPUT);
   pinMode(sonarL.trig, OUTPUT); pinMode(sonarL.echo, INPUT);
   pinMode(sonarR.trig, OUTPUT); pinMode(sonarR.echo, INPUT);
+#if HAS_LINE_SENSOR
   pinMode(PIN_LINE, INPUT);
+#endif
   pinMode(PIN_LED, OUTPUT);
 
   motorsBegin();

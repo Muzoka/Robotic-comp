@@ -9,7 +9,7 @@ Arduino code at all, which is what lets the simulator run it.
   sonar (front, left, right)  ─┐
   gyro rate                    ├──►  nav_step()  ──►  left PWM, right PWM
   wheel encoder counts         │
-  floor sensor                ─┘
+  GO button                   ─┘
 ```
 
 ## States
@@ -94,23 +94,56 @@ Two ways to get to the middle:
 
 ### Which way to turn
 
-**Mode 0 — wall following.** Keep one hand on the wall: try left, then
-straight, then right, then turn around (or mirrored, for the right hand).
-Simple, and it solves any maze whose finish is connected to the wall you are
-holding.
+**First, before anything else: if the way ahead is open, go straight.**
 
-**Mode 1 — Trémaux, the default.** The robot remembers junctions and prefers
-the exit it has used least:
+This one line (`STRAIGHT_FIRST` in `config.h`) decides what the route looks
+like, because on a maze the robot has not seen before nearly every junction
+is otherwise a coin-toss between equally good exits.
+
+Why it is worth having:
+
+- **It is the fastest thing you can do.** Not turning costs nothing; a pivot
+  costs about a second, plus the settle time before and after it.
+- **It avoids the worst pivots.** Map 2 has one 4-way crossing. Turning
+  there is the hardest turn on the whole course, because once the robot has
+  pivoted there is no wall on either side to check itself against — the
+  corridor-parallel correction below has nothing to work with, so a turn
+  that finishes 8° short *stays* 8° short. Every livelock this project had
+  began in that square. Straight-first drives through it twice, turning
+  neither time, and Map 2 drops from 6 pivots to 4.
+- **It makes the hand choice stop mattering.** Left and right now produce
+  the identical route on all three maps. The left-hand rule used to turn
+  straight out of the Map 2 exit and skip the entire lower loop.
+
+The limitation, stated plainly: **straight-first alone is not a complete
+coverage rule.** In a maze with a dead-end stub, the robot can go straight
+into the stub, U-turn at the end, come back to the crossing, and go straight
+again — right past two arms it has never driven. On a test maze built to
+provoke exactly that it covered 5 squares of 11. None of the three
+competition maps has a dead end; `build_maps.py` checks every map and prints
+`SET STRAIGHT_FIRST 0` if one ever appears.
+
+**Mode 0 — wall following, the default.** After the straight-first check:
+keep one hand on the wall — try left, then right, then turn around (or
+mirrored, for the right hand). Simple, and it solves any maze whose finish is
+connected to the wall you are holding.
+
+**Mode 1 — Trémaux.** The robot remembers junctions and prefers the exit it
+has used least:
 
 - arriving at a junction, mark the passage you came in through;
 - choose the open exit with the fewest marks;
-- break ties in wall-following order, so when nothing has been visited it
-  behaves exactly like a wall follower and takes the short, tidy path;
+- break ties straight-first, then in wall-following order, so on fresh
+  ground it takes exactly the route above;
 - mark the exit you chose.
 
-Each passage gets used at most twice, which is what makes it terminate. It
-beats plain wall-following on maps with loops and islands — on the serpentine
-map it scores 9.8/12 sectors against 8/12.
+Each passage gets used at most twice, which is what makes it terminate.
+**This is the mode that closes the dead-end hole**: on the test maze that
+defeats plain straight-first, straight-first-inside-Trémaux covers 11 of 11.
+It costs 4 bytes per junction of the Uno's own SRAM and nothing to buy, so
+if a combined map ever turns up with a stub in it, this is the switch to
+flip. On the three maps as they stand, both modes drive the same route in
+the same time.
 
 One special rule: **at the very first junction, the passage behind you is the
 start gate, so it gets marked "fully used" immediately.** Without it, a
@@ -155,15 +188,20 @@ source of drift.
 
 ## Knowing when to stop
 
-Three ways, any of which ends the run:
+Two ways, either of which ends the run:
 
 1. **Open on all sides**, and more than 800 mm from where it started, for
    450 mm of travel. The distance condition is what stops the robot calling
-   its own start gate a finish.
-2. **A burst of stripes under the floor sensor.** The start and finish gates
-   in the photos are painted with black/white stripes — nothing else in the
-   maze produces four black/white edges in 350 ms.
-3. Four minutes elapsed.
+   its own start gate a finish. This is the one that fires in practice — on
+   every run in this repository.
+2. The run timeout.
+
+There used to be a third: a burst of stripes under a floor sensor. It has
+been removed along with the sensor. A TCRT5000 chatters as it crosses tape
+at an angle, four edges inside 350 ms is easy to produce by accident, and
+the consequence was the robot stopping dead in the middle of a map. It was
+the only sensor on the robot that could end a run by itself and the only one
+that steered nothing. See `HAS_LINE_SENSOR` in `config.h`.
 
 ## Recovering from trouble
 

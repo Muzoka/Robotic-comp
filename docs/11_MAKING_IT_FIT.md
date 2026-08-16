@@ -201,7 +201,7 @@ sensors — modelled time-of-flight lasers measured *worse* than your HC-SR04s
 on this maze, because a wide sonar cone effectively averages a whole square
 of wall and that is exactly what a wall-follower wants. No memory chip. The
 only things still outstanding are the MPU-6050 gyro, the LM393 wheel
-encoders, the TCRT5000 floor sensor, a 7.4 V battery and the tools.
+encoders, the GO button, a 7.4 V battery and the tools.
 
 The one free change worth making: **mount the two side sonars level with the
 wheel axle**, not ahead of it, and just inside the tyre line. Worth about 20

@@ -1,7 +1,7 @@
 # MazeRunner — Robotics Navigation Challenge
 
 Autonomous maze robot: Arduino Uno R3, L298N, 3× HC-SR04, MPU-6050 gyro,
-2× wheel encoders, 1× floor line sensor. Built to the competition rulebook
+2× wheel encoders, one GO button. Built to the competition rulebook
 in `docs/01_RULES.md`.
 
 The unusual part of this repository: **the simulator runs the real
@@ -112,22 +112,49 @@ third. Every tuning decision in this repository is made that way.
 
 Three separate maps from the organisers' spreadsheet, 1 ft passages, 3
 minutes each. The robot must drive **every square of the road** before it
-leaves. Robot **220 × 115 mm**, right-hand rule, `PWM_CRUISE 170`:
+leaves. Robot **220 × 115 mm**, `PWM_CRUISE 200`:
 
-| Map | Complete | Road driven | Time | Wall contact |
-| --- | --- | --- | --- | --- |
-| Map 1 | **100 %** | 100 % | 35 s | none |
-| Map 2 | **100 %** | 100 % | 45 s | none |
-| Map 3 | **100 %** | 100 % | 53 s | none |
+| Map | Complete | Road driven | Sector points | Time | Wall contact |
+| --- | --- | --- | --- | --- | --- |
+| Map 1 | **100 %** | 100 % | 3 / 3 | 32 s | none |
+| Map 2 | **100 %** | 100 % | 5 / 5 | 36 s | none |
+| Map 3 | **100 %** | 100 % | 9 / 9 | 48 s | none |
 
-**120 runs, 120 completed.** Re-run with deliberately bad hardware — double
-the wheel slip, four times the sensor noise, three times the sonar dropout,
-15 % battery sag, up to 15 % motor mismatch — it still completes **100 %** of
-75 runs.
+**96 runs, 96 completed, every sector line crossed every time.** Re-run with
+deliberately bad hardware — 2.5× the wheel slip, four times the sensor
+noise, three times the sonar dropout, 15 % battery sag, up to 15 % motor
+mismatch — it still completes **100 %** of 78 runs, still scoring 442 of 442
+sector points, still without touching a wall.
+
+Those four rows are the same for **every** strategy setting: left hand or
+right hand, wall-following or Trémaux memory, all four combinations now
+drive the identical route. Picking the wrong one at the start line used to
+cost a whole map. It cannot any more — see `STRAIGHT_FIRST` below.
 
 All three finish in about a third of the time allowed. See
 `docs/11_MAKING_IT_FIT.md` for how, `docs/09_CHECKLIST.md` for the shopping
 list, and `docs/12_STARTING_THE_ROBOT.md` for the start procedure.
+
+### The rule that does the work: go straight if you can
+
+At a junction the robot checks straight ahead **first**, and only asks the
+hand rule when the way ahead is blocked.
+
+It sounds trivial. On Map 2 it is the difference between the route you drew
+and the one the robot used to take, and it is worth:
+
+- **two fewer pivots** — and both of the deleted ones were in the open
+  4-way crossing, the single worst place on the course to turn, because
+  there is no wall on either side to square up against afterwards. Every
+  livelock this project ever had started in that square.
+- **the speed ceiling lifted**, 170 → 200 PWM, because Map 2 was what used
+  to break first.
+- **left hand and right hand producing the same route**, on all three maps.
+
+The honest limitation is in `config.h` beside the switch: straight-first on
+its own is not a complete coverage rule in a maze with **dead-end stubs**.
+None of these three maps has one — `build_maps.py` checks and will tell you
+in capital letters if a future map does.
 
 ---
 
@@ -148,6 +175,12 @@ Generated straight from the organisers' spreadsheet by
 The combined course is one line — `COURSE = [("map1", False), ("map3", True),
 ("map2", True)]`, where `True` mirrors that section so the gates line up.
 Change it, re-run, done.
+
+`build_maps.py` also prints, for each map, the route length, the number of
+pivots, whether the walk covers every square of road, and whether the map
+contains a dead end. It asserts that every sector line sits on a boundary
+the route actually crosses — a line the robot cannot reach is a point nobody
+can score, and the only symptom is a scoreboard quietly reading 7/9.
 
 ---
 
