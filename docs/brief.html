@@ -1,0 +1,729 @@
+<title>MazeRunner Build Brief</title>
+<style>
+  :root{
+    --paper:#F4F5F6; --surface:#FFFFFF; --surface-2:#FAFBFB;
+    --ink:#15181B; --ink-2:#4A5158; --ink-3:#7C848C;
+    --line:#DCE0E3; --line-strong:#B7BEC4;
+    --accent:#B96F07; --accent-soft:#FAEFDB;
+    --good:#1C7A47; --good-soft:#E4F1E9;
+    --warn:#A85B16; --warn-soft:#FBEEDF;
+    --bad:#AC3127;  --bad-soft:#FAE5E3;
+    --wall:#22262A; --floor:#FFFFFF; --trail:#2C6FD6;
+
+    --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#101316; --surface:#171B1F; --surface-2:#1C2126;
+      --ink:#E9EBED; --ink-2:#A4ACB4; --ink-3:#79818A;
+      --line:#272C31; --line-strong:#3C434A;
+      --accent:#E0A044; --accent-soft:#2A2013;
+      --good:#4CB57D; --good-soft:#13261C;
+      --warn:#D6893F; --warn-soft:#2A1F12;
+      --bad:#E2685C;  --bad-soft:#2B1614;
+      --wall:#050708; --floor:#C9CED3; --trail:#5C9BF0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#101316; --surface:#171B1F; --surface-2:#1C2126;
+    --ink:#E9EBED; --ink-2:#A4ACB4; --ink-3:#79818A;
+    --line:#272C31; --line-strong:#3C434A;
+    --accent:#E0A044; --accent-soft:#2A2013;
+    --good:#4CB57D; --good-soft:#13261C;
+    --warn:#D6893F; --warn-soft:#2A1F12;
+    --bad:#E2685C;  --bad-soft:#2B1614;
+    --wall:#050708; --floor:#C9CED3; --trail:#5C9BF0;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+  .col{max-width:68ch}
+
+  h1,h2,h3{text-wrap:balance;margin:0}
+  h1{font-size:clamp(2.4rem,6vw,4.1rem);line-height:1.02;letter-spacing:-.035em;font-weight:700}
+  h2{font-size:clamp(1.5rem,3vw,2.1rem);line-height:1.12;letter-spacing:-.024em;font-weight:700}
+  h3{font-size:1.06rem;letter-spacing:-.008em;font-weight:700}
+  p{margin:0}
+  a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line-strong)}
+  a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+  strong{font-weight:700}
+  code,.mono{font-family:var(--mono)}
+  .num{font-variant-numeric:tabular-nums}
+
+  .eyebrow{
+    font-family:var(--mono);font-size:.685rem;text-transform:uppercase;
+    letter-spacing:.19em;color:var(--ink-3);font-weight:500;
+  }
+
+  /* ---------- masthead ---------- */
+  header.mast{
+    border-bottom:1px solid var(--line);background:var(--surface);
+  }
+  .mast-in{display:flex;flex-direction:column;gap:34px;padding:52px 0 44px}
+  .mast-top{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:baseline;
+            justify-content:space-between}
+  .sub{font-size:clamp(1.02rem,1.9vw,1.22rem);color:var(--ink-2);max-width:60ch}
+
+  .verdict{
+    display:grid;gap:0;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));
+    border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--surface-2);
+  }
+  .vcell{padding:18px 20px;border-right:1px solid var(--line)}
+  .vcell:last-child{border-right:0}
+  .vcell .k{font-family:var(--mono);font-size:.66rem;letter-spacing:.17em;
+            text-transform:uppercase;color:var(--ink-3)}
+  .vcell .v{font-size:1.62rem;font-weight:700;letter-spacing:-.03em;margin-top:5px;
+            font-variant-numeric:tabular-nums;line-height:1.15}
+  .vcell .n{font-size:.86rem;color:var(--ink-2);margin-top:3px;line-height:1.45}
+
+  /* ---------- sections ---------- */
+  section{border-bottom:1px solid var(--line);padding:64px 0}
+  .shead{display:flex;gap:22px;align-items:flex-start;margin-bottom:30px}
+  .shead .idx{font-family:var(--mono);font-size:.8rem;color:var(--accent);
+              padding-top:.55em;letter-spacing:.06em;flex:none}
+  .shead .txt{display:flex;flex-direction:column;gap:9px}
+  .stack{display:flex;flex-direction:column;gap:18px}
+  .grid2{display:grid;gap:30px;grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
+  .grid3{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+        padding:22px 24px;display:flex;flex-direction:column;gap:11px}
+  .card p{color:var(--ink-2);font-size:.94rem}
+
+  .callout{border-left:3px solid var(--accent);background:var(--accent-soft);
+           padding:16px 20px;border-radius:0 3px 3px 0}
+  .callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+  .callout .lbl{font-family:var(--mono);font-size:.66rem;letter-spacing:.17em;
+                text-transform:uppercase;color:var(--ink-2);display:block;margin-bottom:6px}
+
+  /* ---------- tables ---------- */
+  .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:3px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:440px}
+  th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{font-family:var(--mono);font-size:.66rem;letter-spacing:.15em;text-transform:uppercase;
+           color:var(--ink-3);font-weight:500;background:var(--surface-2);white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0}
+  td.n{font-variant-numeric:tabular-nums;font-family:var(--mono);white-space:nowrap}
+  .ar{font-size:.95em;color:var(--ink-2);direction:rtl;unicode-bidi:isolate}
+
+  .pill{display:inline-block;font-family:var(--mono);font-size:.66rem;letter-spacing:.09em;
+        text-transform:uppercase;padding:3px 8px;border-radius:2px;white-space:nowrap;font-weight:600}
+  .pill.no{background:var(--bad-soft);color:var(--bad)}
+  .pill.ok{background:var(--good-soft);color:var(--good)}
+  .pill.mid{background:var(--warn-soft);color:var(--warn)}
+
+  /* ---------- diagrams ---------- */
+  figure{margin:0;display:flex;flex-direction:column;gap:12px}
+  .fig-body{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+            padding:22px;overflow-x:auto}
+  figcaption{font-size:.85rem;color:var(--ink-3);max-width:66ch}
+  svg{display:block;max-width:100%;height:auto}
+  .maprow{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
+  .mapcard{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+           display:flex;flex-direction:column}
+  .mapcard .art{padding:16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+  .mapcard .meta{padding:15px 18px;display:flex;flex-direction:column;gap:9px}
+  .mapcard h3{font-size:.98rem}
+  .stat{display:flex;justify-content:space-between;gap:14px;font-size:.85rem;
+        font-family:var(--mono);color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .stat b{color:var(--ink);font-weight:600}
+
+  ul.tight{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:7px;
+           color:var(--ink-2);font-size:.94rem}
+  ul.tight li::marker{color:var(--ink-3)}
+  ol.phases{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  ol.phases li{display:grid;grid-template-columns:64px 1fr;gap:20px;
+               padding:18px 0;border-top:1px solid var(--line)}
+  ol.phases li:first-child{border-top:0}
+  ol.phases .ph{font-family:var(--mono);font-size:.72rem;letter-spacing:.13em;
+                text-transform:uppercase;color:var(--accent);padding-top:.28em}
+  ol.phases .body{display:flex;flex-direction:column;gap:5px}
+  ol.phases .body p{color:var(--ink-2);font-size:.93rem}
+
+  footer{padding:44px 0 64px;color:var(--ink-3);font-size:.86rem;
+         display:flex;flex-direction:column;gap:8px}
+
+  .trailpath{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);
+             animation:draw 2.6s ease-out forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @media (prefers-reduced-motion:reduce){
+    .trailpath{animation:none;stroke-dashoffset:0}
+  }
+</style>
+
+<header class="mast">
+  <div class="wrap mast-in">
+    <div class="mast-top">
+      <div class="stack" style="gap:12px">
+        <span class="eyebrow">Robotics Navigation Challenge &nbsp;/&nbsp; build brief</span>
+        <h1>MazeRunner</h1>
+      </div>
+      <span class="eyebrow">Arduino Uno&nbsp;R3 &nbsp;·&nbsp; 3&thinsp;×&thinsp;HC-SR04 &nbsp;·&nbsp; MPU-6050</span>
+    </div>
+    <p class="sub">A maze robot whose simulator runs the real firmware. Everything below
+      is a measured result, not a plan — reproduce any of it with one command.</p>
+
+    <div class="verdict">
+      <div class="vcell">
+        <span class="k">Ask first</span>
+        <div class="v">269&nbsp;mm</div>
+        <div class="n">The circle the robot sweeps when it pivots. Passages under
+          270&nbsp;mm make turning impossible.</div>
+      </div>
+      <div class="vcell">
+        <span class="k">Gyro</span>
+        <div class="v">Buy it</div>
+        <div class="n">Legal under §2.2, ~20&nbsp;SAR, and worth about a third of
+          your sector points.</div>
+      </div>
+      <div class="vcell">
+        <span class="k">Memory module</span>
+        <div class="v">Not needed</div>
+        <div class="n">The Uno already has 2&nbsp;KB RAM and 1&nbsp;KB EEPROM. The map
+          costs 192&nbsp;bytes.</div>
+      </div>
+      <div class="vcell">
+        <span class="k">Budget</span>
+        <div class="v">~750&nbsp;SAR</div>
+        <div class="n">Parts, tools and the practice track. Full list in §4.</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ============================================================ 01 -->
+<section>
+  <div class="shead">
+    <span class="idx">01</span>
+    <div class="txt">
+      <span class="eyebrow">The measurement that comes before everything</span>
+      <h2>Can the robot turn around at all?</h2>
+    </div>
+  </div>
+
+  <div class="stack col" style="margin-bottom:30px">
+    <p>A two-wheel robot pivots about the middle of its wheel axle, and the corners of
+      the body sweep a circle. If that circle is wider than the passage, the robot
+      <strong>cannot turn</strong> — not "turns badly", cannot turn, no matter how good
+      the code is.</p>
+    <p>The rulebook (§4.1) allows passages of 200–400&nbsp;mm and calls the figure
+      "tentative, to be finalised with vendor". Our robot needs 269&nbsp;mm.</p>
+  </div>
+
+  <figure style="margin-bottom:28px">
+    <div class="fig-body">
+      <svg viewBox="0 0 1240 470" role="img"
+           aria-label="Scale drawing of the robot's pivot circle inside 200, 300 and 400 millimetre passages">
+        <g stroke-linecap="butt">
+          <!-- ============ 200 mm ============ -->
+          <rect x="20" y="20" width="260" height="380" fill="var(--floor)"/>
+          <rect x="20"  y="20" width="30" height="380" fill="var(--wall)"/>
+          <rect x="250" y="20" width="30" height="380" fill="var(--wall)"/>
+          <circle cx="150" cy="210" r="134.5" fill="none" stroke="var(--bad)"
+                  stroke-width="2.5" stroke-dasharray="7 6"/>
+          <rect x="70" y="102.5" width="160" height="215" rx="3"
+                fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+          <circle cx="150" cy="210" r="4" fill="var(--accent)"/>
+          <text x="150" y="435" text-anchor="middle" font-family="var(--mono)"
+                font-size="20" font-weight="700" fill="var(--ink)">200 mm</text>
+          <text x="150" y="458" text-anchor="middle" font-family="var(--mono)"
+                font-size="14.5" fill="var(--bad)">34 mm too narrow</text>
+
+          <!-- ============ 300 mm ============ -->
+          <rect x="340" y="20" width="360" height="380" fill="var(--floor)"/>
+          <rect x="340" y="20" width="30" height="380" fill="var(--wall)"/>
+          <rect x="670" y="20" width="30" height="380" fill="var(--wall)"/>
+          <circle cx="520" cy="210" r="134.5" fill="none" stroke="var(--warn)"
+                  stroke-width="2.5" stroke-dasharray="7 6"/>
+          <rect x="440" y="102.5" width="160" height="215" rx="3"
+                fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+          <circle cx="520" cy="210" r="4" fill="var(--accent)"/>
+          <text x="520" y="435" text-anchor="middle" font-family="var(--mono)"
+                font-size="20" font-weight="700" fill="var(--ink)">300 mm</text>
+          <text x="520" y="458" text-anchor="middle" font-family="var(--mono)"
+                font-size="14.5" fill="var(--warn)">16 mm each side</text>
+
+          <!-- ============ 400 mm ============ -->
+          <rect x="760" y="20" width="460" height="380" fill="var(--floor)"/>
+          <rect x="760"  y="20" width="30" height="380" fill="var(--wall)"/>
+          <rect x="1190" y="20" width="30" height="380" fill="var(--wall)"/>
+          <circle cx="990" cy="210" r="134.5" fill="none" stroke="var(--good)"
+                  stroke-width="2.5" stroke-dasharray="7 6"/>
+          <rect x="910" y="102.5" width="160" height="215" rx="3"
+                fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+          <circle cx="990" cy="210" r="4" fill="var(--accent)"/>
+          <!-- dimension line for the circle -->
+          <g stroke="var(--ink-3)" stroke-width="1.2">
+            <line x1="855.5" y1="60" x2="1124.5" y2="60"/>
+            <line x1="855.5" y1="52" x2="855.5" y2="68"/>
+            <line x1="1124.5" y1="52" x2="1124.5" y2="68"/>
+          </g>
+          <text x="990" y="48" text-anchor="middle" font-family="var(--mono)"
+                font-size="14.5" fill="var(--ink-3)">269 mm swept</text>
+          <text x="990" y="435" text-anchor="middle" font-family="var(--mono)"
+                font-size="20" font-weight="700" fill="var(--ink)">400 mm</text>
+          <text x="990" y="458" text-anchor="middle" font-family="var(--mono)"
+                font-size="14.5" fill="var(--good)">comfortable</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>Drawn to scale. Orange is the robot body (215&nbsp;×&nbsp;160&nbsp;mm,
+      axle centred); the dashed circle is what it sweeps turning on the spot.</figcaption>
+  </figure>
+
+  <div class="grid2">
+    <div class="stack">
+      <h3>Measured, not guessed</h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Passage</th><th>Can turn</th><th>Finished</th><th>Points</th></tr></thead>
+          <tbody>
+            <tr><td class="n">200 mm</td><td><span class="pill no">no</span></td><td class="n">0%</td><td class="n">0%</td></tr>
+            <tr><td class="n">250 mm</td><td><span class="pill no">no</span></td><td class="n">10%</td><td class="n">33%</td></tr>
+            <tr><td class="n">300 mm</td><td><span class="pill mid">tight</span></td><td class="n">60%</td><td class="n">72%</td></tr>
+            <tr><td class="n">350 mm</td><td><span class="pill ok">yes</span></td><td class="n">70%</td><td class="n">71%</td></tr>
+            <tr><td class="n">400 mm</td><td><span class="pill ok">yes</span></td><td class="n">70%</td><td class="n">78%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:.85rem;color:var(--ink-3)">5 maps × both wall-following
+        directions, per width. <code>python3 run.py --all --sweep-corridor</code></p>
+    </div>
+
+    <div class="stack">
+      <h3>Send this email today</h3>
+      <div class="callout bad">
+        <span class="lbl">Blocking question</span>
+        <p style="font-size:.94rem">What is the final passage width? A standard 2WD kit
+          robot sweeps ~270&nbsp;mm turning on the spot and cannot turn in a 200&nbsp;mm
+          passage.</p>
+      </div>
+      <ul class="tight">
+        <li>Is the Finish Zone always on the <strong>outer edge</strong>, or can it be an
+          enclosed chamber in the middle? (This one decides whether wall-following can
+          work at all — see §3.)</li>
+        <li>Is there a time limit per run, and a maximum robot size?</li>
+        <li>Are teams allowed to look at the map before their run?</li>
+        <li>Can we bring identical spare parts to swap in before inspection?</li>
+      </ul>
+      <p style="font-size:.9rem;color:var(--ink-2)">Three things shrink the circle and all
+        are free: centre the wheel axle, keep every add-on inside the wheel line, and mount
+        the battery on top rather than behind the axle.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 02 -->
+<section>
+  <div class="shead">
+    <span class="idx">02</span>
+    <div class="txt">
+      <span class="eyebrow">Which program to simulate with</span>
+      <h2>The simulator runs the firmware itself</h2>
+    </div>
+  </div>
+
+  <div class="stack col" style="margin-bottom:30px">
+    <p>You asked for a simulator good enough that you assemble once and go. Here is the
+      honest version: simulation gets you about 90% of the way, and the last 10% costs one
+      afternoon on a practice track. No simulator knows how your carpet grips.</p>
+    <p>What it does do is remove the seam where student robot projects usually fail — the
+      tested model drifting away from the shipped code. <code>nav_core.cpp</code> holds all
+      the navigation and no Arduino code at all, so it compiles <strong>twice</strong>: once
+      by the Arduino IDE onto the Uno, once by <code>g++</code> into a library the simulator
+      drives. What you watch is what you flash.</p>
+  </div>
+
+  <figure style="margin-bottom:30px">
+    <div class="fig-body">
+      <svg viewBox="0 0 900 250" role="img"
+           aria-label="Diagram: nav_core.cpp is compiled both onto the Arduino and into the simulator">
+        <g font-family="var(--mono)" font-size="14.5">
+          <rect x="300" y="18" width="300" height="52" rx="3" fill="var(--accent-soft)"
+                stroke="var(--accent)" stroke-width="2"/>
+          <text x="450" y="42" text-anchor="middle" fill="var(--ink)" font-weight="700"
+                font-size="15.5">nav_core.cpp</text>
+          <text x="450" y="60" text-anchor="middle" fill="var(--ink-2)" font-size="12.5">all the thinking · no Arduino code</text>
+
+          <g stroke="var(--line-strong)" stroke-width="1.6" fill="none">
+            <path d="M400 70 L400 96 L190 96 L190 122"/>
+            <path d="M500 70 L500 96 L710 96 L710 122"/>
+          </g>
+          <text x="255" y="90" text-anchor="middle" fill="var(--ink-3)" font-size="12">Arduino IDE</text>
+          <text x="648" y="90" text-anchor="middle" fill="var(--ink-3)" font-size="12">g++ -shared</text>
+
+          <rect x="60" y="122" width="260" height="52" rx="3" fill="var(--surface-2)"
+                stroke="var(--line-strong)" stroke-width="1.4"/>
+          <text x="190" y="146" text-anchor="middle" fill="var(--ink)" font-weight="700">MazeRunner.ino</text>
+          <text x="190" y="164" text-anchor="middle" fill="var(--ink-2)" font-size="12.5">pins · I2C · PWM · EEPROM</text>
+
+          <rect x="580" y="122" width="260" height="52" rx="3" fill="var(--surface-2)"
+                stroke="var(--line-strong)" stroke-width="1.4"/>
+          <text x="710" y="146" text-anchor="middle" fill="var(--ink)" font-weight="700">sim/run.py</text>
+          <text x="710" y="164" text-anchor="middle" fill="var(--ink-2)" font-size="12.5">physics · sonar · gyro · maze</text>
+
+          <g stroke="var(--line-strong)" stroke-width="1.6" fill="none">
+            <path d="M190 174 L190 202"/><path d="M710 174 L710 202"/>
+          </g>
+          <text x="190" y="222" text-anchor="middle" fill="var(--ink-2)">the real robot</text>
+          <text x="710" y="222" text-anchor="middle" fill="var(--ink-2)">an animated GIF</text>
+        </g>
+      </svg>
+    </div>
+  </figure>
+
+  <div class="scroll" style="margin-bottom:24px">
+    <table>
+      <thead><tr><th>Tool</th><th>Use it for</th><th>Setup</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>sim/</strong> <span style="color:var(--ink-3)">(this repo)</span></td>
+          <td>Navigation logic, tuning, strategy, the corridor-width risk. Runs your actual firmware.</td>
+          <td class="n">done</td>
+        </tr>
+        <tr>
+          <td><strong>Wokwi</strong> <span style="color:var(--ink-3)">wokwi.com, free</span></td>
+          <td>Simulates the AVR chip itself — proves the pin map, the I2C to the gyro, the loop timing, the SRAM budget. No physics, so it cannot tell you whether the robot navigates.</td>
+          <td class="n">30 min</td>
+        </tr>
+        <tr>
+          <td><strong>A practice track</strong></td>
+          <td>The last 10%: real carpet, real ultrasonic reflections, real battery sag.</td>
+          <td class="n">1 afternoon</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid3">
+    <div class="card">
+      <h3>Webots</h3>
+      <p>Free, proper 3D physics, has differential drive and IMUs built in. But controllers
+        use its own API, so you would be testing a second, different program. Right next
+        step after this competition, not during it.</p>
+    </div>
+    <div class="card">
+      <h3>Tinkercad Circuits</h3>
+      <p>Fine for showing a teammate how an H-bridge works. Too limited for three sensors
+        and an IMU.</p>
+    </div>
+    <div class="card">
+      <h3>Gazebo / ROS 2, CoppeliaSim, Simulink</h3>
+      <p>All excellent, all far too much machinery for an Arduino Uno with three ultrasonics.
+        Skip them.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 03 -->
+<section>
+  <div class="shead">
+    <span class="idx">03</span>
+    <div class="txt">
+      <span class="eyebrow">Reconstructed from your photos and driven</span>
+      <h2>The three maps</h2>
+    </div>
+  </div>
+
+  <div class="stack col" style="margin-bottom:28px">
+    <p>Blue is the path the robot actually drove. Green lines are sector points it scored,
+      dark lines are ones it missed. The shapes come from your photos — the exact
+      millimetres are a guess, and the maps are plain text you can re-trace in fifteen
+      minutes once you see the real maze.</p>
+  </div>
+
+  <div class="maprow" style="margin-bottom:28px"><div class="mapcard"><div class="art"><svg viewBox="0 0 3393 3393" role="img" aria-label="Map 1 - Inward Spiral: the path the robot drove"><rect width="3393" height="3393" fill="var(--floor)"/><g fill="var(--wall)"><rect x="468" y="2808" width="2457" height="117"/><rect x="468" y="2691" width="117" height="117"/><rect x="2808" y="2691" width="117" height="117"/><rect x="468" y="2574" width="117" height="117"/><rect x="2808" y="2574" width="117" height="117"/><rect x="468" y="2457" width="117" height="117"/><rect x="2808" y="2457" width="117" height="117"/><rect x="468" y="2340" width="117" height="117"/><rect x="936" y="2340" width="585" height="117"/><rect x="1872" y="2340" width="585" height="117"/><rect x="2808" y="2340" width="117" height="117"/><rect x="468" y="2223" width="117" height="117"/><rect x="936" y="2223" width="117" height="117"/><rect x="2340" y="2223" width="117" height="117"/><rect x="2808" y="2223" width="117" height="117"/><rect x="468" y="2106" width="117" height="117"/><rect x="936" y="2106" width="117" height="117"/><rect x="2340" y="2106" width="117" height="117"/><rect x="2808" y="2106" width="117" height="117"/><rect x="468" y="1989" width="117" height="117"/><rect x="936" y="1989" width="117" height="117"/><rect x="2340" y="1989" width="117" height="117"/><rect x="2808" y="1989" width="117" height="117"/><rect x="468" y="1872" width="117" height="117"/><rect x="936" y="1872" width="117" height="117"/><rect x="1404" y="1872" width="585" height="117"/><rect x="2340" y="1872" width="117" height="117"/><rect x="2808" y="1872" width="117" height="117"/><rect x="936" y="1755" width="117" height="117"/><rect x="1404" y="1755" width="117" height="117"/><rect x="1872" y="1755" width="117" height="117"/><rect x="2340" y="1755" width="117" height="117"/><rect x="2808" y="1755" width="117" height="117"/><rect x="936" y="1638" width="117" height="117"/><rect x="1404" y="1638" width="117" height="117"/><rect x="1872" y="1638" width="117" height="117"/><rect x="2340" y="1638" width="117" height="117"/><rect x="2808" y="1638" width="117" height="117"/><rect x="936" y="1521" width="117" height="117"/><rect x="1404" y="1521" width="117" height="117"/><rect x="1872" y="1521" width="117" height="117"/><rect x="2340" y="1521" width="117" height="117"/><rect x="2808" y="1521" width="117" height="117"/><rect x="468" y="1404" width="117" height="117"/><rect x="936" y="1404" width="117" height="117"/><rect x="1404" y="1404" width="117" height="117"/><rect x="1872" y="1404" width="117" height="117"/><rect x="2340" y="1404" width="117" height="117"/><rect x="2808" y="1404" width="117" height="117"/><rect x="468" y="1287" width="117" height="117"/><rect x="936" y="1287" width="117" height="117"/><rect x="2340" y="1287" width="117" height="117"/><rect x="2808" y="1287" width="117" height="117"/><rect x="468" y="1170" width="117" height="117"/><rect x="936" y="1170" width="117" height="117"/><rect x="2340" y="1170" width="117" height="117"/><rect x="2808" y="1170" width="117" height="117"/><rect x="468" y="1053" width="117" height="117"/><rect x="936" y="1053" width="117" height="117"/><rect x="2340" y="1053" width="117" height="117"/><rect x="2808" y="1053" width="117" height="117"/><rect x="468" y="936" width="117" height="117"/><rect x="936" y="936" width="1521" height="117"/><rect x="2808" y="936" width="117" height="117"/><rect x="468" y="819" width="117" height="117"/><rect x="2808" y="819" width="117" height="117"/><rect x="468" y="702" width="117" height="117"/><rect x="2808" y="702" width="117" height="117"/><rect x="468" y="585" width="117" height="117"/><rect x="2808" y="585" width="117" height="117"/><rect x="468" y="468" width="2457" height="117"/></g><line x1="526" y1="1872" x2="526" y2="1521" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="585" y1="2398" x2="936" y2="2398" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="2398" y1="2808" x2="2398" y2="2457" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="2457" y1="994" x2="2808" y2="994" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="1053" y1="1930" x2="1404" y2="1930" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="1930" y1="2340" x2="1930" y2="1989" stroke="var(--ink)" stroke-width="20" stroke-linecap="round"/><line x1="1521" y1="1463" x2="1872" y2="1463" stroke="var(--ink)" stroke-width="20" stroke-linecap="round"/><path d="M176 1696 L176 1696 L176 1696 L176 1696 L176 1696 L176 1696 L176 1696 L176 1696 L176 1696 L176 1696 L176 1696 L176 1696 L176 1696 L176 1696 L184 1697 L222 1697 L265 1697 L310 1697 L355 1697 L399 1697 L444 1697 L489 1697 L533 1697 L561 1697 L581 1696 L600 1696 L620 1696 L641 1696 L661 1696 L681 1695 L701 1695 L721 1695 L729 1695 L730 1695 L730 1695 L730 1695 L730 1695 L730 1695 L730 1695 L730 1695 L730 1695 L730 1695 L729 1696 L727 1708 L724 1726 L723 1731 L723 1732 L723 1732 L723 1732 L723 1732 L724 1721 L728 1683 L737 1640 L748 1596 L757 1553 L763 1508 L768 1464 L771 1419 L772 1374 L772 1330 L772 1285 L772 1240 L771 1195 L771 1150 L771 1106 L771 1061 L771 1016 L772 976 L771 952 L771 933 L770 913 L769 893 L768 873 L768 853 L768 833 L767 813 L766 795 L766 790 L766 789 L766 789 L766 789 L767 789 L767 789 L767 789 L767 789 L767 789 L767 789 L764 789 L748 792 L733 794 L731 794 L730 794 L730 794 L730 794 L730 794 L742 794 L780 791 L823 785 L867 777 L911 769 L955 763 L1000 759 L1045 757 L1090 757 L1134 757 L1179 758 L1224 760 L1268 760 L1313 761 L1358 762 L1402 762 L1447 761 L1492 760 L1537 760 L1581 759 L1626 759 L1671 758 L1716 758 L1760 758 L1805 758 L1850 759 L1894 760 L1939 760 L1984 759 L2029 758 L2074 758 L2118 758 L2163 757 L2208 756 L2253 756 L2298 756 L2342 756 L2387 756 L2421 756 L2443 756 L2462 756 L2482 755 L2502 754 L2522 753 L2542 751 L2562 750 L2582 749 L2601 749 L2606 748 L2607 748 L2608 749 L2608 749 L2608 749 L2608 749 L2608 749 L2608 749 L2608 749 L2608 749 L2608 747 L2604 732 L2600 717 L2599 714 L2599 713 L2599 713 L2599 713 L2599 713 L2601 727 L2607 766 L2616 809 L2626 852 L2636 896 L2643 940 L2647 985 L2649 1030 L2650 1074 L2650 1119 L2650 1164 L2649 1209 L2649 1253 L2648 1298 L2648 1343 L2648 1388 L2648 1433 L2649 1478 L2649 1522 L2650 1567 L2650 1612 L2650 1657 L2651 1702 L2651 1747 L2651 1791 L2650 1836 L2650 1881 L2649 1925 L2649 1970 L2649 2015 L2649 2060 L2650 2104 L2650 2149 L2651 2194 L2652 2239 L2652 2284 L2653 2328 L2653 2373 L2653 2413 L2653 2437 L2654 2457 L2654 2476 L2656 2496 L2657 2516 L2658 2536 L2660 2556 L2661 2576 L2662 2596 L2663 2606 L2663 2608 L2663 2608 L2663 2609 L2662 2609 L2662 2609 L2662 2609 L2662 2609 L2662 2609 L2662 2609 L2662 2609 L2673 2605 L2680 2602 L2680 2602 L2680 2602 L2680 2602 L2680 2602 L2680 2602 L2669 2605 L2632 2615 L2590 2629 L2548 2643 L2504 2655 L2460 2663 L2416 2668 L2371 2670 L2326 2671 L2281 2672 L2236 2672 L2192 2671 L2147 2670 L2102 2668 L2057 2667 L2012 2666 L1968 2666 L1923 2666 L1878 2666 L1838 2666 L1814 2667 L1793 2668 L1773 2670 L1753 2672 L1733 2674 L1713 2676 L1689 2678 L1650 2681 L1606 2683 L1561 2683 L1516 2682 L1471 2680 L1426 2677 L1382 2675 L1337 2672 L1292 2670 L1248 2669 L1203 2668 L1158 2667 L1113 2667 L1069 2668 L1024 2668 L982 2669 L956 2669 L936 2669 L916 2671 L897 2672 L877 2674 L857 2675 L837 2676 L817 2677 L797 2679 L788 2679 L787 2679 L786 2679 L786 2679 L786 2679 L786 2679 L786 2679 L788 2680 L800 2687 L819 2694 L817 2693 L794 2685 L779 2674 L765 2658 L756 2640 L750 2621 L743 2602 L736 2583 L730 2564 L725 2544 L720 2522 L712 2484 L706 2440 L701 2396 L696 2351 L691 2306 L688 2262 L686 2217 L687 2172 L687 2127 L689 2082 L690 2038 L690 1993 L691 1948 L691 1903 L691 1860 L692 1835 L693 1814 L694 1794 L695 1773 L696 1753 L696 1731 L695 1707 L694 1667 L696 1623 L698 1578 L700 1533 L701 1489 L701 1444 L700 1399 L698 1354 L697 1310 L696 1265 L694 1220 L694 1175 L694 1131 L694 1086 L694 1041 L694 996 L694 966 L693 944 L693 925 L692 905 L691 886 L689 866 L688 846 L686 826 L685 806 L683 785 L682 778 L682 777 L682 777 L682 777 L682 776 L682 776 L682 776 L682 776 L682 776 L682 777 L682 777 L682 777 L683 775 L683 770 L684 765 L685 760 L686 755 L688 750 L689 745 L690 739 L693 731 L695 725 L695 725 L695 725 L695 725 L695 725 L695 725 L695 724 L695 724 L695 724 L692 735 L691 755 L694 773 L691 757 L693 730 L694 725 L694 725 L694 724 L694 724 L695 724 L695 724 L695 724 L695 724 L695 724 L695 724 L695 724 L695 724 L694 724 L694 724 L694 724 L694 724 L695 724 L694 724 L694 724 L694 724 L695 724 L695 724 L695 724 L695 725 L695 725 L695 725 L695 725 L695 725 L695 725 L695 725 L695 725 L697 731 L699 737 L700 740 L699 738 L698 735 L698 733 L698 733 L698 733 L698 733 L698 733 L698 732 L698 732 L698 732 L698 732 L698 732 L698 732 L698 732 L698 732 L698 733 L698 733 L698 732 L698 732 L698 732 L698 732 L698 732 L698 732 L698 732 L698 732 L698 732 L698 732 L698 732 L698 732 L696 737 L693 755 L694 776 L693 774 L693 749 L698 729 L700 725 L700 725 L700 725 L700 725 L700 725 L700 725 L700 726 L700 726 L700 726 L700 726 L700 726 L699 722 L698 720 L698 719 L698 720 L698 720 L698 720 L698 720 L698 720 L698 720 L698 720 L698 720 L699 722 L705 737 L711 751 L712 754 L712 755 L712 755 L712 755 L712 755 L712 755 L718 764 L725 782 L727 801 L726 786 L717 762 L714 757 L714 757 L714 757 L714 757 L722 766 L738 778 L754 785 L744 783 L727 781 L722 781 L722 781 L722 781 L722 781 L723 780 L723 780 L723 780 L723 780 L723 780 L723 780 L723 778 L723 762 L724 747 L724 744 L724 743 L724 743 L724 743 L724 743 L724 743 L728 771 L735 813 L742 857 L748 901 L752 946 L757 990 L762 1035 L767 1080 L770 1124 L773 1169 L775 1214 L776 1258 L777 1303 L777 1348 L778 1392 L778 1437 L777 1482 L777 1527 L777 1561 L778 1583 L779 1603 L781 1623 L782 1643 L783 1663 L785 1684 L786 1719 L788 1763 L791 1807 L793 1852 L793 1897 L792 1942 L789 1986 L787 2031 L784 2076 L782 2121 L780 2165 L779 2210 L778 2255 L777 2300 L776 2344 L776 2389 L776 2423 L776 2446 L776 2465 L775 2485 L775 2505 L774 2525 L772 2545 L771 2565 L770 2585 L770 2600 L770 2602 L770 2602 L770 2602 L770 2602 L769 2602 L769 2602 L769 2602 L769 2602 L769 2602 L769 2602 L763 2601 L745 2600 L734 2600 L732 2600 L732 2600 L732 2600 L732 2600 L732 2600 L732 2600 L746 2598 L785 2596 L829 2599 L874 2604 L918 2610 L962 2615 L1007 2618 L1052 2619 L1096 2619 L1141 2618 L1186 2617 L1231 2617 L1276 2616 L1320 2615 L1365 2615 L1410 2614 L1455 2613 L1499 2613 L1542 2613 L1568 2613 L1589 2614 L1609 2615 L1629 2615 L1649 2615 L1669 2614 L1687 2615 L1691 2615 L1692 2615 L1691 2615 L1691 2615 L1691 2615 L1691 2615 L1691 2615 L1691 2615 L1691 2615 L1691 2615 L1691 2619 L1690 2635 L1690 2649 L1690 2652 L1690 2653 L1690 2653 L1690 2653 L1690 2653 L1689 2644 L1684 2607 L1679 2564 L1674 2520 L1671 2475 L1670 2430 L1672 2388 L1673 2362 L1675 2343 L1675 2323 L1674 2303 L1671 2283 L1669 2263 L1667 2244 L1665 2224 L1663 2207 L1663 2203 L1662 2203 L1663 2203 L1663 2203 L1663 2203 L1663 2203 L1663 2203 L1663 2203 L1663 2203 L1663 2203 L1667 2204 L1684 2205 L1698 2206 L1700 2206 L1700 2206 L1700 2206 L1700 2206 L1701 2206 L1675 2207 L1633 2204 L1589 2199 L1544 2192 L1500 2185 L1457 2180 L1429 2177 L1408 2176 L1389 2175 L1369 2176 L1349 2176 L1329 2177 L1309 2178 L1289 2179 L1270 2180 L1252 2181 L1247 2181 L1246 2181 L1245 2181 L1245 2181 L1245 2181 L1245 2181 L1245 2181 L1245 2181 L1245 2181 L1245 2181 L1246 2183 L1250 2199 L1254 2213 L1255 2216 L1255 2216 L1255 2216 L1255 2216 L1256 2224 L1256 2230 L1256 2230 L1256 2202 L1251 2160 L1243 2117 L1234 2073 L1225 2029 L1218 1985 L1214 1940 L1212 1895 L1211 1851 L1211 1806 L1212 1761 L1213 1716 L1214 1672 L1215 1627 L1215 1582 L1216 1537 L1216 1493 L1216 1450 L1216 1425 L1215 1401 L1215 1381 L1214 1361 L1212 1341 L1211 1321 L1210 1301 L1208 1281 L1207 1261 L1207 1253 L1207 1251 L1207 1251 L1207 1250 L1208 1250 L1208 1250 L1208 1250 L1208 1250 L1208 1250 L1208 1250 L1208 1250 L1195 1254 L1178 1259 L1178 1259 L1178 1259 L1178 1259 L1178 1259 L1178 1259 L1178 1259 L1180 1258 L1210 1255 L1252 1248 L1296 1240 L1340 1231 L1384 1223 L1428 1218 L1473 1215 L1518 1213 L1552 1213 L1574 1212 L1595 1211 L1615 1210 L1635 1209 L1655 1209 L1675 1208 L1701 1207 L1742 1206 L1787 1206 L1832 1206 L1876 1207 L1921 1209 L1955 1211 L1977 1213 L1997 1214 L2016 1214 L2036 1214 L2056 1214 L2076 1213 L2096 1213 L2116 1212 L2136 1212 L2151 1212 L2154 1212 L2154 1212 L2155 1212 L2155 1212 L2155 1212 L2155 1213 L2155 1213 L2155 1213 L2155 1213 L2155 1213 L2154 1207 L2150 1189 L2147 1179 L2147 1177 L2147 1177 L2147 1177 L2147 1177 L2147 1177 L2147 1177 L2148 1199 L2152 1240 L2158 1284 L2163 1328 L2168 1373 L2172 1418 L2174 1463 L2174 1507 L2173 1552 L2172 1597 L2171 1642 L2171 1686 L2170 1731 L2170 1776 L2169 1821 L2169 1866 L2169 1910 L2169 1949 L2169 1974 L2169 1994 L2170 2014 L2171 2034 L2173 2054 L2174 2074 L2175 2093 L2177 2114 L2178 2130 L2178 2133 L2178 2134 L2178 2134 L2177 2135 L2177 2135 L2177 2135 L2177 2135 L2177 2135 L2177 2135" fill="none" stroke="var(--trail)" stroke-width="24" stroke-linejoin="round" stroke-linecap="round" opacity="0.9" class="trailpath" style="--len:16814"/></svg></div><div class="meta"><h3>Map 1 - Inward Spiral</h3><div class="stat"><span>sector points</span><b>5 / 7</b></div><div class="stat"><span>run</span><b>200 s &nbsp;<span class="pill mid">timed out</span></b></div><p style="font-size:.85rem;color:var(--ink-3);line-height:1.5">Wall-following can never reach a goal enclosed in the middle. Memory mode still collects most of the lines.</p></div></div><div class="mapcard"><div class="art"><svg viewBox="0 0 3744 2925" role="img" aria-label="Map 2 - Serpentine: the path the robot drove"><rect width="3744" height="2925" fill="var(--floor)"/><g fill="var(--wall)"><rect x="468" y="2340" width="2808" height="117"/><rect x="3159" y="2223" width="117" height="117"/><rect x="3159" y="2106" width="117" height="117"/><rect x="3159" y="1989" width="117" height="117"/><rect x="468" y="1872" width="2340" height="117"/><rect x="3159" y="1872" width="117" height="117"/><rect x="468" y="1755" width="117" height="117"/><rect x="3159" y="1755" width="117" height="117"/><rect x="468" y="1638" width="117" height="117"/><rect x="3159" y="1638" width="117" height="117"/><rect x="468" y="1521" width="117" height="117"/><rect x="3159" y="1521" width="117" height="117"/><rect x="468" y="1404" width="117" height="117"/><rect x="936" y="1404" width="2340" height="117"/><rect x="468" y="1287" width="117" height="117"/><rect x="3159" y="1287" width="117" height="117"/><rect x="468" y="1170" width="117" height="117"/><rect x="3159" y="1170" width="117" height="117"/><rect x="468" y="1053" width="117" height="117"/><rect x="3159" y="1053" width="117" height="117"/><rect x="468" y="936" width="2340" height="117"/><rect x="3159" y="936" width="117" height="117"/><rect x="3159" y="819" width="117" height="117"/><rect x="3159" y="702" width="117" height="117"/><rect x="3159" y="585" width="117" height="117"/><rect x="468" y="468" width="2808" height="117"/></g><line x1="526" y1="936" x2="526" y2="585" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="1404" y1="936" x2="1404" y2="585" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="2340" y1="936" x2="2340" y2="585" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="2866" y1="1404" x2="3159" y2="1404" stroke="var(--ink)" stroke-width="20" stroke-linecap="round"/><line x1="1872" y1="1404" x2="1872" y2="1053" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="936" y1="1404" x2="936" y2="1053" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="585" y1="1696" x2="936" y2="1696" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="1872" y1="1872" x2="1872" y2="1521" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="2808" y1="1872" x2="2808" y2="1521" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="2340" y1="2340" x2="2340" y2="1989" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="1404" y1="2340" x2="1404" y2="1989" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="526" y1="2340" x2="526" y2="1989" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><path d="M176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L184 761 L222 761 L265 761 L310 761 L354 762 L399 762 L444 762 L489 762 L534 762 L579 762 L623 761 L668 761 L713 762 L758 762 L803 762 L847 762 L892 763 L937 763 L982 763 L1026 763 L1071 762 L1116 761 L1161 761 L1206 760 L1251 760 L1295 759 L1340 759 L1385 759 L1430 759 L1475 758 L1519 758 L1564 758 L1609 758 L1654 758 L1699 758 L1743 759 L1788 759 L1833 759 L1878 759 L1922 758 L1967 758 L2012 758 L2057 758 L2102 758 L2146 757 L2191 757 L2236 756 L2281 755 L2326 754 L2370 753 L2415 752 L2460 751 L2505 751 L2550 751 L2594 750 L2639 750 L2684 750 L2729 750 L2767 750 L2793 750 L2812 750 L2832 749 L2852 747 L2872 746 L2892 744 L2912 743 L2932 742 L2951 740 L2957 740 L2959 740 L2959 740 L2959 741 L2960 741 L2960 741 L2960 741 L2960 741 L2960 741 L2960 741 L2959 740 L2955 726 L2950 712 L2950 712 L2950 712 L2950 712 L2950 712 L2950 712 L2954 731 L2964 770 L2976 813 L2989 855 L3000 899 L3008 943 L3013 988 L3014 1021 L3015 1043 L3015 1063 L3016 1082 L3017 1102 L3018 1122 L3019 1142 L3020 1162 L3022 1182 L3023 1197 L3023 1200 L3023 1201 L3023 1202 L3023 1202 L3023 1202 L3023 1202 L3023 1202 L3022 1202 L3023 1202 L3026 1200 L3026 1200 L3023 1202 L3001 1211 L2962 1225 L2920 1240 L2877 1252 L2833 1261 L2789 1266 L2744 1269 L2699 1269 L2654 1269 L2610 1268 L2565 1268 L2520 1267 L2475 1267 L2431 1266 L2386 1266 L2341 1266 L2296 1266 L2252 1267 L2207 1267 L2162 1268 L2117 1268 L2072 1269 L2027 1269 L1983 1269 L1938 1269 L1893 1269 L1848 1270 L1803 1270 L1759 1270 L1714 1271 L1669 1271 L1624 1272 L1580 1272 L1535 1272 L1490 1272 L1445 1272 L1400 1273 L1356 1273 L1311 1273 L1266 1274 L1221 1274 L1176 1274 L1132 1275 L1087 1275 L1042 1276 L997 1276 L963 1277 L942 1277 L922 1276 L902 1275 L882 1274 L862 1273 L842 1272 L822 1272 L802 1271 L790 1271 L788 1271 L788 1271 L788 1271 L789 1271 L789 1270 L789 1270 L789 1270 L789 1270 L789 1270 L789 1270 L787 1261 L785 1243 L784 1235 L783 1233 L783 1233 L783 1233 L783 1233 L783 1233 L783 1233 L781 1224 L778 1205 L781 1187 L775 1210 L768 1251 L768 1295 L772 1340 L778 1385 L784 1429 L791 1473 L795 1500 L798 1521 L799 1540 L801 1561 L803 1581 L805 1601 L806 1621 L806 1641 L806 1661 L806 1674 L806 1676 L806 1676 L806 1676 L805 1675 L805 1675 L805 1675 L805 1675 L805 1675 L805 1675 L805 1675 L796 1677 L777 1685 L761 1697 L763 1695 L777 1683 L793 1672 L809 1660 L825 1648 L841 1636 L856 1623 L862 1619 L862 1618 L862 1619 L862 1619 L862 1619 L862 1619 L862 1619 L862 1619 L862 1619 L862 1619 L862 1619 L862 1619 L862 1620 L858 1634 L849 1652 L843 1660 L853 1649 L861 1638 L863 1635 L863 1635 L864 1635 L864 1635 L864 1635 L865 1635 L865 1635 L865 1635 L865 1635 L865 1635 L864 1629 L861 1612 L859 1601 L859 1599 L859 1599 L859 1599 L859 1599 L857 1586 L851 1567 L842 1554 L851 1568 L858 1590 L859 1604 L859 1608 L860 1612 L860 1616 L860 1620 L860 1627 L861 1644 L860 1664 L857 1683 L853 1703 L850 1715 L849 1717 L849 1717 L849 1717 L849 1716 L848 1716 L848 1716 L848 1716 L848 1716 L848 1716 L848 1716 L839 1718 L821 1721 L813 1723 L812 1723 L811 1723 L811 1723 L811 1723 L811 1723 L811 1723 L811 1723 L817 1721 L838 1712 L869 1700 L910 1687 L953 1676 L997 1666 L1041 1656 L1085 1649 L1130 1643 L1174 1639 L1219 1636 L1264 1634 L1309 1633 L1354 1632 L1399 1632 L1443 1633 L1488 1633 L1533 1633 L1578 1633 L1623 1633 L1667 1633 L1712 1633 L1757 1631 L1802 1629 L1846 1627 L1891 1626 L1936 1626 L1981 1626 L2026 1627 L2070 1628 L2115 1629 L2160 1629 L2205 1629 L2250 1629 L2294 1628 L2339 1628 L2384 1628 L2429 1628 L2474 1628 L2518 1628 L2563 1628 L2608 1628 L2653 1627 L2697 1627 L2742 1627 L2776 1626 L2798 1626 L2817 1626 L2837 1625 L2857 1623 L2877 1622 L2897 1620 L2917 1619 L2937 1617 L2954 1616 L2958 1615 L2959 1615 L2959 1615 L2959 1615 L2959 1615 L2959 1615 L2959 1615 L2959 1615 L2959 1615 L2959 1615 L2959 1615 L2959 1615 L2959 1615 L2959 1615 L2964 1616 L2968 1617 L2973 1618 L2978 1618 L2983 1619 L2988 1620 L2992 1621 L2998 1622 L3003 1624 L3009 1625 L3010 1625 L3010 1625 L3010 1625 L3010 1625 L3010 1625 L3010 1625 L3010 1625 L3009 1625 L2993 1623 L2972 1624 L2972 1624 L2997 1624 L3012 1627 L3014 1627 L3014 1627 L3014 1627 L3014 1627 L3014 1627 L3014 1627 L3014 1627 L3015 1628 L3017 1628 L3017 1628 L3016 1628 L3016 1628 L3016 1628 L3016 1628 L3016 1628 L3013 1629 L3008 1631 L3002 1633 L3005 1632 L3018 1628 L3021 1627 L3022 1627 L3022 1627 L3022 1627 L3022 1627 L3023 1627 L3023 1627 L3022 1627 L3022 1627 L3022 1627 L3022 1627 L3023 1627 L3023 1627 L3023 1627 L3023 1627 L3023 1627 L3023 1627 L3014 1625 L2994 1624 L2978 1627 L2996 1624 L3020 1627 L3022 1628 L3022 1628 L3021 1628 L3021 1628 L3021 1628 L3021 1628 L3021 1628 L3021 1628 L3021 1628 L3021 1628 L3020 1628 L3007 1632 L2990 1637 L2986 1638 L2985 1638 L2985 1638 L2985 1639 L2985 1639 L2985 1639 L2985 1639 L2984 1639 L2969 1644 L2949 1646 L2939 1646 L2960 1646 L2983 1640 L2983 1640 L2983 1640 L2983 1640 L2982 1640 L2975 1644 L2966 1650 L2958 1656 L2959 1655 L2959 1655 L2959 1655 L2958 1656 L2949 1666 L2932 1677 L2920 1682 L2936 1675 L2953 1665 L2966 1654 L2966 1654 L2966 1654 L2966 1654 L2965 1655 L2955 1668 L2946 1688 L2944 1697 L2946 1683 L2951 1664 L2954 1654 L2954 1653 L2954 1653 L2954 1654 L2954 1654 L2954 1654 L2954 1654 L2954 1654 L2955 1655 L2961 1669 L2964 1689 L2964 1700 L2964 1683 L2959 1662 L2956 1655 L2956 1654 L2956 1654 L2956 1654 L2956 1655 L2956 1655 L2956 1655 L2956 1655 L2956 1655 L2956 1655 L2956 1655 L2956 1655 L2956 1655 L2956 1655 L2956 1655 L2956 1655 L2956 1655 L2956 1656 L2957 1656 L2957 1656 L2958 1656 L2958 1656 L2959 1655 L2959 1655 L2959 1654 L2959 1654 L2959 1654 L2959 1654 L2959 1654 L2959 1654 L2959 1654 L2959 1654 L2959 1654 L2959 1654 L2959 1653 L2958 1641 L2957 1634 L2957 1634 L2957 1634 L2957 1634 L2957 1634 L2957 1634 L2957 1634 L2957 1634 L2959 1650 L2967 1689 L2979 1732 L2993 1774 L3005 1817 L3014 1861 L3019 1906 L3022 1946 L3022 1970 L3023 1989 L3024 2009 L3025 2029 L3026 2049 L3027 2069 L3028 2089 L3029 2109 L3030 2126 L3030 2130 L3030 2131 L3030 2131 L3030 2131 L3030 2131 L3030 2131 L3030 2131 L3030 2132 L3030 2132 L3030 2132 L3028 2134 L3016 2145 L3000 2157 L2982 2166 L2963 2173 L2944 2180 L2925 2187 L2906 2193 L2887 2198 L2867 2203 L2848 2208 L2816 2214 L2774 2222 L2730 2228 L2685 2233 L2640 2237 L2596 2239 L2551 2240 L2506 2241 L2461 2241 L2417 2241 L2372 2241 L2327 2241 L2282 2241 L2238 2241 L2193 2241 L2148 2241 L2103 2240 L2059 2240 L2014 2239 L1969 2239 L1925 2239 L1880 2239 L1835 2239 L1790 2239 L1745 2239 L1701 2240 L1656 2240 L1611 2240 L1566 2241 L1521 2241 L1476 2241 L1432 2241 L1387 2241 L1342 2240 L1297 2240 L1252 2240 L1208 2241 L1163 2241 L1118 2241 L1073 2241 L1029 2241 L984 2241 L939 2241 L894 2241 L849 2241 L805 2241 L760 2242 L715 2242 L670 2242 L625 2243 L581 2243 L536 2243 L491 2244" fill="none" stroke="var(--trail)" stroke-width="24" stroke-linejoin="round" stroke-linecap="round" opacity="0.9" class="trailpath" style="--len:12724"/></svg></div><div class="meta"><h3>Map 2 - Serpentine</h3><div class="stat"><span>sector points</span><b>11 / 12</b></div><div class="stat"><span>run</span><b>156 s &nbsp;<span class="pill ok">finished</span></b></div><p style="font-size:.85rem;color:var(--ink-3);line-height:1.5">Trémaux memory scores 9.8 of 12 here on average; plain wall-following manages 8.0.</p></div></div><div class="mapcard"><div class="art"><svg viewBox="0 0 3744 3042" role="img" aria-label="Map 3 - Island Loop: the path the robot drove"><rect width="3744" height="3042" fill="var(--floor)"/><g fill="var(--wall)"><rect x="468" y="2457" width="2808" height="117"/><rect x="3159" y="2340" width="117" height="117"/><rect x="3159" y="2223" width="117" height="117"/><rect x="3159" y="2106" width="117" height="117"/><rect x="468" y="1989" width="117" height="117"/><rect x="936" y="1989" width="1872" height="117"/><rect x="3159" y="1989" width="117" height="117"/><rect x="468" y="1872" width="117" height="117"/><rect x="936" y="1872" width="1872" height="117"/><rect x="3159" y="1872" width="117" height="117"/><rect x="468" y="1755" width="117" height="117"/><rect x="936" y="1755" width="1872" height="117"/><rect x="3159" y="1755" width="117" height="117"/><rect x="468" y="1638" width="117" height="117"/><rect x="936" y="1638" width="1872" height="117"/><rect x="3159" y="1638" width="117" height="117"/><rect x="468" y="1521" width="2340" height="117"/><rect x="3159" y="1521" width="117" height="117"/><rect x="468" y="1404" width="117" height="117"/><rect x="936" y="1404" width="1872" height="117"/><rect x="3159" y="1404" width="117" height="117"/><rect x="468" y="1287" width="117" height="117"/><rect x="936" y="1287" width="1872" height="117"/><rect x="3159" y="1287" width="117" height="117"/><rect x="468" y="1170" width="117" height="117"/><rect x="936" y="1170" width="1872" height="117"/><rect x="3159" y="1170" width="117" height="117"/><rect x="468" y="1053" width="117" height="117"/><rect x="936" y="1053" width="1872" height="117"/><rect x="3159" y="1053" width="117" height="117"/><rect x="468" y="936" width="117" height="117"/><rect x="936" y="936" width="1872" height="117"/><rect x="3159" y="936" width="117" height="117"/><rect x="3159" y="819" width="117" height="117"/><rect x="3159" y="702" width="117" height="117"/><rect x="3159" y="585" width="117" height="117"/><rect x="468" y="468" width="2808" height="117"/></g><line x1="526" y1="936" x2="526" y2="585" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="1170" y1="936" x2="1170" y2="585" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="2106" y1="936" x2="2106" y2="585" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="2808" y1="936" x2="3159" y2="936" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="2808" y1="1521" x2="3159" y2="1521" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="2808" y1="2106" x2="3159" y2="2106" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="2340" y1="2457" x2="2340" y2="2106" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="1404" y1="2457" x2="1404" y2="2106" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><line x1="526" y1="2457" x2="526" y2="2106" stroke="var(--good)" stroke-width="26" stroke-linecap="round"/><path d="M176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L176 760 L184 761 L222 761 L265 761 L310 761 L355 762 L400 762 L444 762 L489 762 L534 762 L579 762 L619 762 L643 762 L664 761 L684 759 L704 758 L724 757 L744 756 L766 755 L806 754 L849 753 L894 752 L939 751 L984 752 L1028 754 L1073 756 L1118 757 L1163 759 L1208 761 L1253 762 L1298 762 L1342 762 L1387 762 L1432 762 L1477 762 L1522 762 L1567 762 L1611 763 L1656 763 L1701 763 L1746 762 L1790 762 L1835 762 L1880 762 L1925 762 L1970 763 L2015 763 L2059 763 L2104 763 L2149 763 L2194 763 L2238 762 L2283 762 L2328 761 L2373 761 L2418 761 L2462 761 L2507 761 L2552 761 L2597 761 L2642 761 L2686 761 L2731 761 L2768 762 L2791 762 L2811 761 L2830 760 L2850 759 L2870 758 L2890 756 L2910 755 L2930 754 L2946 753 L2950 753 L2951 753 L2951 753 L2951 753 L2952 753 L2952 753 L2952 753 L2952 753 L2952 753 L2950 747 L2941 730 L2930 716 L2938 724 L2949 741 L2957 760 L2962 780 L2966 799 L2970 819 L2974 839 L2977 858 L2980 878 L2982 898 L2984 922 L2985 962 L2986 1006 L2987 1051 L2987 1096 L2987 1140 L2987 1185 L2987 1230 L2987 1275 L2987 1320 L2987 1364 L2987 1409 L2987 1454 L2987 1499 L2987 1544 L2987 1588 L2988 1633 L2988 1678 L2988 1723 L2987 1767 L2988 1812 L2988 1857 L2988 1902 L2988 1946 L2988 1991 L2988 2036 L2988 2073 L2988 2102 L2989 2123 L2989 2143 L2990 2163 L2991 2183 L2993 2203 L2994 2223 L2995 2243 L2996 2262 L2997 2267 L2997 2268 L2996 2269 L2996 2269 L2996 2269 L2996 2269 L2996 2269 L2996 2269 L2996 2269 L2996 2269 L2998 2269 L3013 2265 L3028 2261 L3031 2260 L3031 2260 L3032 2260 L3031 2260 L3031 2260 L3031 2260 L3006 2263 L2964 2269 L2921 2277 L2877 2285 L2833 2292 L2788 2296 L2744 2298 L2699 2299 L2654 2298 L2609 2297 L2564 2297 L2520 2296 L2475 2295 L2430 2294 L2385 2294 L2340 2293 L2296 2293 L2251 2292 L2206 2292 L2161 2293 L2117 2294 L2072 2294 L2027 2295 L1982 2295 L1938 2294 L1893 2294 L1848 2294 L1803 2294 L1758 2294 L1714 2294 L1669 2295 L1624 2295 L1579 2295 L1535 2296 L1490 2295 L1445 2295 L1400 2296 L1355 2296 L1310 2296 L1266 2296 L1221 2296 L1176 2295 L1132 2296 L1087 2296 L1042 2296 L997 2296 L953 2296 L912 2296 L888 2297 L868 2298 L847 2299 L827 2300 L807 2302 L787 2303 L764 2304 L724 2306 L680 2307 L635 2309 L590 2309 L545 2308 L501 2306" fill="none" stroke="var(--trail)" stroke-width="24" stroke-linejoin="round" stroke-linecap="round" opacity="0.9" class="trailpath" style="--len:7006"/></svg></div><div class="meta"><h3>Map 3 - Island Loop</h3><div class="stat"><span>sector points</span><b>9 / 9</b></div><div class="stat"><span>run</span><b>54 s &nbsp;<span class="pill ok">finished</span></b></div><p style="font-size:.85rem;color:var(--ink-3);line-height:1.5">Every sector line, every seed, no scrapes. This is what a solved map looks like.</p></div></div></div>
+
+  <div class="grid2">
+    <div class="callout">
+      <span class="lbl">Why this changes your strategy</span>
+      <p style="font-size:.95rem">§6.1 awards a point per sector line all three wheels
+        cross, and time is only a tie-breaker. <strong>Finishing is not required to
+        score.</strong> A robot that never jams and keeps crossing lines beats one that
+        solves two maps perfectly and wedges on the third.</p>
+    </div>
+    <div class="stack">
+      <h3>The one shape wall-following cannot solve</h3>
+      <p style="color:var(--ink-2);font-size:.94rem">If a finish is a chamber in the
+        <em>middle</em>, enclosed by its own ring of wall — which is what photo 1 looks
+        like — then no wall-following robot can ever reach it. The goal is not connected to
+        the wall you are holding. That is maze theory, not a bug.</p>
+      <p style="color:var(--ink-2);font-size:.94rem">Our memory mode still collects 5–6 of
+        that map's 7 sector points. And if the real map 1 has its finish gate on the outer
+        edge, as the striped marking suggests, the problem disappears — hence question 2 in
+        the email.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 04 -->
+<section>
+  <div class="shead">
+    <span class="idx">04</span>
+    <div class="txt">
+      <span class="eyebrow">Two questions you asked</span>
+      <h2>The gyro, and the memory you already own</h2>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="stack">
+      <h3>Direction sensor — yes, buy two</h3>
+      <p style="color:var(--ink-2);font-size:.95rem">An MPU-6050 is a sensor, not a
+        microcontroller, so §2.2 explicitly permits it ("use of multiple sensors"). What it
+        buys you:</p>
+      <ul class="tight">
+        <li><strong>Turns that are actually 90°.</strong> Without it you run the motors in
+          opposite directions for 400&nbsp;ms and hope — wrong by 5–15° every time, and it
+          depends on battery voltage and floor friction. Four corners in, the robot is 40°
+          crooked and wedges.</li>
+        <li><strong>Straight lines.</strong> Your two TT motors are not matched; in
+          simulation the right one runs about 6% weak. Without a heading reference the
+          robot curves into a wall down a long corridor.</li>
+        <li><strong>Turning in a doorway,</strong> where there are no side walls to
+          reference and the gyro is the only thing that knows which way you point.</li>
+      </ul>
+      <div class="callout">
+        <span class="lbl">The catch, and the fix</span>
+        <p style="font-size:.93rem">Naive integration drifts 15–20° per run, which is
+          exactly enough to jam the robot in the next corner — we measured 22° of error
+          after 50 seconds. The firmware re-measures the gyro's zero-rate bias every time
+          the robot stops (which it does for a quarter-second before every turn), and
+          re-zeroes the heading to the corridor after every completed turn. The gyro then
+          only has to stay honest for the 1.5&nbsp;s that one turn takes.</p>
+      </div>
+    </div>
+
+    <div class="stack">
+      <h3>Memory module — you don't need one</h3>
+      <p style="color:var(--ink-2);font-size:.95rem">The ATmega328P on your Uno already
+        contains both kinds of memory, and <code>EEPROM.h</code> ships with the IDE.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Memory</th><th>Size</th><th>We use</th></tr></thead>
+          <tbody>
+            <tr><td>SRAM (working)</td><td class="n">2048 B</td><td class="n">192 B</td></tr>
+            <tr><td>EEPROM (keeps its contents)</td><td class="n">1024 B</td><td class="n">192 B</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="color:var(--ink-2);font-size:.95rem">The junction map costs <strong>4 bytes
+        per junction</strong> — position plus two bits per compass direction recording how
+        often that exit was used. 48 junctions fit in 192 bytes; a maze this size has maybe
+        10–20. Nothing to buy, nothing to mount, no rule to worry about.</p>
+      <p style="color:var(--ink-2);font-size:.95rem">That memory is what runs Trémaux's
+        algorithm: at each junction take the exit you have used least, breaking ties in
+        wall-following order. It beats plain wall-following on maps with loops — 9.8 versus
+        8.0 sector points on the serpentine.</p>
+      <div class="callout">
+        <span class="lbl">The rule that saves runs</span>
+        <p style="font-size:.93rem">At the first junction, the passage behind you is the
+          start gate, so it gets marked "fully used" immediately. Without that, a
+          wall-following robot laps the outer ring and calmly drives back out of its own
+          front door — the most common way to score nothing at this kind of event.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 05 -->
+<section>
+  <div class="shead">
+    <span class="idx">05</span>
+    <div class="txt">
+      <span class="eyebrow">Two shops, one trip each</span>
+      <h2>What to buy</h2>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:26px">
+    <div class="stack">
+      <h3>Electronics shop <span style="color:var(--ink-3);font-weight:400">— الموجات الإلكترونية, King Fahd St</span></h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Item</th><th>Qty</th><th>SAR</th></tr></thead>
+          <tbody>
+            <tr><td><strong>MPU-6050 gyro</strong><div class="ar">حساس جيروسكوب</div></td><td class="n">2</td><td class="n">15–25</td></tr>
+            <tr><td><strong>LM393 wheel encoder</strong><div class="ar">حساس سرعة العجلة</div></td><td class="n">2–4</td><td class="n">8–12</td></tr>
+            <tr><td><strong>TCRT5000 line sensor</strong><div class="ar">حساس خط</div></td><td class="n">2</td><td class="n">8–12</td></tr>
+            <tr><td><strong>6×AA holder</strong> or 2× 18650 + charger<div class="ar">بيت بطاريات</div></td><td class="n">1</td><td class="n">15–60</td></tr>
+            <tr><td>Rocker switch 3 A<div class="ar">مفتاح تشغيل</div></td><td class="n">2</td><td class="n">5</td></tr>
+            <tr><td>1000 µF + 100 nF capacitors<div class="ar">مكثفات</div></td><td class="n">2 + 10</td><td class="n">15</td></tr>
+            <tr><td>Pin headers, 22 AWG wire, heat-shrink<div class="ar">هيدر، سلك، حرارية</div></td><td class="n">—</td><td class="n">40</td></tr>
+            <tr><td>Spare HC-SR04<div class="ar">حساس مسافة احتياطي</div></td><td class="n">1–2</td><td class="n">20</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="stack">
+      <h3>SACO <span style="color:var(--ink-3);font-weight:400">— ساكو</span></h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Item</th><th>SAR</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Soldering iron 40–60 W + stand, solder, flux</strong><div class="ar">كاوي لحام + قصدير</div></td><td class="n">90</td></tr>
+            <tr><td><strong>Digital multimeter</strong><div class="ar">افوميتر</div></td><td class="n">60</td></tr>
+            <tr><td>Precision screwdrivers, PH1/PH2<div class="ar">طقم مفكات دقيقة + مفك صليبة</div></td><td class="n">50</td></tr>
+            <tr><td>Needle-nose pliers, side cutters, wire strippers<div class="ar">زرادية، قصافة، مقشر أسلاك</div></td><td class="n">55</td></tr>
+            <tr><td>M3 + M2 screws, nuts, washers, nylon standoffs<div class="ar">مسامير وصواميل وفواصل</div></td><td class="n">60</td></tr>
+            <tr><td>Zip ties, double-sided foam tape, thread-lock<div class="ar">ربطات، لاصق وجهين، مثبت مسامير</div></td><td class="n">45</td></tr>
+            <tr><td>Hot glue gun, electrical tape, craft knife, files<div class="ar">شمع لاصق، شريط عازل، كتر، مبارد</div></td><td class="n">60</td></tr>
+            <tr><td><strong>Practice track:</strong> 12× foam board 5 mm, black gaffer tape, white board, masking tape<div class="ar">فوم بورد، شريط أسود، كرتون أبيض</div></td><td class="n">150</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="callout">
+      <span class="lbl">If the budget gets tight</span>
+      <p style="font-size:.95rem">The three you cannot cut are the <strong>MPU-6050</strong>,
+        the <strong>multimeter</strong>, and the <strong>practice track materials</strong>.
+        You cannot tune a maze robot without a maze, and every hour on a real track is worth
+        ten hours of guessing.</p>
+    </div>
+    <div class="callout bad">
+      <span class="lbl">Do not buy — §2.2 is a disqualification</span>
+      <p style="font-size:.95rem">No ESP32, Raspberry Pi, Nano or any second
+        microcontroller — not even unused on the board. No external EEPROM or SD module
+        (§4 explains why). And skip the magnetometer compass: it reads the motor magnets and
+        lies to you. Use the green perfboard instead of the white breadboard — spring
+        contacts shake loose, and §5.1 checks for exactly that.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 06 -->
+<section>
+  <div class="shead">
+    <span class="idx">06</span>
+    <div class="txt">
+      <span class="eyebrow">Ordered so nothing gets built before it's needed</span>
+      <h2>The plan</h2>
+    </div>
+  </div>
+
+  <ol class="phases">
+    <li>
+      <span class="ph">Phase 0<br>1 hour</span>
+      <div class="body">
+        <h3>Before you spend a riyal</h3>
+        <p>Send the email. Measure your robot — length, width, wheelbase, wheel diameter,
+          nose-to-axle — put the numbers in <code>config.h</code>, run
+          <code>tools/geometry_check.py</code>, then watch the maps drive.</p>
+      </div>
+    </li>
+    <li>
+      <span class="ph">Phase 1<br>2 days</span>
+      <div class="body">
+        <h3>Buy and build — practice track first</h3>
+        <p>Build the 2&nbsp;m track before you touch the robot; it is the thing you will be
+          tempted to skip and the thing that decides the result. Then assemble with the
+          axle centred, solder the perfboard, wire it, and re-measure where the sensors
+          actually ended up.</p>
+      </div>
+    </li>
+    <li>
+      <span class="ph">Phase 2<br>1 day</span>
+      <div class="body">
+        <h3>Bring it up, one subsystem at a time</h3>
+        <p>Motors, then encoders, then sonars, then gyro, then line sensor — each a
+          throwaway sketch with a pass condition. Debugging three subsystems at once is how
+          a week disappears.</p>
+      </div>
+    </li>
+    <li>
+      <span class="ph">Phase 3<br>1 day</span>
+      <div class="body">
+        <h3>Tune on the track</h3>
+        <p>Straight corridor, then one corner, then a dead end, then each map shape ten
+          times. Every change goes into <code>config.h</code> and gets re-checked in the
+          simulator before it goes on the robot. Log the robot's telemetry and compare it
+          to the simulator's — where they disagree tells you which model parameter is
+          wrong, and after you fix it the simulator predicts <em>your</em> robot.</p>
+      </div>
+    </li>
+    <li>
+      <span class="ph">Phase 4<br>half a day</span>
+      <div class="body">
+        <h3>Reliability, not speed</h3>
+        <p>Ten clean runs per map shape. Start it 30&nbsp;mm off-centre and 10° crooked,
+          because the judges will not place it perfectly. Run it on half-flat batteries.
+          Then lower the cruise speed until the failure rate hits zero and leave it there.</p>
+      </div>
+    </li>
+    <li>
+      <span class="ph">Phase 5<br>the day</span>
+      <div class="body">
+        <h3>Measure the real maze, then choose your hand</h3>
+        <p>Trace each map into the simulator on arrival — fifteen minutes each — and it
+          tells you which wall-following direction wins before your run. The robot lets you
+          pick at the start line with a hand gesture: a quick tap in front of the nose is
+          left-hand, a long hold is right-hand, and the countdown blinks slow or fast to
+          confirm. No laptop, no radio, nothing to touch.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- ============================================================ 07 -->
+<section style="border-bottom:0">
+  <div class="shead">
+    <span class="idx">07</span>
+    <div class="txt">
+      <span class="eyebrow">Found in simulation, before any hardware existed</span>
+      <h2>Four bugs that would have cost you the event</h2>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>The steering was inverted</h3>
+      <p>The wall-centring term had the wrong sign, so the robot steered <em>into</em>
+        whichever wall it was already too close to. Fixing it cut wall scrapes from about
+        2,500 per run to under 100.</p>
+    </div>
+    <div class="card">
+      <h3>It turned into a wall in the first two seconds</h3>
+      <p>Junction detection asked "is the side open right now?", which is true the instant
+        the robot rolls out of the gate into the open start zone — before it has seen a
+        single wall. It now triggers on the <em>edge</em> from wall to open, debounced over
+        nine loops so one dropped ping cannot invent a junction.</p>
+    </div>
+    <div class="card">
+      <h3>It pivoted from the wrong place</h3>
+      <p>The ultrasonic sits 95&nbsp;mm ahead of the wheel axle. Stop when the sensor sees
+        the wall and the axle is still 95&nbsp;mm short of the junction centre — pivot from
+        there and the robot lands 95&nbsp;mm off the new corridor's centreline, which in a
+        300&nbsp;mm passage means hitting the wall. It now creeps until the axle is in the
+        middle, ranging off the wall ahead.</p>
+    </div>
+    <div class="card">
+      <h3>Every turn leaked a few millimetres</h3>
+      <p>The two wheels are never matched, so during a pivot the odometry gained a few
+        millimetres of phantom travel. Forty turns later the robot thought it was a quarter
+        metre from where it was, and the junction memory became worthless. Translation is
+        now discarded while pivoting.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="wrap">
+  <p>Full source, firmware and docs: <code>Muzoka/Robotic-comp</code>, branch
+    <code>claude/robot-competition-setup-ingek7</code> — pull request #1.</p>
+  <p>Every number on this page comes from <code>sim/run.py</code> and can be reproduced
+    with one command.</p>
+</footer>
