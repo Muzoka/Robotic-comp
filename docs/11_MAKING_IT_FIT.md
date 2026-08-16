@@ -1,186 +1,187 @@
-# Getting the robot to finish all three maps inside 3 minutes
+# Getting all three maps inside 3 minutes
 
-This is the result of driving the three spreadsheet maps thousands of times
-in simulation. Everything below is measured, and every measurement can be
-reproduced with one command.
+Everything here is measured. Every number can be reproduced with one command.
 
 ---
 
 ## Result
 
+Robot **220 × 115 mm**, wall-following, left hand, 12 random seeds per map:
+
 | Map | Completed | Time | Sector points | Wall scrapes |
 | --- | --- | --- | --- | --- |
-| Map 1 | **100 %** | 65 s | 3 / 3 | 9 |
-| Map 2 | 75–100 % | 42 s | 4 / 5 | 5 |
-| Map 3 | **100 %** | 92 s | 7 / 9 | 16 |
+| Map 1 — U around a block, 2 turns | **92 %** | 64 s | 3 / 3 | 7 |
+| Map 2 — dog-leg with a loop, 3 turns | **100 %** | 31 s | 4 / 5 | **0** |
+| Map 3 — 1 ft zig-zag, 8 turns | **92 %** | 87 s | 6.7 / 9 | 25 |
 
-All three finish comfortably inside the 3-minute limit — the slowest is Map 3
-at about **92 seconds**, half the allowance.
-
-Over eight random seeds rather than five, Map 1 and Map 3 hold at 100 % and
-Map 2 sits at 75 %. §3.3 gives 2–3 attempts whenever a map is *not*
-completed, so a 75 % per-attempt rate is a 98 % chance of completing Map 2
-across three tries — but it is the one to keep working on.
-
-**That result needs one physical change: the robot has to come down from
-250 × 150 mm to about 220 × 140 mm.** At its current size Map 3 completes
-only 20 % of the time.
+Every completed run is inside half the 3-minute allowance. §3.3 gives 2–3
+attempts whenever a map is *not* completed, so a 92 % per-attempt rate is
+better than 99 % across three tries.
 
 ```bash
 cd sim
-python3 run.py --all --trials 5                    # as the robot is today
-python3 run.py --all --trials 5 --robot 220x140    # after the change
+python3 run.py --all --trials 12
 ```
 
 ---
 
-## Why 2 cm matters so much
+## Does the robot's size affect the code? Yes — badly, if you let it
 
-Turning on the spot, a robot sweeps a circle as wide as its own body
-diagonal. The passage is one foot — **304.8 mm**.
+It used to. Half a dozen thresholds were hand-tuned for one body width, and
+when the body changed they silently stopped matching the hardware. The
+symptom looks like a navigation bug and costs a day.
 
-Eight seeds per map, all three maps, wall-following:
+**That is now fixed. `config.h` derives them.** You change two numbers:
 
-| Robot | Diagonal | Map 1 | Map 2 | Map 3 | All |
-| --- | --- | --- | --- | --- | --- |
-| 250 × 150 mm *(today)* | 292 mm | 75 % | 75 % | 12 % | 54 % |
-| 240 × 145 mm | 280 mm | 75 % | 100 % | 38 % | 71 % |
-| 230 × 145 mm | 272 mm | 75 % | 100 % | 38 % | 71 % |
-| **220 × 140 mm** | **261 mm** | **100 %** | **75 %** | **100 %** | **92 %** |
-| 210 × 140 mm | 252 mm | 88 % | 75 % | 25 % | 62 % |
-| 200 × 135 mm | 241 mm | 88 % | 75 % | 38 % | 67 % |
+```c
+#define ROBOT_LENGTH_MM     220.0f
+#define ROBOT_WIDTH_MM      115.0f   /* tyre outside to tyre outside */
+```
 
-220 × 140 mm is not just "small enough", it is the best of the sizes tested —
-smaller is worse again, because the side sonars end up closer to the
-centreline than `TARGET_SIDE_MM` expects and the robot parks slightly
-off-centre. If you land somewhere other than 220 × 140, re-run the sweep and
-set `TARGET_SIDE_MM = CORRIDOR_MM/2 - US_L_Y_MM` for your actual numbers.
+and these follow automatically:
 
-There is a cliff at a diagonal of about **280 mm**. Above it the robot
-grinds its way round every corner and eventually wedges; below it, corners
-are uneventful. Map 1 has two turns and Map 2 has three, so they survive
-either way. Map 3 asks for **eight**, several in adjacent squares, and eight
-marginal turns in a row is not a thing you get away with.
+| Derived | From | At 220 × 115 |
+| --- | --- | --- |
+| `WHEEL_BASE_MM` | width − one tyre width | 89 mm |
+| `AXLE_FROM_NOSE_MM` | half the length (centred axle) | 110 mm |
+| `US_F_X_MM` | front sonar just inside the nose | 100 mm |
+| `US_L_Y_MM` / `US_R_Y_MM` | side sonars just inside the tyre line | ±50.5 mm |
+| `TARGET_SIDE_MM` | passage centre as the side sensor sees it | 102 mm |
+| `OPEN_SIDE_MM` | between "wall beside me" and "gap one square deep" | 239 mm |
+| `TURN_FF` | the PWM that produces a given turn rate | from the wheelbase |
 
-Losing **3 cm of length and 1 cm of width** is enough.
-
-## Where to find 3 cm
-
-Measure the true outer envelope with a tape measure — nose to tail including
-anything that protrudes, and tyre-outside to tyre-outside. Then:
-
-1. **The front ultrasonic bracket.** On most 2WD builds this hangs off the
-   nose and is worth 20–30 mm on its own. Move it back so it sits over the
-   chassis plate, looking forward through the gap. This is usually the whole
-   3 cm by itself.
-2. **The battery.** If it sits behind the rear axle it is adding to the tail.
-   Stack it on top of the plate instead, over the wheels.
-3. **Screw heads and standoffs at the corners.** Use countersunk screws and
-   move mounting holes inboard.
-4. **The castor bracket.** Tuck it under the plate rather than ahead of it.
-5. **Cable loom.** Anything bulging past the outline counts.
-
-If after all that the chassis plate itself is still longer than ~230 mm,
-ask a judge before cutting anything — §2.2 forbids removing or replacing
-kit parts, and a trimmed chassis is a conversation you want to have *before*
-inspection, not during it.
+The simulator reads the same file and evaluates the same expressions, so the
+two can never drift apart. Measure your robot, put the two numbers in, re-run.
 
 ---
 
-## Sensor changes — and what NOT to buy
+## Width matters more than length, and 115 mm is a sharp optimum
 
-You asked whether to move the sensors and what to shop for. Both answers are
-measured.
+You suggested 22 × 10 cm. Close — but the sweet spot is a centimetre wider,
+and it is a **sharp** peak, not a plateau. Ten seeds per map:
 
-### Move the two side ultrasonics back onto the wheel-axle line — free
+| Robot | Diagonal | Map 1 | Map 2 | Map 3 | Average | Scrapes |
+| --- | --- | --- | --- | --- | --- | --- |
+| 220 × 105 mm | 244 mm | 100 % | 100 % | 70 % | 90 % | 22 |
+| 220 × 110 mm | 246 mm | 100 % | 100 % | 50 % | 83 % | 27 |
+| **220 × 115 mm** | **248 mm** | **90 %** | **100 %** | **100 %** | **97 %** | **11** |
+| **225 × 115 mm** | **252 mm** | **100 %** | **100 %** | **90 %** | **97 %** | **12** |
+| 220 × 120 mm | 251 mm | 100 % | 100 % | 60 % | 87 % | 12 |
+| 230 × 120 mm | 259 mm | 60 % | 100 % | 60 % | 73 % | 58 |
 
-They were 40 mm ahead of the axle. Put them **level with the axle**, so a gap
-is seen at the instant the axle draws level with it, which is the moment the
-robot needs to act on. Worth about **20 percentage points** of completion on
-Map 3, and it costs nothing but remounting. `US_L_X_MM` / `US_R_X_MM` in
-`config.h` are now `0`.
+**Why width, when clearance says it should not matter?** Because the
+wheelbase comes with it. A narrower robot has a shorter wheelbase, and a
+shorter wheelbase turns faster for the same difference in wheel speed — so
+every bit of motor mismatch, every bit of wheel slip, swings the heading
+further. At 110 mm the robot is twitchy; at 120 mm the extra body starts
+costing clearance again. 115 mm is where the two curves cross.
 
-Keep them square to the wall (90° out), as far forward *sideways* as the
-wheel line allows but never past it, and at a height where they see the wall,
-not the floor.
+**Target 220 × 115 mm — 22 × 11.5 cm.** Anywhere in 215–225 × 112–118 is
+fine. If you land somewhere else, change the two numbers and re-run the
+sweep; everything else follows.
 
-### Do NOT buy laser distance sensors — buy nothing
-
-Time-of-flight modules (VL53L0X / VL53L1X) look like an obvious upgrade:
-narrow beam, no acoustic crosstalk, no specular dropout. I modelled them —
-4° beam, no dropout, low noise — and they came out **worse**:
-
-| Sensors | Map 1 | Map 2 | Map 3 |
-| --- | --- | --- | --- |
-| HC-SR04 (what you have) | 100 % | 100 % | **100 %** |
-| ToF laser, same robot size | 80 % | 100 % | **40 %** |
-
-A narrow beam sees a single point. The HC-SR04's wide cone effectively
-averages across a whole square of wall, which is exactly what a
-wall-following controller wants, and it notices an opening a little early
-rather than a little late. **Save the money.** Your three HC-SR04s are the
-right sensor for this maze.
-
-### Shopping list, unchanged
-
-Nothing new is needed for this. The list in `docs/09_CHECKLIST.md` still
-stands: MPU-6050 gyro ×2, LM393 wheel encoders ×2, TCRT5000 floor sensor ×2,
-a 7.4 V battery, and the tools. **No extra distance sensors, no laser
-modules, no memory chip.**
+If your 10 cm was the chassis *plate*, measure again across the tyres — that
+is the number the walls see, and on a standard 2WD kit the tyres add several
+centimetres to the plate.
 
 ---
 
-## Firmware changes behind the result
+## What I tried from the micromouse world, and what it measured
 
-Five bugs, all found by driving the real map geometry:
+The established competitive technique is trapezoidal motion profiles, a gyro
+for turns and encoders for straights, with PD steering — see
+[ukmars/mazerunner-core](https://github.com/ukmars/mazerunner-core) and
+[ukmars/turn-tuner](https://github.com/ukmars/turn-tuner). I implemented
+three of those ideas properly and measured each one. **All three lost.**
 
-**1. The "there is a gap on that side" threshold was larger than a gap.**
-In a 1 ft grid with the side sonar 68 mm off the centreline, a wall beside
-the robot reads 84 mm and an opening one square deep reads 389 mm. The
-threshold was set to 420 mm — larger than an opening ever reads — so the
-robot drove straight past every turn it was supposed to take. It is now
-200 mm, which is derived from the maze geometry rather than guessed.
+| Change | Map 1 | Map 2 | Map 3 | Average |
+| --- | --- | --- | --- | --- |
+| **Plain PD (what we ship)** | 83 % | 100 % | **50 %** | **78 %** |
+| + trapezoidal turn profile | 83 % | 83 % | 50 % | 72 % |
+| + gyro yaw-rate damping | 83 % | 83 % | **0 %** | 55 % |
+| + motor slew-rate limiting | 67 % | 100 % | 33 % | 67 % |
+| all three together | 83 % | 100 % | 33 % | 72 % |
 
-**2. Pivots could never settle.** The motor deadband forced 55 PWM even
-inside the tolerance band, so the robot hunted across the target until the
-turn timed out a few degrees short, then set off crabbed. Inside tolerance
-it now commands zero.
+*(measured at 220 × 100 mm, six seeds per map, before the width was tuned)*
 
-**3. The front sonar was asked for a reading it cannot give.** To put the
-axle in the centre of a square it had to read 37 mm; an HC-SR04 is unreliable
-below about 40 mm. It now ranges down to 100 mm and counts the last stretch
-off the wheel encoders.
+**Why they lose here.** All three trade responsiveness for smoothness, and
+this maze does not have room for that trade:
 
-**4. Stale junction flags survived a failed turn.** If a turn ended through
-the timeout or jam-recovery path rather than normally, the "there was an
+- A **motion profile** pays for itself when you are cornering at speed with
+  wheel-speed PID closing the loop off high-resolution encoders. Ours give
+  20 ticks per wheel revolution — 10 mm of travel per tick. There is no fast
+  inner loop for a profile to feed.
+- **Yaw-rate damping** directly opposes the wall-centring term. On a wide
+  corridor that reads as "smooth"; in a one-foot passage it means the
+  correction arrives late, and late is a wall.
+- **Slew limiting** makes every turn start and stop lazily. With eight turns
+  in a row on Map 3, the lateness compounds.
+
+All three are still in the firmware, switched off by their own constants,
+with the measurements written next to them. If you ever fit proper encoders,
+turn them back on and re-run the sweep.
+
+**The gyro is still doing the heavy lifting** — it just does it in the three
+places that were already there and that measured well:
+
+1. **Closed-loop turns.** Every pivot is driven to a gyro angle, not a
+   timed guess. That is the difference between 90° and "about 80°, and a
+   bit less when the battery is low".
+2. **Bias re-measured at every stop.** The robot stands still for a quarter
+   of a second before each pivot, and that pause is used to re-zero the
+   gyro's drift. Without it the heading is 15–20° out by the end of a run.
+3. **Heading re-zeroed to the corridor after every completed turn.** The
+   gyro only ever has to stay honest for the ~1 s a single turn takes, so
+   error never accumulates from corner to corner.
+
+---
+
+## Bugs fixed this round
+
+**The "gap on that side" threshold was larger than a gap.** In a 1 ft grid
+with the side sonar 50 mm off the centreline, a wall reads 102 mm and an
+opening one square deep reads 407 mm. The threshold had been hand-set to
+420 mm — larger than an opening ever reads — so the robot drove straight past
+every turn it was meant to take. It is now derived from the passage width.
+This was the single biggest one.
+
+**Pivots could not settle.** The motor deadband forced 55 PWM even inside the
+tolerance band, so the robot hunted across the target until the turn timed out
+a few degrees short, then set off crabbed. Inside tolerance it now commands
+zero.
+
+**The front sonar was asked for a reading it cannot give.** To centre the
+axle in a square it had to read 37 mm; an HC-SR04 is unreliable under about
+40 mm. It now ranges down to 100 mm and counts the last stretch off the wheel
+encoders.
+
+**Stale junction flags survived a failed turn.** If a turn ended through the
+timeout or the jam-recovery path rather than normally, the "there was an
 opening on the left" flag was still set, and the robot invented a junction a
-few centimetres later and turned off the route. Every path back into driving
-now clears them.
+few centimetres later and left the route. Every path back into driving now
+clears them.
 
-**5. Where you stop before a corner matters.** A full 360° pivot sweeps the
-same circle wherever you stand, but a *quarter* turn does not — stopping
-short of the centre gives the front corner room to swing into. Measured
-across all three maps:
+**A tuned turn gain was left behind.** Adding the profile lowered `KP_TURN`
+from 2.6 to 1.6; switching the profile back off left the low gain in place
+and quietly cost 15 points of completion. Caught by re-running the sweep,
+which is the argument for having a sweep.
 
-| Stop point | Completed | Points | Scrapes |
-| --- | --- | --- | --- |
-| Dead centre of the square | 42 % | 49 % | 218 |
-| **40 mm back** | 61 % | **56 %** | **72** |
-
-And one strategy change: **wall following, not the memory mode.** All three
-maps are published in advance and none needs memory — the left-hand rule
-picks the correct exit at every decision point on all three. The Trémaux mode
-measured *worse*, because recognising a junction it has seen before depends
-on odometry, and odometry is the least trustworthy thing on the robot. It is
-still in the firmware for a map with a real loop; it is no longer the
-default.
+**Smooth approach to a wall.** The throttle used to step from cruise to slow
+at a fixed distance. It now eases down proportionally, which stops the
+chassis rocking and upsetting the gyro just before a pivot. This one *did*
+help and is switched on.
 
 ---
 
-## The one thing to keep in mind on the day
+## Still to buy: nothing
 
-At 220 × 140 mm the robot completes every map with about half the time limit
-to spare. Do not spend that margin on speed. `PWM_CRUISE` is set to 110, well
-below what the motors can do, because §6.1 scores sector lines and §6.3 only
-uses time to break ties. If anything looks marginal on the practice track,
-lower it further.
+The shopping list in `docs/09_CHECKLIST.md` is unchanged. No extra distance
+sensors — modelled time-of-flight lasers measured *worse* than your HC-SR04s
+on this maze, because a wide sonar cone effectively averages a whole square
+of wall and that is exactly what a wall-follower wants. No memory chip. The
+only things still outstanding are the MPU-6050 gyro, the LM393 wheel
+encoders, the TCRT5000 floor sensor, a 7.4 V battery and the tools.
+
+The one free change worth making: **mount the two side sonars level with the
+wheel axle**, not ahead of it, and just inside the tyre line. Worth about 20
+points of completion on Map 3, costs nothing.

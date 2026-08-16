@@ -40,6 +40,17 @@ static int16_t deadband(int16_t v)
     return v;
 }
 
+/* Never step a motor command by more than PWM_SLEW in one tick. A sudden
+ * jump makes the tyres slip, and a slipping wheel reports distance it never
+ * travelled. */
+static int16_t slew(int16_t prev, int16_t want)
+{
+    int16_t d = (int16_t)(want - prev);
+    if (d >  PWM_SLEW) return (int16_t)(prev + PWM_SLEW);
+    if (d < -PWM_SLEW) return (int16_t)(prev - PWM_SLEW);
+    return want;
+}
+
 /* direction index: 0 = +X (the way we faced at the start), 1 = +Y (left),
  * 2 = -X, 3 = -Y. */
 static uint8_t dir_of_heading(float h)
@@ -95,8 +106,12 @@ typedef struct {
     float   creep_target_mm;
     float   backup_start_mm;
 
-    /* turning */
-    float   turn_from_deg;
+    /* turning - a trapezoidal profile, generated fresh for every pivot */
+    float   turn_from_deg;     /* heading when the pivot started          */
+    float   turn_total_deg;    /* how far to go, signed                   */
+    float   turn_prof_deg;     /* how far the profile has swept so far    */
+    float   turn_prof_dps;     /* the rate the profile is asking for      */
+    int16_t out_l, out_r;      /* last commanded PWM, for the slew limit  */
     uint32_t turn_ok_ms;
     uint8_t  turn_retries;
     uint8_t  resume_turn;      /* back up, then finish the turn we started */
@@ -349,6 +364,12 @@ static float steer_command(const NavIn *in, float dt_s)
     float hterm = KP_HEADING * herr;
     steer += side_valid ? (hterm * 0.35f) : hterm;
 
+    /* Yaw-rate damping. The gyro says how fast we are turning right now, so
+     * we can cancel it instead of waiting for the heading to go wrong and
+     * then chasing it. This is what stops the robot weaving down a straight,
+     * and weaving is what puts a corner into a wall three metres later. */
+    steer -= KD_YAW * in->gyro_rate_dps;
+
     if (steer >  (float)STEER_LIMIT) steer =  (float)STEER_LIMIT;
     if (steer < -(float)STEER_LIMIT) steer = -(float)STEER_LIMIT;
     return steer;
@@ -436,9 +457,12 @@ static int8_t choose_turn(void)
 /* ------------------------------------------------------------------ */
 static void enter_turn(int8_t quarters)
 {
-    g.turn_from_deg = g.heading;
-    if (quarters == 2) g.target_deg = wrap180(g.target_deg + 180.0f);
-    else               g.target_deg = wrap180(g.target_deg + 90.0f * (float)quarters);
+    float total = (quarters == 2) ? 180.0f : 90.0f * (float)quarters;
+    g.turn_from_deg  = g.heading;
+    g.turn_total_deg = total;
+    g.turn_prof_deg  = 0.0f;
+    g.turn_prof_dps  = 0.0f;
+    g.target_deg = wrap180(g.target_deg + total);
     g.state = ST_TURN;
     g.state_t_ms = 0;
     g.turn_ok_ms = 0;
@@ -623,8 +647,16 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
         }
 
         /* --- normal driving --- */
-        base  = PWM_CRUISE;
-        if (in->dist_front_mm < 320) base = PWM_SLOW;   /* ease into corners */
+        /* Ease off smoothly as a wall comes up rather than stepping the
+         * throttle down, which shakes the chassis and upsets the gyro. */
+        base = PWM_CRUISE;
+        if (in->dist_front_mm < 400) {
+            float f = ((float)in->dist_front_mm - (float)FRONT_BLOCKED_MM)
+                    / (400.0f - (float)FRONT_BLOCKED_MM);
+            if (f < 0.0f) f = 0.0f;
+            if (f > 1.0f) f = 1.0f;
+            base = (int16_t)(PWM_SLOW + f * (PWM_CRUISE - PWM_SLOW));
+        }
         steer = steer_command(in, dt_s);
         break;
     }
@@ -693,33 +725,75 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
         if (g.state_t_ms < TURN_SETTLE_IN_MS) {
             /* stand still for a moment: pivoting while still rolling
              * forward is what puts a corner of the chassis into a wall */
-            out->pwm_left = 0; out->pwm_right = 0;
+            out->pwm_left = slew(g.out_l, 0); out->pwm_right = slew(g.out_r, 0);
+            g.out_l = out->pwm_left; g.out_r = out->pwm_right;
             g.last_cmd_mag = 0;
             out->state = g.state; out->done = 0; out->led = 1;
             out->sectors_seen = g.sectors;
             out->dbg_target_deg = g.target_deg; out->dbg_steer = 0.0f;
             return;
         }
-        float err = wrap180(g.target_deg - g.heading);
-        float ae  = err < 0 ? -err : err;
+        /* --- generate the profile one tick at a time ---------------
+         * Ramp up at TURN_ALPHA, hold at TURN_OMEGA, and start braking at
+         * exactly the point where TURN_ALPHA can still bring us to a stop on
+         * the target. Commanding the angle directly and letting a P term
+         * sort it out slams the motors to full and then hunts; a profile
+         * arrives smoothly and stops. */
+        float dt_s2 = in->dt_ms / 1000.0f;
+        float sgn   = (g.turn_total_deg >= 0.0f) ? 1.0f : -1.0f;
+        float swept = g.turn_prof_deg * sgn;
+        float total = g.turn_total_deg * sgn;
+        float remain = total - swept;
+        if (remain < 0.0f) remain = 0.0f;
+
+        float w_brake = sqrtf(2.0f * TURN_ALPHA_DPS2 * remain);
+        float w_cmd   = (w_brake < TURN_OMEGA_DPS) ? w_brake : TURN_OMEGA_DPS;
+        float w_accel = g.turn_prof_dps + TURN_ALPHA_DPS2 * dt_s2;
+        if (w_cmd > w_accel) w_cmd = w_accel;
+        if (w_cmd < 0.0f) w_cmd = 0.0f;
+        g.turn_prof_dps  = w_cmd;
+        g.turn_prof_deg += sgn * w_cmd * dt_s2;
+        if ((g.turn_prof_deg * sgn) > total) g.turn_prof_deg = g.turn_total_deg;
+
+        /* --- follow it: feed-forward plus a small PD correction ---- */
+        float aim = wrap180(g.turn_from_deg + g.turn_prof_deg);
+        float err = wrap180(aim - g.heading);
+        float rate_err = (sgn * w_cmd) - in->gyro_rate_dps;
+
+        /* Feed-forward: the PWM that already produces this rate, so the PD
+         * terms only have to clean up the difference. PWM_MIN is the motor's
+         * dead zone - below it nothing turns at all - so it is added as an
+         * offset, not scaled. */
+        float mag = TURN_FF * w_cmd;
+        if (w_cmd > 1.0f) mag += (float)PWM_MIN;
+        float cmd = sgn * mag + KP_TURN * err + KD_TURN * rate_err;
+
         int16_t t;
-        if (ae < TURN_TOL_DEG) {
-            /* Inside tolerance: command nothing. The motor deadband would
-             * otherwise force 55 PWM here, the robot would hunt across the
-             * target forever, the settle window would never be met and the
-             * turn would time out a few degrees short - which is exactly how
-             * a robot ends up crabbing into the next wall. */
-            t = 0;
+        if (w_cmd <= 0.0f) {
+            float fe = wrap180(g.target_deg - g.heading);
+            if (fe < 0) fe = -fe;
+            /* Profile done. Inside tolerance command nothing at all - the
+             * motor deadband would otherwise force 55 PWM and the robot
+             * would hunt across the target until the turn timed out. */
+            t = (fe < TURN_TOL_DEG) ? 0 : deadband(clamp16(
+                    KP_TURN * wrap180(g.target_deg - g.heading), -PWM_TURN, PWM_TURN));
         } else {
-            float cmd = KP_TURN * err - KD_TURN * in->gyro_rate_dps;
             t = clamp16(cmd, -PWM_TURN, PWM_TURN);
             t = deadband(t);
         }
+        int16_t tl = slew(g.out_l, (int16_t)(-t));
+        int16_t tr = slew(g.out_r, (int16_t)(+t));
+        g.out_l = tl; g.out_r = tr;
         g.last_cmd_mag = (t < 0) ? (int16_t)(-t) : t;
-        out->pwm_left  = (int16_t)(-t);
-        out->pwm_right = (int16_t)(+t);
+        out->pwm_left  = tl;
+        out->pwm_right = tr;
 
-        if (ae < TURN_TOL_DEG) {
+        /* The pivot is finished when the PROFILE has run out and the real
+         * heading has settled on the target - not merely when it passes
+         * through it on the way past. */
+        float fin = wrap180(g.target_deg - g.heading);
+        if (fin < 0) fin = -fin;
+        if (fin < TURN_TOL_DEG && remain <= 0.0f) {
             g.turn_ok_ms += in->dt_ms;
         } else {
             g.turn_ok_ms = 0;
@@ -786,6 +860,9 @@ NAV_API void nav_step(const NavIn *in, NavOut *out)
     if (base != 0) { li = deadband(li); ri = deadband(ri); }
     else           { li = 0; ri = 0; }
 
+    li = slew(g.out_l, li);
+    ri = slew(g.out_r, ri);
+    g.out_l = li; g.out_r = ri;
     g.last_cmd_mag = (int16_t)((li < 0 ? -li : li) > (ri < 0 ? -ri : ri)
                                ? (li < 0 ? -li : li) : (ri < 0 ? -ri : ri));
     out->pwm_left  = li;
