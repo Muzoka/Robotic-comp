@@ -20,9 +20,8 @@ firmware assume exactly this.
   │ D9  ───── HC-SR04 RIGHT  TRIG                 │
   │ D10 ───── HC-SR04 RIGHT  ECHO                 │
   │ D11 ───── L298N IN4                           │
-  │ D12 ───── spare  (leave empty, handy test pt) │
+  │ D12 ───── GO button ───── GND                 │  no resistor
   │ D13 ───── status LED (onboard) + buzzer       │
-  │           + GO button to GND VIA 330 Ω        │  see below
   │ A0  ───── HC-SR04 FRONT  TRIG                 │
   │ A1  ───── HC-SR04 FRONT  ECHO                 │
   │ A2  ───── HC-SR04 LEFT   TRIG                 │
@@ -106,26 +105,28 @@ field.
 
 If you mount it upside down, set `GYRO_Z_SIGN = -1.0f` in `MazeRunner.ino`.
 
-**GO button — D13, and the 330 Ω is not optional.** D13 already drives the
-onboard status LED, so the pin spends most of its life as an *output*. A
-plain button from D13 to ground would short that output straight to ground
-every time you pressed it. The 330 Ω resistor sits in series with the button
-and limits that to a few milliamps.
+**GO button — D12, two wires, no resistor.**
 
 ```
-   D13 ──┬──── onboard LED (already on the board)
-         │
-         └──[ 330 Ω ]──[ GO button ]──── GND
+   D12 ──[ GO button ]──── GND
 ```
 
-The firmware flips D13 to an input with the pull-up on for 200 µs, reads it,
-and flips it straight back to an output — so the LED keeps working and the
-button still reads. It is only sampled before the run starts, so a knock
-mid-run cannot restart anything. Full procedure in
-`docs/12_STARTING_THE_ROBOT.md`.
+That is the whole circuit. The pin uses the AVR's internal pull-up, so it
+sits HIGH until the button connects it to ground.
+
+It used to live on D13 with a 330 Ω resistor in series, because D13 also
+drives the status LED and a bare button would have shorted that output to
+ground. The firmware had to flip the pin between OUTPUT and INPUT_PULLUP a
+hundred times a second to sample it — and in Wokwi it never registered a
+press at all. Removing the floor sensor freed D12, so the button now has a
+pin to itself and the whole trick is gone. Fewer parts, simpler wiring, and
+it actually works.
+
+It is only sampled before the run starts, so a knock mid-run cannot restart
+anything. Full procedure in `docs/12_STARTING_THE_ROBOT.md`.
 
 **No floor sensor.** There is deliberately nothing under the nose any more —
-see `docs/09_CHECKLIST.md`. D12 is free; it makes a convenient scope point.
+see `docs/09_CHECKLIST.md`.
 
 **Encoders.** The LM393 slot sensor straddles the black slotted disc on the
 inside of each wheel. Get the disc centred in the slot — if it rubs, it

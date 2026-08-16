@@ -365,15 +365,34 @@
 #define PIN_TRIG_R     9
 #define PIN_ECHO_R    10
 #define PIN_IN4       11
-#define PIN_LINE      12   /* SPARE. Was the TCRT5000 - not fitted any
-                              more, see HAS_LINE_SENSOR above. Leave the
-                              pin empty; it is a handy test point.      */
-#define PIN_LED       13   /* onboard LED + optional buzzer            */
+#define PIN_LINE      12   /* was the TCRT5000 - not fitted, see
+                              HAS_LINE_SENSOR. The pin now carries the
+                              GO button instead.                       */
+/* GO button: button between this pin and GND, nothing else. The internal
+ * pull-up does the rest, so there is no resistor to fit and no way to wire
+ * it wrong.
+ *
+ * It used to share D13 with the status LED, because the line sensor owned
+ * D12. That meant flipping D13 between OUTPUT and INPUT_PULLUP a hundred
+ * times a second to sample it, with a 330 ohm resistor to stop the press
+ * shorting the LED drive - and in Wokwi it simply did not register presses.
+ * Dropping the line sensor freed D12, so the button gets its own pin and
+ * the whole trick goes away. */
+#define PIN_GO        12
+#define PIN_LED       13   /* onboard LED + optional buzzer. OUTPUT only */
 #define PIN_TRIG_F   A0
 #define PIN_ECHO_F   A1
 #define PIN_TRIG_L   A2
 #define PIN_ECHO_L   A3
 /*      A4 = SDA, A5 = SCL  -> MPU-6050, do not use for anything else  */
+
+/* The GO button took over the line sensor's pin. If you ever refit a line
+ * sensor, one of them has to move - and a silent clash would show up as the
+ * robot starting itself whenever it drove over black tape, which is a
+ * miserable thing to debug in a competition hall. */
+#if HAS_LINE_SENSOR && (PIN_GO == PIN_LINE)
+#error "PIN_GO and PIN_LINE are both D12. Move one before fitting a line sensor."
+#endif
 
 /* Motor polarity: flip to -1 if a wheel spins backwards after wiring. */
 #define MOTOR_L_SIGN  (+1)
