@@ -11,11 +11,16 @@ reproduced with one command.
 | Map | Completed | Time | Sector points | Wall scrapes |
 | --- | --- | --- | --- | --- |
 | Map 1 | **100 %** | 65 s | 3 / 3 | 9 |
-| Map 2 | **100 %** | 42 s | 4 / 5 | 5 |
+| Map 2 | 75–100 % | 42 s | 4 / 5 | 5 |
 | Map 3 | **100 %** | 92 s | 7 / 9 | 16 |
 
 All three finish comfortably inside the 3-minute limit — the slowest is Map 3
 at about **92 seconds**, half the allowance.
+
+Over eight random seeds rather than five, Map 1 and Map 3 hold at 100 % and
+Map 2 sits at 75 %. §3.3 gives 2–3 attempts whenever a map is *not*
+completed, so a 75 % per-attempt rate is a 98 % chance of completing Map 2
+across three tries — but it is the one to keep working on.
 
 **That result needs one physical change: the robot has to come down from
 250 × 150 mm to about 220 × 140 mm.** At its current size Map 3 completes
@@ -34,11 +39,22 @@ python3 run.py --all --trials 5 --robot 220x140    # after the change
 Turning on the spot, a robot sweeps a circle as wide as its own body
 diagonal. The passage is one foot — **304.8 mm**.
 
-| Robot | Body diagonal | Clearance each side | Map 3 completed |
-| --- | --- | --- | --- |
-| 250 × 150 mm *(today)* | 292 mm | 6.4 mm | 20 % |
-| 235 × 145 mm | 276 mm | 14 mm | 100 % |
-| **220 × 140 mm** *(target)* | **261 mm** | **22 mm** | **100 %** |
+Eight seeds per map, all three maps, wall-following:
+
+| Robot | Diagonal | Map 1 | Map 2 | Map 3 | All |
+| --- | --- | --- | --- | --- | --- |
+| 250 × 150 mm *(today)* | 292 mm | 75 % | 75 % | 12 % | 54 % |
+| 240 × 145 mm | 280 mm | 75 % | 100 % | 38 % | 71 % |
+| 230 × 145 mm | 272 mm | 75 % | 100 % | 38 % | 71 % |
+| **220 × 140 mm** | **261 mm** | **100 %** | **75 %** | **100 %** | **92 %** |
+| 210 × 140 mm | 252 mm | 88 % | 75 % | 25 % | 62 % |
+| 200 × 135 mm | 241 mm | 88 % | 75 % | 38 % | 67 % |
+
+220 × 140 mm is not just "small enough", it is the best of the sizes tested —
+smaller is worse again, because the side sonars end up closer to the
+centreline than `TARGET_SIDE_MM` expects and the robot parks slightly
+off-centre. If you land somewhere other than 220 × 140, re-run the sweep and
+set `TARGET_SIDE_MM = CORRIDOR_MM/2 - US_L_Y_MM` for your actual numbers.
 
 There is a cliff at a diagonal of about **280 mm**. Above it the robot
 grinds its way round every corner and eventually wedges; below it, corners

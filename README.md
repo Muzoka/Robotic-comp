@@ -63,31 +63,26 @@ docs/
     07_COMPETITION_DAY.md  print this and take it
     08_SOFTWARE_AND_STEPS.md  what to install, and every step  ← start here
     09_CHECKLIST.md        every item, with alternatives  ← shopping list
-    10_MAP_NOTES.md        the three maps and what still needs checking
+    10_MAP_NOTES.md        the three maps, straight from the spreadsheet
+    11_MAKING_IT_FIT.md    how all three maps got inside 3 minutes  ← read this
 ```
 
 ---
 
 ## The three things that matter most
 
-### 1. The robot has to get smaller
+### 1. The robot has to get smaller — 3 cm shorter, 1 cm narrower
 
-`tools/geometry_check.py` prints:
+Turning on the spot sweeps a circle as wide as the body diagonal. The passage
+is one foot, 304.8 mm.
 
-> turning on the spot sweeps a circle **292 mm** across
+| Robot | Diagonal | Clearance | Map 3 completed |
+| --- | --- | --- | --- |
+| 250 × 150 mm *(today)* | 292 mm | 6.4 mm | 12 % |
+| **220 × 140 mm** | **261 mm** | **22 mm** | **100 %** |
 
-Your robot is 25 × 15 cm and the passages are 30 cm, so it has **4 mm of
-clearance each side** while turning. Measured over the three real maps, both
-wall-following directions:
-
-| Robot | Swept circle | Maps solved | Sector points | Scrapes/run |
-| --- | --- | --- | --- | --- |
-| 250 × 150 mm *(today)* | 292 mm | 56 % | 63 % | 100 |
-| 210 × 130 mm | 247 mm | 56 % | 66 % | 84 |
-| **190 × 130 mm** | **230 mm** | **75 %** | **72 %** | 73 |
-
-Target about **21 × 13 cm**: sensors inside the wheel line, nothing hanging
-off the nose or tail, battery stacked on top, wheel axle exactly central.
+There is a cliff at about 280 mm of diagonal. Most builds find the whole 3 cm
+in the front ultrasonic bracket alone.
 
 ### 2. Yes, add the gyro. No, you do not need a memory module.
 
@@ -114,18 +109,26 @@ third. Every tuning decision in this repository is made that way.
 
 ## Where it stands today
 
-From the organisers' spreadsheet: 5 × 5 grid of 1 ft squares, passage
-**304.8 mm**, walls 19 mm thick and 190 mm tall, 3 minutes per run.
+Three separate maps from the organisers' spreadsheet: 5 × 5 grid of 1 ft
+squares, passage **304.8 mm**, 3 minutes per run. Wall-following, left hand,
+robot at the target **220 × 140 mm**:
 
-| Section | Sector points | Time | Wall scrapes |
+| Map | Completed | Time | Sector points |
 | --- | --- | --- | --- |
-| Map 1 — U around a block, 2 turns | **3 / 3** | 63 s | 12 |
-| Map 2 — dog-leg with a loop, 3 turns | 3–4 / 5 | 36 s | 4 |
-| Map 3 — 1 ft zig-zag, 8 turns | 2.7 / 9 | ran out of time | 124 |
-| Combined course, 4.67 m, 36 ft route | 9 / 17 | ran out of time | 123 |
+| Map 1 — U around a block, 2 turns | **100 %** | 65 s | 3 / 3 |
+| Map 2 — dog-leg with a loop, 3 turns | 75–100 % | 42 s | 4 / 5 |
+| Map 3 — 1 ft zig-zag, 8 turns | **100 %** | 92 s | 7 / 9 |
 
-Maps 1 and 2 are solved. **Map 3 is not, and it carries 9 of the 17 points**
-— see `docs/10_MAP_NOTES.md` for exactly why and what is being done.
+All three inside the limit with roughly half the time to spare. **This needs
+the robot to come down from 250 × 150 mm to about 220 × 140 mm** — at its
+current size Map 3 completes 12 % of the time. See
+`docs/11_MAKING_IT_FIT.md`.
+
+```bash
+cd sim
+python3 run.py --all --trials 5                    # the robot as it is today
+python3 run.py --all --trials 5 --robot 220x140    # after shrinking it
+```
 
 ---
 
