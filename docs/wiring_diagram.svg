@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 860" width="1180" height="860"
+     font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <rect width="1180" height="860" fill="#ffffff"/>
+
+  <text x="30" y="42" font-size="24" font-weight="700" fill="#15181b"
+        font-family="Helvetica, Arial, sans-serif">MazeRunner — physical wiring</text>
+  <text x="30" y="66" font-size="13" fill="#5a6067">Every wire on the robot. Colours are a suggestion; keep red = power, black = ground.</text>
+
+  <!-- ============ BATTERY / POWER ============ -->
+  <g>
+    <rect x="30" y="100" width="230" height="120" rx="4" fill="#fff8e8" stroke="#b96f07" stroke-width="2"/>
+    <text x="45" y="126" font-size="14" font-weight="700" fill="#15181b">BATTERY  7.4 V</text>
+    <text x="45" y="146" font-size="11.5" fill="#4a5158">2 × 18650 in series</text>
+    <text x="45" y="162" font-size="11.5" fill="#4a5158">(or 6 × AA = 9 V)</text>
+    <circle cx="60" cy="188" r="5" fill="#cc2222"/><text x="74" y="193" font-size="12" fill="#15181b">+</text>
+    <circle cx="60" cy="208" r="5" fill="#111111"/><text x="74" y="213" font-size="12" fill="#15181b">−</text>
+
+    <rect x="300" y="130" width="120" height="52" rx="4" fill="#f2f3f4" stroke="#7c848c" stroke-width="2"/>
+    <text x="312" y="152" font-size="13" font-weight="700" fill="#15181b">SWITCH</text>
+    <text x="312" y="170" font-size="11" fill="#4a5158">master, in the + line</text>
+
+    <line x1="65" y1="188" x2="300" y2="156" stroke="#cc2222" stroke-width="3"/>
+    <line x1="420" y1="156" x2="470" y2="156" stroke="#cc2222" stroke-width="3"/>
+    <line x1="470" y1="156" x2="470" y2="300" stroke="#cc2222" stroke-width="3"/>
+    <line x1="470" y1="230" x2="880" y2="230" stroke="#cc2222" stroke-width="3"/>
+    <circle cx="470" cy="230" r="4.5" fill="#cc2222"/>
+
+    <line x1="65" y1="208" x2="200" y2="208" stroke="#111111" stroke-width="3"/>
+    <line x1="200" y1="208" x2="200" y2="640" stroke="#111111" stroke-width="3"/>
+  </g>
+
+  <!-- ============ L298N ============ -->
+  <g>
+    <rect x="330" y="300" width="280" height="230" rx="4" fill="#fdecec" stroke="#ac3127" stroke-width="2"/>
+    <text x="346" y="326" font-size="15" font-weight="700" fill="#15181b">L298N motor driver</text>
+    <text x="346" y="346" font-size="11" fill="#ac3127" font-weight="700">REMOVE the ENA and ENB jumpers</text>
+    <text x="346" y="362" font-size="11" fill="#4a5158">LEAVE the 5V-EN jumper fitted</text>
+
+    <text x="346" y="392" font-size="12" fill="#15181b">+12V ●</text>
+    <text x="346" y="412" font-size="12" fill="#15181b">GND  ●</text>
+    <text x="346" y="432" font-size="12" fill="#15181b">5V   ○  do not connect</text>
+
+    <text x="346" y="464" font-size="12" fill="#15181b">OUT1 OUT2 ● ● → RIGHT motor</text>
+    <text x="346" y="484" font-size="12" fill="#15181b">OUT3 OUT4 ● ● → LEFT  motor</text>
+    <text x="346" y="512" font-size="11" fill="#4a5158">ENA IN1 IN2 ENB IN3 IN4 → Uno</text>
+
+    <line x1="470" y1="300" x2="470" y2="386" stroke="#cc2222" stroke-width="3"/>
+    <circle cx="400" cy="388" r="4" fill="#cc2222"/>
+    <line x1="200" y1="408" x2="400" y2="408" stroke="#111111" stroke-width="3"/>
+    <circle cx="400" cy="408" r="4" fill="#111111"/>
+    <circle cx="200" cy="408" r="4.5" fill="#111111"/>
+  </g>
+
+  <!-- capacitor note -->
+  <g>
+    <rect x="640" y="300" width="210" height="88" rx="4" fill="#f2f3f4" stroke="#7c848c" stroke-width="1.6"/>
+    <text x="654" y="322" font-size="12" font-weight="700" fill="#15181b">1000 µF</text>
+    <text x="654" y="340" font-size="11" fill="#4a5158">across +12V and GND</text>
+    <text x="654" y="356" font-size="11" fill="#4a5158">at the L298N terminals.</text>
+    <text x="654" y="374" font-size="11" fill="#4a5158">100 nF across each motor.</text>
+  </g>
+
+  <!-- ============ ARDUINO ============ -->
+  <g>
+    <rect x="880" y="120" width="270" height="470" rx="4" fill="#e8f2fb" stroke="#1c5fa8" stroke-width="2"/>
+    <text x="896" y="148" font-size="15" font-weight="700" fill="#15181b">Arduino Uno R3</text>
+
+    <text x="896" y="180" font-size="12" fill="#15181b">VIN  ●──────── battery +</text>
+    <text x="896" y="200" font-size="12" fill="#15181b">GND  ●──────── battery −</text>
+    <text x="896" y="220" font-size="12" fill="#15181b">5V   ●──────── sensor rail</text>
+
+    <line x1="880" y1="176" x2="740" y2="176" stroke="#cc2222" stroke-width="3"/>
+    <line x1="740" y1="176" x2="740" y2="230" stroke="#cc2222" stroke-width="3"/>
+    <circle cx="740" cy="230" r="4.5" fill="#cc2222"/>
+    <line x1="880" y1="196" x2="700" y2="196" stroke="#111111" stroke-width="3"/>
+    <line x1="700" y1="196" x2="700" y2="640" stroke="#111111" stroke-width="3"/>
+    <line x1="200" y1="640" x2="700" y2="640" stroke="#111111" stroke-width="3"/>
+    <text x="330" y="632" font-size="11.5" fill="#111111" font-weight="700">ONE COMMON GROUND — everything ties here</text>
+
+    <line x1="896" y1="240" x2="1140" y2="240" stroke="#c9ced3" stroke-width="1"/>
+
+    <text x="896" y="266" font-size="12" fill="#15181b">D2  ← encoder LEFT   (LM393)</text>
+    <text x="896" y="286" font-size="12" fill="#15181b">D3  ← encoder RIGHT  (LM393)</text>
+    <text x="896" y="306" font-size="12" fill="#15181b">D4  → L298N IN1</text>
+    <text x="896" y="326" font-size="12" fill="#15181b">D5  → L298N ENA   (PWM, right)</text>
+    <text x="896" y="346" font-size="12" fill="#15181b">D6  → L298N ENB   (PWM, left)</text>
+    <text x="896" y="366" font-size="12" fill="#15181b">D7  → L298N IN2</text>
+    <text x="896" y="386" font-size="12" fill="#15181b">D8  → L298N IN3</text>
+    <text x="896" y="406" font-size="12" fill="#15181b">D9  → sonar RIGHT  TRIG</text>
+    <text x="896" y="426" font-size="12" fill="#15181b">D10 ← sonar RIGHT  ECHO</text>
+    <text x="896" y="446" font-size="12" fill="#15181b">D11 → L298N IN4</text>
+    <text x="896" y="466" font-size="12" fill="#15181b">D12   spare (not used)</text>
+    <text x="896" y="486" font-size="12" fill="#15181b">D13 → LED / buzzer + GO btn via 330Ω</text>
+    <text x="896" y="510" font-size="12" fill="#15181b">A0  → sonar FRONT  TRIG</text>
+    <text x="896" y="530" font-size="12" fill="#15181b">A1  ← sonar FRONT  ECHO</text>
+    <text x="896" y="550" font-size="12" fill="#15181b">A2  → sonar LEFT   TRIG</text>
+    <text x="896" y="570" font-size="12" fill="#15181b">A3  ← sonar LEFT   ECHO</text>
+
+    <text x="896" y="596" font-size="12" fill="#b96f07" font-weight="700">A4 = SDA, A5 = SCL → MPU-6050 only</text>
+
+    <line x1="880" y1="316" x2="610" y2="316" stroke="#7c848c" stroke-width="2"/>
+    <line x1="880" y1="336" x2="610" y2="336" stroke="#7c848c" stroke-width="2"/>
+    <line x1="880" y1="356" x2="610" y2="356" stroke="#7c848c" stroke-width="2"/>
+    <line x1="880" y1="376" x2="610" y2="376" stroke="#7c848c" stroke-width="2"/>
+    <line x1="880" y1="396" x2="640" y2="396" stroke="#7c848c" stroke-width="2"/>
+    <line x1="640" y1="396" x2="640" y2="420" stroke="#7c848c" stroke-width="2"/>
+    <line x1="640" y1="420" x2="610" y2="420" stroke="#7c848c" stroke-width="2"/>
+    <line x1="880" y1="456" x2="660" y2="456" stroke="#7c848c" stroke-width="2"/>
+    <line x1="660" y1="456" x2="660" y2="440" stroke="#7c848c" stroke-width="2"/>
+    <line x1="660" y1="440" x2="610" y2="440" stroke="#7c848c" stroke-width="2"/>
+  </g>
+
+  <!-- ============ SENSOR RAIL ============ -->
+  <g>
+    <rect x="30" y="300" width="250" height="290" rx="4" fill="#eef7f1" stroke="#1c7a47" stroke-width="2"/>
+    <text x="46" y="326" font-size="14" font-weight="700" fill="#15181b">Sensor board</text>
+    <text x="46" y="344" font-size="11" fill="#4a5158">solder this on the GREEN</text>
+    <text x="46" y="360" font-size="11" fill="#4a5158">perfboard, not a breadboard</text>
+
+    <line x1="46" y1="378" x2="264" y2="378" stroke="#cc2222" stroke-width="3"/>
+    <text x="46" y="396" font-size="11.5" fill="#cc2222" font-weight="700">5 V rail  ← Uno 5V</text>
+    <line x1="46" y1="412" x2="264" y2="412" stroke="#111111" stroke-width="3"/>
+    <text x="46" y="430" font-size="11.5" fill="#111111" font-weight="700">GND rail  ← Uno GND</text>
+
+    <text x="46" y="458" font-size="12" fill="#15181b">sonar FRONT   4-pin header</text>
+    <text x="46" y="478" font-size="12" fill="#15181b">sonar LEFT    4-pin header</text>
+    <text x="46" y="498" font-size="12" fill="#15181b">sonar RIGHT   4-pin header</text>
+    <text x="46" y="518" font-size="12" fill="#15181b">MPU-6050      4-pin header</text>
+    <text x="46" y="538" font-size="12" fill="#15181b">encoder L / R 3-pin headers</text>
+    <text x="46" y="558" font-size="12" fill="#15181b">GO button     2-pin + 330Ω</text>
+    <text x="46" y="578" font-size="11" fill="#4a5158">AD0 on the MPU: leave unconnected</text>
+
+    <line x1="880" y1="216" x2="150" y2="216" stroke="#cc2222" stroke-width="3"/>
+    <line x1="150" y1="216" x2="150" y2="378" stroke="#cc2222" stroke-width="3"/>
+    <circle cx="150" cy="378" r="4.5" fill="#cc2222"/>
+    <line x1="120" y1="412" x2="120" y2="640" stroke="#111111" stroke-width="3"/>
+    <circle cx="120" cy="412" r="4.5" fill="#111111"/>
+    <circle cx="120" cy="640" r="4.5" fill="#111111"/>
+  </g>
+
+  <!-- ============ MOTORS ============ -->
+  <g>
+    <rect x="330" y="690" width="180" height="70" rx="4" fill="#f2f3f4" stroke="#15181b" stroke-width="2"/>
+    <text x="346" y="716" font-size="13" font-weight="700" fill="#15181b">RIGHT TT motor</text>
+    <text x="346" y="736" font-size="11" fill="#4a5158">OUT1 / OUT2</text>
+    <text x="346" y="752" font-size="11" fill="#4a5158">+ 100 nF across it</text>
+
+    <rect x="540" y="690" width="180" height="70" rx="4" fill="#f2f3f4" stroke="#15181b" stroke-width="2"/>
+    <text x="556" y="716" font-size="13" font-weight="700" fill="#15181b">LEFT TT motor</text>
+    <text x="556" y="736" font-size="11" fill="#4a5158">OUT3 / OUT4</text>
+    <text x="556" y="752" font-size="11" fill="#4a5158">+ 100 nF across it</text>
+
+    <line x1="420" y1="530" x2="420" y2="690" stroke="#7c848c" stroke-width="2.5"/>
+    <line x1="560" y1="530" x2="560" y2="690" stroke="#7c848c" stroke-width="2.5"/>
+  </g>
+
+  <!-- ============ WARNINGS ============ -->
+  <g>
+    <rect x="760" y="660" width="390" height="140" rx="4" fill="#fdecec" stroke="#ac3127" stroke-width="1.8"/>
+    <text x="776" y="684" font-size="13" font-weight="700" fill="#ac3127">Four ways to destroy the board</text>
+    <text x="776" y="708" font-size="11.5" fill="#15181b">1. No common ground → sonar reads nonsense</text>
+    <text x="776" y="728" font-size="11.5" fill="#15181b">2. L298N 5V output wired to Uno 5V → damage</text>
+    <text x="776" y="748" font-size="11.5" fill="#15181b">3. Motors powered from USB → dead USB port</text>
+    <text x="776" y="768" font-size="11.5" fill="#15181b">4. ENA/ENB jumpers left on → no speed control</text>
+    <text x="776" y="790" font-size="11" fill="#4a5158">Check every rail with the multimeter BEFORE the Uno goes in.</text>
+  </g>
+</svg>

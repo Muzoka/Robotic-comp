@@ -1,0 +1,7 @@
+sim/libnavcore.so
+sim/navcore.dll
+sim/libnavcore.dylib
+sim/runs/*.csv
+sim/runs/*.txt
+__pycache__/
+*.pyc

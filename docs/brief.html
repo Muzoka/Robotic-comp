@@ -1,0 +1,728 @@
+<title>MazeRunner Build Brief</title>
+<style>
+  :root{
+    --paper:#F4F5F6; --surface:#FFFFFF; --surface-2:#FAFBFB;
+    --ink:#15181B; --ink-2:#4A5158; --ink-3:#7C848C;
+    --line:#DCE0E3; --line-strong:#B7BEC4;
+    --accent:#B96F07; --accent-soft:#FAEFDB;
+    --good:#1C7A47; --good-soft:#E4F1E9;
+    --warn:#A85B16; --warn-soft:#FBEEDF;
+    --bad:#AC3127;  --bad-soft:#FAE5E3;
+    --wall:#22262A; --floor:#FFFFFF; --trail:#2C6FD6;
+
+    --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#101316; --surface:#171B1F; --surface-2:#1C2126;
+      --ink:#E9EBED; --ink-2:#A4ACB4; --ink-3:#79818A;
+      --line:#272C31; --line-strong:#3C434A;
+      --accent:#E0A044; --accent-soft:#2A2013;
+      --good:#4CB57D; --good-soft:#13261C;
+      --warn:#D6893F; --warn-soft:#2A1F12;
+      --bad:#E2685C;  --bad-soft:#2B1614;
+      --wall:#050708; --floor:#C9CED3; --trail:#5C9BF0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#101316; --surface:#171B1F; --surface-2:#1C2126;
+    --ink:#E9EBED; --ink-2:#A4ACB4; --ink-3:#79818A;
+    --line:#272C31; --line-strong:#3C434A;
+    --accent:#E0A044; --accent-soft:#2A2013;
+    --good:#4CB57D; --good-soft:#13261C;
+    --warn:#D6893F; --warn-soft:#2A1F12;
+    --bad:#E2685C;  --bad-soft:#2B1614;
+    --wall:#050708; --floor:#C9CED3; --trail:#5C9BF0;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+  .col{max-width:68ch}
+
+  h1,h2,h3{text-wrap:balance;margin:0}
+  h1{font-size:clamp(2.4rem,6vw,4.1rem);line-height:1.02;letter-spacing:-.035em;font-weight:700}
+  h2{font-size:clamp(1.5rem,3vw,2.1rem);line-height:1.12;letter-spacing:-.024em;font-weight:700}
+  h3{font-size:1.06rem;letter-spacing:-.008em;font-weight:700}
+  p{margin:0}
+  a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line-strong)}
+  a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+  strong{font-weight:700}
+  code,.mono{font-family:var(--mono)}
+  .num{font-variant-numeric:tabular-nums}
+
+  .eyebrow{
+    font-family:var(--mono);font-size:.685rem;text-transform:uppercase;
+    letter-spacing:.19em;color:var(--ink-3);font-weight:500;
+  }
+
+  /* ---------- masthead ---------- */
+  header.mast{
+    border-bottom:1px solid var(--line);background:var(--surface);
+  }
+  .mast-in{display:flex;flex-direction:column;gap:34px;padding:52px 0 44px}
+  .mast-top{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:baseline;
+            justify-content:space-between}
+  .sub{font-size:clamp(1.02rem,1.9vw,1.22rem);color:var(--ink-2);max-width:60ch}
+
+  .verdict{
+    display:grid;gap:0;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));
+    border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--surface-2);
+  }
+  .vcell{padding:18px 20px;border-right:1px solid var(--line)}
+  .vcell:last-child{border-right:0}
+  .vcell .k{font-family:var(--mono);font-size:.66rem;letter-spacing:.17em;
+            text-transform:uppercase;color:var(--ink-3)}
+  .vcell .v{font-size:1.62rem;font-weight:700;letter-spacing:-.03em;margin-top:5px;
+            font-variant-numeric:tabular-nums;line-height:1.15}
+  .vcell .n{font-size:.86rem;color:var(--ink-2);margin-top:3px;line-height:1.45}
+
+  /* ---------- sections ---------- */
+  section{border-bottom:1px solid var(--line);padding:64px 0}
+  .shead{display:flex;gap:22px;align-items:flex-start;margin-bottom:30px}
+  .shead .idx{font-family:var(--mono);font-size:.8rem;color:var(--accent);
+              padding-top:.55em;letter-spacing:.06em;flex:none}
+  .shead .txt{display:flex;flex-direction:column;gap:9px}
+  .stack{display:flex;flex-direction:column;gap:18px}
+  .grid2{display:grid;gap:30px;grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
+  .grid3{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+        padding:22px 24px;display:flex;flex-direction:column;gap:11px}
+  .card p{color:var(--ink-2);font-size:.94rem}
+
+  .callout{border-left:3px solid var(--accent);background:var(--accent-soft);
+           padding:16px 20px;border-radius:0 3px 3px 0}
+  .callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+  .callout .lbl{font-family:var(--mono);font-size:.66rem;letter-spacing:.17em;
+                text-transform:uppercase;color:var(--ink-2);display:block;margin-bottom:6px}
+
+  /* ---------- tables ---------- */
+  .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:3px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:440px}
+  th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{font-family:var(--mono);font-size:.66rem;letter-spacing:.15em;text-transform:uppercase;
+           color:var(--ink-3);font-weight:500;background:var(--surface-2);white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0}
+  td.n{font-variant-numeric:tabular-nums;font-family:var(--mono);white-space:nowrap}
+  .ar{font-size:.95em;color:var(--ink-2);direction:rtl;unicode-bidi:isolate}
+
+  .pill{display:inline-block;font-family:var(--mono);font-size:.66rem;letter-spacing:.09em;
+        text-transform:uppercase;padding:3px 8px;border-radius:2px;white-space:nowrap;font-weight:600}
+  .pill.no{background:var(--bad-soft);color:var(--bad)}
+  .pill.ok{background:var(--good-soft);color:var(--good)}
+  .pill.mid{background:var(--warn-soft);color:var(--warn)}
+
+  /* ---------- diagrams ---------- */
+  figure{margin:0;display:flex;flex-direction:column;gap:12px}
+  .fig-body{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+            padding:22px;overflow-x:auto}
+  figcaption{font-size:.85rem;color:var(--ink-3);max-width:66ch}
+  svg{display:block;max-width:100%;height:auto}
+  .maprow{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
+  .mapcard{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+           display:flex;flex-direction:column}
+  .mapcard .art{padding:16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+  .mapcard .meta{padding:15px 18px;display:flex;flex-direction:column;gap:9px}
+  .mapcard h3{font-size:.98rem}
+  .stat{display:flex;justify-content:space-between;gap:14px;font-size:.85rem;
+        font-family:var(--mono);color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .stat b{color:var(--ink);font-weight:600}
+
+  ul.tight{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:7px;
+           color:var(--ink-2);font-size:.94rem}
+  ul.tight li::marker{color:var(--ink-3)}
+  ol.phases{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  ol.phases li{display:grid;grid-template-columns:64px 1fr;gap:20px;
+               padding:18px 0;border-top:1px solid var(--line)}
+  ol.phases li:first-child{border-top:0}
+  ol.phases .ph{font-family:var(--mono);font-size:.72rem;letter-spacing:.13em;
+                text-transform:uppercase;color:var(--accent);padding-top:.28em}
+  ol.phases .body{display:flex;flex-direction:column;gap:5px}
+  ol.phases .body p{color:var(--ink-2);font-size:.93rem}
+
+  footer{padding:44px 0 64px;color:var(--ink-3);font-size:.86rem;
+         display:flex;flex-direction:column;gap:8px}
+
+  .trailpath{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);
+             animation:draw 2.6s ease-out forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @media (prefers-reduced-motion:reduce){
+    .trailpath{animation:none;stroke-dashoffset:0}
+  }
+</style>
+
+<header class="mast">
+  <div class="wrap mast-in">
+    <div class="mast-top">
+      <div class="stack" style="gap:12px">
+        <span class="eyebrow">Robotics Navigation Challenge &nbsp;/&nbsp; build brief</span>
+        <h1>MazeRunner</h1>
+      </div>
+      <span class="eyebrow">Arduino Uno&nbsp;R3 &nbsp;·&nbsp; 3&thinsp;×&thinsp;HC-SR04 &nbsp;·&nbsp; MPU-6050</span>
+    </div>
+    <p class="sub">A maze robot whose simulator runs the real firmware. Everything below
+      is a measured result, not a plan — reproduce any of it with one command.</p>
+
+    <div class="verdict">
+      <div class="vcell">
+        <span class="k">Blocking</span>
+        <div class="v">4&nbsp;mm</div>
+        <div class="n">Clearance each side when your 25&nbsp;×&nbsp;15&nbsp;cm robot pivots in a 30&nbsp;cm passage. It has to get smaller.</div>
+      </div>
+      <div class="vcell">
+        <span class="k">Gyro</span>
+        <div class="v">Buy it</div>
+        <div class="n">Legal under §2.2, ~20&nbsp;SAR, and worth about a third of
+          your sector points.</div>
+      </div>
+      <div class="vcell">
+        <span class="k">Memory module</span>
+        <div class="v">Not needed</div>
+        <div class="n">The Uno already has 2&nbsp;KB RAM and 1&nbsp;KB EEPROM. The map
+          costs 192&nbsp;bytes.</div>
+      </div>
+      <div class="vcell">
+        <span class="k">Budget</span>
+        <div class="v">~800&nbsp;SAR</div>
+        <div class="n">Parts, tools and the practice track. Full list in §4.</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ============================================================ 01 -->
+<section>
+  <div class="shead">
+    <span class="idx">01</span>
+    <div class="txt">
+      <span class="eyebrow">The measurement that comes before everything</span>
+      <h2>Can the robot turn around at all?</h2>
+    </div>
+  </div>
+
+  <div class="stack col" style="margin-bottom:30px">
+    <p>A two-wheel robot pivots about the middle of its wheel axle, and the corners of
+      the body sweep a circle. That circle has to fit between the walls, and it is the
+      widest the robot ever gets.</p>
+    <p>Your robot is <strong>250 &times; 150&nbsp;mm</strong>, so it sweeps
+      <strong>292&nbsp;mm</strong>. The passages are <strong>300&nbsp;mm</strong>. That is
+      <strong>4&nbsp;mm of clearance each side</strong> — geometrically possible, practically
+      not. In simulation it grinds against the walls about 100 times per run.</p>
+  </div>
+
+  <figure style="margin-bottom:28px">
+    <div class="fig-body">
+      <svg viewBox="0 0 1240 470" role="img"
+           aria-label="Scale drawing of the robot's pivot circle inside 200, 300 and 400 millimetre passages">
+        <g stroke-linecap="butt">
+          <!-- ============ 200 mm ============ -->
+          <rect x="20" y="20" width="260" height="380" fill="var(--floor)"/>
+          <rect x="20"  y="20" width="30" height="380" fill="var(--wall)"/>
+          <rect x="250" y="20" width="30" height="380" fill="var(--wall)"/>
+          <circle cx="150" cy="210" r="145.8" fill="none" stroke="var(--bad)"
+                  stroke-width="2.5" stroke-dasharray="7 6"/>
+          <rect x="75" y="97.5" width="150" height="225" rx="3"
+                fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+          <circle cx="150" cy="210" r="4" fill="var(--accent)"/>
+          <text x="150" y="435" text-anchor="middle" font-family="var(--mono)"
+                font-size="20" font-weight="700" fill="var(--ink)">200 mm</text>
+          <text x="150" y="458" text-anchor="middle" font-family="var(--mono)"
+                font-size="14.5" fill="var(--bad)">46 mm too narrow</text>
+
+          <!-- ============ 300 mm ============ -->
+          <rect x="340" y="20" width="360" height="380" fill="var(--floor)"/>
+          <rect x="340" y="20" width="30" height="380" fill="var(--wall)"/>
+          <rect x="670" y="20" width="30" height="380" fill="var(--wall)"/>
+          <circle cx="520" cy="210" r="145.8" fill="none" stroke="var(--warn)"
+                  stroke-width="2.5" stroke-dasharray="7 6"/>
+          <rect x="445" y="97.5" width="150" height="225" rx="3"
+                fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+          <circle cx="520" cy="210" r="4" fill="var(--accent)"/>
+          <text x="520" y="435" text-anchor="middle" font-family="var(--mono)"
+                font-size="20" font-weight="700" fill="var(--ink)">300 mm</text>
+          <text x="520" y="458" text-anchor="middle" font-family="var(--mono)"
+                font-size="14.5" fill="var(--warn)">4 mm each side</text>
+
+          <!-- ============ 400 mm ============ -->
+          <rect x="760" y="20" width="460" height="380" fill="var(--floor)"/>
+          <rect x="760"  y="20" width="30" height="380" fill="var(--wall)"/>
+          <rect x="1190" y="20" width="30" height="380" fill="var(--wall)"/>
+          <circle cx="990" cy="210" r="145.8" fill="none" stroke="var(--good)"
+                  stroke-width="2.5" stroke-dasharray="7 6"/>
+          <rect x="915" y="97.5" width="150" height="225" rx="3"
+                fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+          <circle cx="990" cy="210" r="4" fill="var(--accent)"/>
+          <!-- dimension line for the circle -->
+          <g stroke="var(--ink-3)" stroke-width="1.2">
+            <line x1="844.2" y1="60" x2="1135.8" y2="60"/>
+            <line x1="844.2" y1="52" x2="844.2" y2="68"/>
+            <line x1="1135.8" y1="52" x2="1135.8" y2="68"/>
+          </g>
+          <text x="990" y="48" text-anchor="middle" font-family="var(--mono)"
+                font-size="14.5" fill="var(--ink-3)">292 mm swept</text>
+          <text x="990" y="435" text-anchor="middle" font-family="var(--mono)"
+                font-size="20" font-weight="700" fill="var(--ink)">400 mm</text>
+          <text x="990" y="458" text-anchor="middle" font-family="var(--mono)"
+                font-size="14.5" fill="var(--good)">comfortable</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>Drawn to scale. Orange is the robot body (215&nbsp;×&nbsp;160&nbsp;mm,
+      axle centred); the dashed circle is what it sweeps turning on the spot.</figcaption>
+  </figure>
+
+  <div class="grid2">
+    <div class="stack">
+      <h3>How much smaller, measured</h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Robot</th><th>Swept</th><th>Solved</th><th>Points</th><th>Scrapes</th></tr></thead>
+          <tbody>
+            <tr><td class="n">250 &times; 150</td><td class="n">292 mm</td><td class="n">56%</td><td class="n">63%</td><td class="n">100</td></tr>
+            <tr><td class="n">230 &times; 150</td><td class="n">275 mm</td><td class="n">50%</td><td class="n">58%</td><td class="n">94</td></tr>
+            <tr><td class="n">210 &times; 150</td><td class="n">258 mm</td><td class="n">44%</td><td class="n">59%</td><td class="n">85</td></tr>
+            <tr><td class="n">210 &times; 130</td><td class="n">247 mm</td><td class="n">56%</td><td class="n">66%</td><td class="n">84</td></tr>
+            <tr><td class="n"><strong>190 &times; 130</strong></td><td class="n"><strong>230 mm</strong></td><td class="n"><strong>75%</strong></td><td class="n"><strong>72%</strong></td><td class="n">73</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:.85rem;color:var(--ink-3)">All three maps, both wall-following
+        directions, 2 seeds each. Target about 21 &times; 13 cm.</p>
+    </div>
+
+    <div class="stack">
+      <h3>Four ways to shrink it, all free</h3>
+      <ul class="tight">
+        <li><strong>Centre the wheel axle.</strong> An axle mounted two-thirds of the way
+          back makes the circle bigger for no benefit. It is just which mounting holes you
+          use.</li>
+        <li><strong>Nothing may stick out.</strong> No sensor, bracket, wire loom or battery
+          past the tyres, the nose or the tail. The ultrasonic bracket in particular wants to
+          hang off the front — do not let it.</li>
+        <li><strong>Stack the battery on top,</strong> not behind. Anything behind the axle
+          adds to the tail, and the tail is what sweeps.</li>
+        <li><strong>Pull the sensors inboard.</strong> The side ultrasonics can sit just
+          inside the wheel line and still see the wall.</li>
+      </ul>
+      <div class="callout">
+        <span class="lbl">Why it is worth the trouble</span>
+        <p style="font-size:.93rem">Every millimetre off the diagonal is a millimetre of
+          margin at every corner of every map. Going from 25&nbsp;&times;&nbsp;15 to
+          19&nbsp;&times;&nbsp;13&nbsp;cm takes maps solved from 56% to 75% with no code
+          change at all.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 02 -->
+<section>
+  <div class="shead">
+    <span class="idx">02</span>
+    <div class="txt">
+      <span class="eyebrow">Which program to simulate with</span>
+      <h2>The simulator runs the firmware itself</h2>
+    </div>
+  </div>
+
+  <div class="stack col" style="margin-bottom:30px">
+    <p>You asked for a simulator good enough that you assemble once and go. Here is the
+      honest version: simulation gets you about 90% of the way, and the last 10% costs one
+      afternoon on a practice track. No simulator knows how your carpet grips.</p>
+    <p>What it does do is remove the seam where student robot projects usually fail — the
+      tested model drifting away from the shipped code. <code>nav_core.cpp</code> holds all
+      the navigation and no Arduino code at all, so it compiles <strong>twice</strong>: once
+      by the Arduino IDE onto the Uno, once by <code>g++</code> into a library the simulator
+      drives. What you watch is what you flash.</p>
+  </div>
+
+  <figure style="margin-bottom:30px">
+    <div class="fig-body">
+      <svg viewBox="0 0 900 250" role="img"
+           aria-label="Diagram: nav_core.cpp is compiled both onto the Arduino and into the simulator">
+        <g font-family="var(--mono)" font-size="14.5">
+          <rect x="300" y="18" width="300" height="52" rx="3" fill="var(--accent-soft)"
+                stroke="var(--accent)" stroke-width="2"/>
+          <text x="450" y="42" text-anchor="middle" fill="var(--ink)" font-weight="700"
+                font-size="15.5">nav_core.cpp</text>
+          <text x="450" y="60" text-anchor="middle" fill="var(--ink-2)" font-size="12.5">all the thinking · no Arduino code</text>
+
+          <g stroke="var(--line-strong)" stroke-width="1.6" fill="none">
+            <path d="M400 70 L400 96 L190 96 L190 122"/>
+            <path d="M500 70 L500 96 L710 96 L710 122"/>
+          </g>
+          <text x="255" y="90" text-anchor="middle" fill="var(--ink-3)" font-size="12">Arduino IDE</text>
+          <text x="648" y="90" text-anchor="middle" fill="var(--ink-3)" font-size="12">g++ -shared</text>
+
+          <rect x="60" y="122" width="260" height="52" rx="3" fill="var(--surface-2)"
+                stroke="var(--line-strong)" stroke-width="1.4"/>
+          <text x="190" y="146" text-anchor="middle" fill="var(--ink)" font-weight="700">MazeRunner.ino</text>
+          <text x="190" y="164" text-anchor="middle" fill="var(--ink-2)" font-size="12.5">pins · I2C · PWM · EEPROM</text>
+
+          <rect x="580" y="122" width="260" height="52" rx="3" fill="var(--surface-2)"
+                stroke="var(--line-strong)" stroke-width="1.4"/>
+          <text x="710" y="146" text-anchor="middle" fill="var(--ink)" font-weight="700">sim/run.py</text>
+          <text x="710" y="164" text-anchor="middle" fill="var(--ink-2)" font-size="12.5">physics · sonar · gyro · maze</text>
+
+          <g stroke="var(--line-strong)" stroke-width="1.6" fill="none">
+            <path d="M190 174 L190 202"/><path d="M710 174 L710 202"/>
+          </g>
+          <text x="190" y="222" text-anchor="middle" fill="var(--ink-2)">the real robot</text>
+          <text x="710" y="222" text-anchor="middle" fill="var(--ink-2)">an animated GIF</text>
+        </g>
+      </svg>
+    </div>
+  </figure>
+
+  <div class="scroll" style="margin-bottom:24px">
+    <table>
+      <thead><tr><th>Tool</th><th>Use it for</th><th>Setup</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>sim/</strong> <span style="color:var(--ink-3)">(this repo)</span></td>
+          <td>Navigation logic, tuning, strategy, the corridor-width risk. Runs your actual firmware.</td>
+          <td class="n">done</td>
+        </tr>
+        <tr>
+          <td><strong>Wokwi</strong> <span style="color:var(--ink-3)">wokwi.com, free</span></td>
+          <td>Simulates the AVR chip itself — proves the pin map, the I2C to the gyro, the loop timing, the SRAM budget. No physics, so it cannot tell you whether the robot navigates.</td>
+          <td class="n">30 min</td>
+        </tr>
+        <tr>
+          <td><strong>A practice track</strong></td>
+          <td>The last 10%: real carpet, real ultrasonic reflections, real battery sag.</td>
+          <td class="n">1 afternoon</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid3">
+    <div class="card">
+      <h3>Webots</h3>
+      <p>Free, proper 3D physics, has differential drive and IMUs built in. But controllers
+        use its own API, so you would be testing a second, different program. Right next
+        step after this competition, not during it.</p>
+    </div>
+    <div class="card">
+      <h3>Tinkercad Circuits</h3>
+      <p>Fine for showing a teammate how an H-bridge works. Too limited for three sensors
+        and an IMU.</p>
+    </div>
+    <div class="card">
+      <h3>Gazebo / ROS 2, CoppeliaSim, Simulink</h3>
+      <p>All excellent, all far too much machinery for an Arduino Uno with three ultrasonics.
+        Skip them.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 03 -->
+<section>
+  <div class="shead">
+    <span class="idx">03</span>
+    <div class="txt">
+      <span class="eyebrow">Drawn to your measurements and driven</span>
+      <h2>The three maps, at real size</h2>
+    </div>
+  </div>
+
+  <div class="stack col" style="margin-bottom:28px">
+    <p>Drawn to your tape-measure numbers: 30&nbsp;cm passages, sector lines 30&nbsp;cm straight across, start and finish outside. Blue is the path the robot actually drove; green lines are sector points it scored, dark ones it missed. Map 2 matches its photo. Maps 1 and 3 are my best reading of how the inner walls connect — a photo taken from straight above would let me draw them exactly.</p>
+  </div>
+
+  <div class="maprow" style="margin-bottom:28px"><div class="mapcard"><div class="art"><svg viewBox="0 0 2100 1860" role="img" aria-label="Map 1 - 120x90 serpentine: the path the robot drove"><rect width="2100" height="1860" fill="var(--floor)"/><g fill="var(--wall)"><rect x="420" y="1410" width="1260" height="30"/><rect x="420" y="1380" width="30" height="30"/><rect x="420" y="1350" width="30" height="30"/><rect x="420" y="1320" width="30" height="30"/><rect x="420" y="1290" width="30" height="30"/><rect x="420" y="1260" width="30" height="30"/><rect x="420" y="1230" width="30" height="30"/><rect x="420" y="1200" width="30" height="30"/><rect x="420" y="1170" width="30" height="30"/><rect x="420" y="1140" width="30" height="30"/><rect x="420" y="1110" width="30" height="30"/><rect x="420" y="1080" width="30" height="30"/><rect x="750" y="1080" width="930" height="30"/><rect x="420" y="1050" width="30" height="30"/><rect x="1650" y="1050" width="30" height="30"/><rect x="420" y="1020" width="30" height="30"/><rect x="1650" y="1020" width="30" height="30"/><rect x="420" y="990" width="30" height="30"/><rect x="1650" y="990" width="30" height="30"/><rect x="420" y="960" width="30" height="30"/><rect x="1650" y="960" width="30" height="30"/><rect x="420" y="930" width="30" height="30"/><rect x="1650" y="930" width="30" height="30"/><rect x="420" y="900" width="30" height="30"/><rect x="1650" y="900" width="30" height="30"/><rect x="420" y="870" width="30" height="30"/><rect x="1650" y="870" width="30" height="30"/><rect x="420" y="840" width="30" height="30"/><rect x="1650" y="840" width="30" height="30"/><rect x="420" y="810" width="30" height="30"/><rect x="1650" y="810" width="30" height="30"/><rect x="420" y="780" width="30" height="30"/><rect x="1650" y="780" width="30" height="30"/><rect x="420" y="750" width="930" height="30"/><rect x="1650" y="750" width="30" height="30"/><rect x="1650" y="720" width="30" height="30"/><rect x="1650" y="690" width="30" height="30"/><rect x="1650" y="660" width="30" height="30"/><rect x="1650" y="630" width="30" height="30"/><rect x="1650" y="600" width="30" height="30"/><rect x="1650" y="570" width="30" height="30"/><rect x="1650" y="540" width="30" height="30"/><rect x="1650" y="510" width="30" height="30"/><rect x="1650" y="480" width="30" height="30"/><rect x="1650" y="450" width="30" height="30"/><rect x="420" y="420" width="1260" height="30"/></g><line x1="510" y1="750" x2="510" y2="480" stroke="var(--good)" stroke-width="22" stroke-linecap="round"/><line x1="1020" y1="750" x2="1020" y2="480" stroke="var(--good)" stroke-width="22" stroke-linecap="round"/><line x1="1200" y1="750" x2="1200" y2="480" stroke="var(--good)" stroke-width="22" stroke-linecap="round"/><line x1="1500" y1="1050" x2="1500" y2="810" stroke="var(--ink)" stroke-width="16" stroke-linecap="round"/><line x1="1020" y1="1050" x2="1020" y2="810" stroke="var(--good)" stroke-width="22" stroke-linecap="round"/><line x1="540" y1="1050" x2="540" y2="810" stroke="var(--ink)" stroke-width="16" stroke-linecap="round"/><line x1="840" y1="1410" x2="840" y2="1140" stroke="var(--ink)" stroke-width="16" stroke-linecap="round"/><line x1="1320" y1="1410" x2="1320" y2="1140" stroke="var(--ink)" stroke-width="16" stroke-linecap="round"/><path d="M200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L202 615 L209 615 L220 615 L233 615 L246 615 L261 615 L275 615 L290 615 L305 615 L320 616 L335 616 L349 616 L364 616 L379 616 L394 616 L409 616 L424 615 L439 615 L454 614 L469 613 L483 612 L498 612 L513 611 L528 610 L543 609 L558 608 L573 607 L588 607 L603 606 L618 605 L633 605 L648 604 L662 604 L677 604 L692 603 L707 603 L722 603 L737 603 L752 603 L767 603 L782 602 L797 602 L812 602 L827 602 L842 602 L857 602 L872 602 L886 602 L901 602 L916 603 L931 603 L946 603 L961 603 L976 603 L991 603 L1006 603 L1021 603 L1036 603 L1051 603 L1066 603 L1081 603 L1095 603 L1110 603 L1125 603 L1140 603 L1155 603 L1170 603 L1185 603 L1200 602 L1215 602 L1227 602 L1237 602 L1245 602 L1254 602 L1262 602 L1270 602 L1278 602 L1285 602 L1293 602 L1301 602 L1308 601 L1315 601 L1322 601 L1330 601 L1337 602 L1345 603 L1352 605 L1359 606 L1365 608 L1372 610 L1379 613 L1385 616 L1391 619 L1397 621 L1404 624 L1411 627 L1418 630 L1424 633 L1430 637 L1436 641 L1441 645 L1446 649 L1452 653 L1458 659 L1464 664 L1471 670 L1477 675 L1483 679 L1488 683 L1494 688 L1499 692 L1504 696 L1506 698 L1506 698 L1506 698 L1506 698 L1507 698 L1507 698 L1507 698 L1507 698 L1507 698 L1507 698 L1507 698 L1507 698 L1507 699 L1507 699 L1507 699 L1507 699 L1507 699 L1507 699 L1507 699 L1507 700 L1507 700 L1507 700 L1507 700 L1507 700 L1506 700 L1506 700 L1506 700 L1506 700 L1506 700 L1506 700 L1506 700 L1506 700 L1506 700 L1507 700 L1508 698 L1509 698 L1511 695 L1514 692 L1517 687 L1521 681 L1524 675 L1525 673 L1523 676 L1521 681 L1517 688 L1510 698 L1500 708 L1489 716 L1476 723 L1476 723 L1477 723 L1481 721 L1486 719 L1491 717 L1497 714 L1502 712 L1504 711 L1505 710 L1505 710 L1505 710 L1505 710 L1505 710 L1505 710 L1505 710 L1505 710 L1505 710 L1505 710 L1505 710 L1505 710 L1505 710 L1506 710 L1506 710 L1507 710 L1507 710 L1508 709 L1510 709 L1511 708 L1513 708 L1509 709 L1500 709 L1488 707 L1475 703 L1463 696 L1453 688 L1445 680 L1440 672 L1435 663 L1432 653 L1431 643 L1430 634 L1431 630 L1431 628 L1431 623 L1432 615 L1435 607 L1438 599 L1440 596 L1440 596 L1441 595 L1441 595 L1441 594 L1442 594 L1442 593 L1444 592 L1445 590 L1447 589 L1450 586 L1454 583 L1459 580 L1464 577 L1470 574 L1477 572 L1483 571 L1490 570 L1496 569 L1503 568 L1504 568 L1501 568 L1497 568 L1491 569 L1485 570 L1480 570 L1478 570 L1476 570 L1475 571 L1475 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1474 571 L1473 571 L1473 571 L1473 571 L1473 571 L1473 571 L1472 572 L1468 574 L1464 576 L1458 578 L1452 581 L1447 584 L1444 585 L1443 586 L1442 586 L1441 587 L1441 587 L1441 587 L1441 587 L1441 587 L1441 587 L1441 587 L1441 587 L1441 587 L1441 587 L1441 587 L1441 587 L1441 587 L1441 587 L1441 587 L1441 587 L1439 588 L1436 591 L1432 595 L1428 600 L1424 606 L1421 612 L1418 618 L1416 625 L1415 628 L1415 627 L1416 623 L1418 618 L1420 612 L1423 606 L1426 600 L1428 596 L1428 595 L1428 595 L1428 595 L1428 595 L1427 598 L1425 602 L1423 607 L1420 612 L1417 618 L1415 622 L1413 625 L1413 626 L1412 627 L1412 628 L1412 628 L1412 628 L1412 628 L1412 628 L1412 628 L1412 628 L1412 628 L1412 628 L1412 628 L1412 628 L1412 628 L1412 628 L1412 628 L1412 628 L1412 630 L1412 631 L1411 634 L1411 635 L1411 636 L1411 637 L1410 638 L1410 638 L1411 635 L1413 628 L1414 621 L1414 612 L1413 603 L1411 594 L1411 594 L1412 597 L1414 601 L1416 607 L1418 612 L1421 618 L1422 622 L1423 624 L1423 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 625 L1424 628 L1424 630 L1424 634 L1424 639 L1424 645 L1424 650 L1424 652 L1424 653 L1424 654 L1424 654 L1424 654 L1424 654 L1424 654 L1424 654 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 653 L1424 654 L1424 658 L1425 664 L1426 670 L1428 677 L1431 683 L1434 689 L1438 695 L1441 699 L1439 698 L1436 693 L1432 687 L1429 679 L1426 671 L1424 662 L1424 653 L1424 651 L1424 649 L1423 647 L1423 646 L1423 644 L1423 642 L1423 641 L1423 639 L1423 637 L1423 636 L1423 634 L1423 633 L1423 631 L1423 630 L1423 628 L1423 627 L1423 625 L1423 624 L1423 621 L1423 616 L1424 611 L1425 604 L1426 601 L1426 602 L1425 605 L1423 610 L1421 616 L1419 621 L1418 625 L1418 627 L1417 628 L1417 629 L1417 629 L1417 629 L1417 629 L1417 629 L1417 629 L1417 629 L1417 629 L1417 629 L1417 629 L1417 629 L1417 629 L1417 629 L1417 629 L1417 630 L1417 631 L1417 633 L1416 635 L1416 637 L1416 638 L1415 639 L1415 640 L1415 639 L1417 635 L1418 629 L1419 621 L1419 613 L1419 606 L1417 599 L1417 597 L1418 600 L1419 604 L1421 609 L1423 614 L1425 619 L1426 622 L1427 623 L1427 624 L1427 624 L1428 624 L1428 625 L1428 625 L1428 625 L1428 625 L1428 625 L1428 625 L1429 625 L1429 625 L1429 625 L1429 625 L1429 625 L1429 625 L1429 625 L1429 625 L1429 625 L1429 625 L1430 625 L1430 625 L1430 625 L1430 625 L1430 625 L1430 625 L1430 625 L1430 625 L1430 625 L1430 625 L1430 625 L1429 626 L1427 629 L1428 628 L1429 625 L1432 621 L1434 616 L1437 611 L1440 606 L1441 604 L1442 602 L1442 602 L1442 601 L1442 601 L1442 601 L1442 601 L1442 601 L1442 601 L1442 601 L1442 601 L1442 601 L1441 601 L1441 601 L1441 601 L1441 601 L1441 601 L1441 601 L1441 601 L1441 601 L1441 601 L1441 601 L1441 601 L1441 601 L1441 601 L1441 601 L1441 600 L1441 600 L1441 600 L1441 600 L1441 600 L1441 600 L1441 603 L1441 607 L1441 612 L1442 618 L1442 624 L1443 630 L1443 634 L1443 635 L1443 636 L1443 637 L1443 637 L1443 637 L1443 637 L1443 637 L1443 637 L1443 637 L1443 637 L1443 637 L1443 637 L1443 637 L1443 637 L1443 637 L1443 637 L1443 637 L1443 637 L1443 637 L1443 638 L1443 641 L1443 647 L1443 653 L1444 659 L1445 666 L1447 673 L1450 679 L1453 685 L1453 685 L1451 682 L1449 677 L1446 671 L1444 664 L1443 657 L1442 650 L1442 643 L1442 636 L1443 629 L1445 623 L1447 616 L1449 610 L1451 604 L1453 598 L1454 597 L1453 599 L1451 603 L1449 608 L1447 614 L1445 619 L1444 621 L1444 623 L1444 623 L1444 624 L1443 624 L1443 624 L1443 625 L1443 625 L1444 625 L1444 625 L1444 625 L1444 625 L1444 625 L1444 625 L1444 625 L1444 625 L1444 625 L1444 626 L1444 626 L1444 626 L1444 626 L1444 626 L1444 626 L1444 626 L1444 626 L1444 626 L1444 626 L1444 626 L1444 626 L1444 626 L1444 626 L1444 626 L1446 626 L1450 628 L1455 629 L1461 631 L1467 633 L1472 635 L1476 636 L1477 637 L1478 637 L1479 637 L1479 637 L1479 637 L1479 638 L1479 638 L1479 638 L1479 638 L1479 638 L1479 638 L1479 638 L1479 638 L1482 638 L1486 639 L1491 641 L1497 643 L1503 646 L1504 647 L1505 647 L1505 648 L1504 647 L1502 645 L1497 642 L1493 639 L1487 637 L1481 634 L1473 631 L1465 629 L1457 628 L1449 627 L1441 628 L1434 629 L1428 631 L1422 633 L1422 633 L1422 633 L1422 633 L1422 633 L1420 634 L1416 636 L1411 637 L1409 638 L1409 638 L1409 638 L1409 638 L1409 638 L1409 638 L1409 638 L1409 638 L1409 638 L1409 638 L1409 638 L1410 638 L1411 637 L1413 637 L1415 636 L1417 635 L1419 635 L1420 634 L1422 633 L1423 633 L1423 633 L1423 633 L1423 633 L1423 633 L1423 633 L1423 633 L1423 633 L1423 633 L1423 633 L1423 633 L1423 633 L1424 632 L1428 631 L1434 629 L1440 628 L1446 627 L1453 627 L1460 628 L1467 629 L1467 629 L1461 628 L1451 626 L1438 624 L1425 624 L1411 625 L1396 627 L1382 631 L1368 635 L1361 637 L1361 637 L1361 637 L1361 637 L1361 637 L1361 637 L1361 637 L1361 637 L1361 637 L1361 637 L1361 637 L1361 637 L1362 637 L1364 636 L1366 636 L1367 635 L1369 634 L1371 634 L1373 633 L1374 632 L1374 632 L1373 633 L1372 633 L1371 634 L1370 634 L1369 634 L1368 635 L1366 636 L1365 636 L1364 636 L1363 637 L1360 638 L1355 639 L1348 641 L1340 641 L1333 641 L1325 641 L1318 639 L1312 637 L1305 634 L1299 632 L1293 629 L1287 625 L1281 622 L1276 619 L1270 615 L1264 612 L1258 609 L1252 605 L1247 602 L1241 599 L1235 596 L1232 595 L1231 594 L1230 594 L1229 594 L1229 594 L1229 594 L1229 594 L1229 594 L1229 594 L1229 593 L1230 593 L1230 593 L1230 593 L1230 593 L1230 593 L1230 593 L1230 593 L1230 593 L1230 593 L1230 593 L1230 593 L1230 593 L1230 593 L1230 593 L1230 593 L1230 593 L1230 593 L1231 592 L1232 590 L1234 589 L1238 586 L1242 583 L1248 580 L1254 577 L1255 576 L1252 577 L1246 580 L1240 584 L1236 587 L1231 591 L1225 597 L1220 604 L1220 604 L1220 604 L1220 605 L1219 605 L1219 605 L1219 607 L1219 606 L1220 603 L1222 598 L1223 593 L1224 592 L1224 592 L1224 592 L1224 592 L1224 592 L1224 592 L1224 592 L1224 592 L1224 592 L1224 592 L1224 592 L1224 592 L1224 592 L1224 592 L1224 592 L1224 592 L1224 592 L1224 591 L1225 589 L1225 588 L1225 585 L1226 583 L1226 578 L1226 576 L1226 577 L1226 581 L1227 587 L1228 591 L1228 591 L1228 591 L1228 591 L1228 591 L1228 591 L1228 591 L1228 591 L1228 591 L1228 591 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1228 592 L1227 593 L1227 596 L1225 601 L1225 604 L1225 602 L1225 598 L1226 593 L1227 587 L1227 584 L1228 584 L1228 584 L1228 584 L1228 584 L1228 584 L1228 584 L1228 584 L1228 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 584 L1227 585 L1227 585 L1227 585 L1227 585 L1227 589 L1226 595 L1225 602 L1225 604 L1225 602 L1225 597 L1225 592 L1226 586 L1226 581 L1226 578 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 578 L1226 578 L1226 578 L1226 578 L1226 578 L1226 578 L1226 578 L1226 578 L1226 578 L1226 578 L1226 578 L1226 578 L1226 578 L1226 578 L1226 578 L1226 578 L1226 578 L1226 575 L1226 575 L1226 575 L1226 575 L1226 575 L1226 575 L1226 575 L1226 575 L1226 578 L1226 582 L1226 587 L1226 588 L1226 585 L1226 581 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 577 L1226 575 L1226 575 L1226 575 L1226 575 L1226 575 L1226 575 L1226 575 L1226 575 L1226 579 L1227 585 L1228 592 L1230 600 L1231 602 L1230 601 L1228 597 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1228 596 L1229 598 L1232 602 L1234 606 L1236 607 L1237 609 L1240 611 L1244 614 L1248 618 L1254 621 L1259 624 L1265 627 L1271 629 L1277 631 L1283 633 L1290 635 L1296 637 L1303 638 L1309 640 L1316 641 L1322 642 L1329 643 L1336 645 L1343 646 L1351 648 L1358 650 L1365 653 L1372 656 L1378 659 L1384 662 L1390 666 L1395 669 L1400 673 L1403 675 L1404 677 L1405 677 L1405 678 L1406 678 L1406 678 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 679 L1406 678 L1405 676 L1404 672 L1402 667 L1400 661 L1398 655 L1397 651 L1396 649 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 648 L1396 649 L1396 649 L1396 649 L1396 649 L1396 649 L1396 649 L1396 649 L1396 649 L1396 649 L1396 649 L1396 649 L1396 648 L1395 646 L1394 643 L1393 638 L1391 632 L1389 626 L1387 622 L1387 620 L1386 618 L1386 618 L1386 618 L1386 618 L1386 618 L1386 618 L1386 618 L1386 618 L1386 618 L1386 618 L1386 618 L1386 618 L1386 618 L1386 618 L1386 618 L1386 618 L1386 618 L1386 617 L1385 615 L1385 614 L1384 613 L1384 611 L1383 610 L1383 609 L1383 607 L1383 609 L1383 609 L1383 609 L1383 609 L1383 609 L1383 609 L1383 609 L1383 609 L1383 609 L1383 609 L1383 609 L1383 609 L1383 608 L1382 605 L1380 600 L1378 596 L1378 596 L1378 596 L1378 596 L1378 596 L1378 596 L1380 600 L1384 607 L1389 617 L1394 629 L1397 641 L1400 650 L1403 660 L1405 669 L1408 677 L1410 686 L1412 693 L1414 701 L1416 706 L1416 707 L1416 708 L1417 710 L1417 711 L1418 712 L1418 714 L1418 715 L1419 716 L1419 718 L1419 719 L1420 720 L1419 719 L1419 718 L1419 716 L1418 715 L1418 714 L1417 712 L1417 711 L1417 709 L1417 711 L1418 715 L1420 720 L1421 725 L1423 731 L1425 737 L1427 744 L1428 750 L1430 756 L1432 763 L1434 769 L1436 775 L1438 781 L1439 787 L1441 793 L1443 800 L1444 806 L1446 813 L1447 819 L1448 826 L1450 832 L1451 839 L1452 846 L1453 852 L1454 859 L1455 865 L1455 872 L1456 879 L1457 885 L1457 892 L1458 899 L1459 905 L1459 912 L1460 919 L1460 925 L1460 929 L1460 929 L1460 925 L1460 920 L1459 914 L1459 908 L1459 904 L1458 902 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1458 901 L1456 901 L1449 901 L1438 900 L1425 897 L1415 893 L1415 893 L1415 893 L1415 893 L1415 893 L1415 893 L1415 893 L1415 893 L1415 893 L1415 893 L1410 892 L1410 891 L1410 891 L1410 891 L1410 891 L1410 891 L1410 891 L1410 891 L1410 891 L1410 891 L1410 891 L1410 891 L1412 892 L1417 893 L1423 894 L1429 895 L1436 895 L1443 895 L1450 893 L1456 892 L1454 892 L1446 895 L1435 896 L1422 897 L1408 895 L1398 892 L1398 892 L1398 892 L1398 892 L1398 892 L1398 892 L1398 892 L1398 892 L1398 892 L1398 892 L1398 892 L1398 892 L1399 892 L1400 893 L1402 893 L1404 894 L1405 895 L1407 895 L1409 896 L1410 897 L1410 896 L1409 896 L1409 896 L1409 896 L1409 896 L1409 896 L1409 896 L1409 896 L1409 896 L1409 896 L1409 896 L1409 896 L1412 897 L1416 899 L1422 900 L1428 901 L1435 901 L1442 901 L1449 900 L1455 899 L1453 899 L1446 901 L1434 902 L1421 902 L1408 900 L1394 896 L1391 895 L1391 895 L1391 895 L1391 895 L1391 895 L1391 895 L1391 895 L1391 895 L1391 895 L1391 895 L1388 893 L1383 892 L1383 892 L1383 892 L1383 892 L1383 892 L1383 892 L1383 892 L1383 892 L1383 892 L1383 892 L1383 892 L1383 892 L1385 892 L1386 893 L1388 894 L1390 894 L1392 895 L1393 896 L1395 896 L1397 897 L1397 897 L1397 897 L1397 897 L1397 897 L1397 897 L1397 897 L1397 897 L1397 897 L1397 897 L1397 897 L1397 897 L1397 897 L1400 898 L1405 900 L1411 901 L1417 902 L1424 902 L1431 902 L1438 901 L1443 900 L1439 901 L1431 903 L1419 904 L1406 904 L1392 901 L1378 898 L1374 896 L1374 896 L1374 896 L1374 896 L1374 896 L1374 896 L1374 896 L1374 896 L1374 896 L1374 896 L1374 896 L1374 896 L1374 897 L1376 897 L1378 898 L1379 899 L1381 899 L1383 900 L1385 901 L1387 902 L1387 902 L1387 902 L1384 900 L1379 899 L1376 897 L1376 897 L1376 897 L1375 897 L1375 897 L1375 897 L1375 897 L1375 897 L1375 897 L1375 897 L1375 897 L1375 897 L1376 897 L1379 899 L1384 900 L1390 901 L1396 902 L1403 903 L1410 902 L1417 901 L1422 900 L1419 901 L1411 904 L1404 907 L1397 910 L1391 912 L1384 915 L1374 919 L1361 922 L1348 926 L1334 930 L1320 934 L1306 937 L1291 940 L1277 943 L1262 945 L1247 947 L1232 949 L1217 950 L1202 952 L1187 953 L1172 954 L1158 955 L1143 955 L1128 956 L1113 956 L1098 956 L1083 956 L1068 956 L1053 955 L1038 955 L1023 955 L1008 955 L993 954 L979 954 L964 954 L949 954 L934 954 L919 953 L904 953 L889 953 L874 953 L862 952 L852 952 L844 952 L836 952 L829 952 L822 952 L815 952 L808 952 L802 952 L795 952 L788 952 L782 952 L774 952 L767 952 L759 953 L752 954 L745 956 L739 959 L732 961 L726 963 L720 966 L714 968 L708 971 L702 974 L696 977 L690 981 L685 985 L679 989 L674 993 L667 998 L661 1002 L656 1006 L649 1010 L642 1014 L636 1018 L628 1021 L621 1024 L615 1026 L608 1029 L602 1031 L596 1034 L596 1034 L599 1032 L603 1030 L608 1027 L614 1025 L618 1022 L621 1021 L622 1020 L623 1020 L623 1019 L623 1019 L624 1019 L624 1019 L624 1019 L624 1019 L624 1019 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L624 1018 L623 1016 L621 1013 L619 1008 L617 1002 L615 996 L614 989 L614 982 L614 975 L615 972 L614 977 L614 985 L614 993 L615 1001 L618 1009 L620 1015 L623 1020 L623 1020 L623 1020 L623 1020 L623 1020 L623 1020 L623 1020 L623 1020 L623 1020 L623 1020 L623 1020 L623 1020 L622 1019 L621 1018 L620 1016 L619 1013 L616 1009 L612 1004 L607 1000 L602 995 L598 992 L598 993 L601 994 L605 996 L610 999 L615 1002 L620 1006 L621 1006 L619 1005 L615 1002 L611 999 L606 996 L602 993 L599 991 L598 991 L598 990 L597 990 L597 990 L597 990 L597 990 L597 990 L597 990 L597 990 L597 990 L597 990 L597 991 L597 991 L597 991 L597 991 L597 991 L597 991 L597 991 L597 991 L596 991 L596 991 L596 991 L596 991 L596 991 L596 991 L596 991 L596 991 L596 991 L596 991 L596 991 L596 991 L598 992 L602 993 L608 994 L614 995 L620 996 L626 997 L629 997 L631 998 L632 998 L632 998 L632 998 L632 998 L633 998 L633 998 L633 998 L633 998 L633 998 L633 998 L633 998 L633 998 L633 998 L632 998 L632 998 L632 998 L632 998 L632 998 L632 998 L632 998 L632 998 L632 998 L632 998 L631 998 L628 996 L623 994 L618 992 L612 990 L606 988 L599 986 L595 986 L596 986 L600 986 L605 986 L611 987 L617 987 L620 987 L622 987 L623 987 L624 987 L624 987 L625 987 L625 987 L625 987 L625 987 L625 987 L625 987 L626 986 L626 986 L626 986 L626 986 L626 986 L626 986 L626 986 L626 986 L626 985 L625 985 L625 985 L625 985 L625 985 L625 985 L625 985 L625 985 L625 985 L625 985 L625 985 L625 985 L625 985 L625 985 L622 983 L618 980 L614 976 L609 972 L604 968 L601 965 L599 964 L598 963 L597 963 L597 962 L597 962 L596 962 L596 962 L596 962 L596 962 L596 962 L596 962 L596 962 L596 962 L596 962 L596 962 L596 962 L596 962 L596 962 L596 962 L596 962 L596 962 L596 962 L598 963 L601 964 L606 967 L611 970 L616 973 L621 977 L626 981 L631 984 L632 985 L630 984 L627 981 L622 978 L618 974 L613 971 L611 969 L610 968 L610 968 L609 968 L609 968 L609 968 L609 968 L609 968 L609 968 L609 968 L609 968 L609 968 L609 968 L609 968 L609 968 L609 969 L609 969 L609 969 L609 969 L608 969 L608 969 L608 969 L608 969 L608 969 L608 969 L608 969 L608 969 L608 969 L608 969 L608 969 L608 969 L608 969 L610 969 L614 970 L620 971 L626 972 L632 973 L638 973 L641 974 L643 974 L644 974 L644 974 L644 974 L645 974 L645 974 L645 974 L645 974 L645 974 L645 974 L645 974 L645 974 L645 974 L645 974 L645 974 L645 974 L645 974 L645 974 L645 974 L645 974 L645 974 L644 974 L644 974 L641 973 L636 971 L630 970 L624 969 L617 968 L610 968 L604 969 L597 970 L596 970 L599 970 L603 969 L608 968 L614 967 L619 966 L622 965 L623 965 L624 965 L625 965 L625 965 L625 965 L625 964 L625 964 L626 964 L626 964 L626 964 L626 964 L626 964 L626 963 L626 963 L626 963 L626 963 L626 963 L626 963 L626 963 L626 963 L626 963 L625 963 L625 963 L625 963 L625 963 L625 963 L625 963 L625 963 L625 963 L625 963 L625 963 L624 961 L620 959 L616 956 L611 952 L606 949 L601 945 L598 944 L597 943 L596 942 L596 942 L596 942 L596 942 L596 942 L596 942 L596 942 L596 942 L596 942 L596 942 L596 942 L596 942 L596 942 L595 942 L595 941 L594 941 L594 940 L593 940 L592 939 L590 937 L590 936 L591 938 L594 941 L599 945 L603 949 L608 952 L613 956 L619 960 L624 964 L630 968 L635 972 L640 975 L646 979 L651 983 L657 987 L660 989 L659 989 L656 987 L652 984 L648 980 L643 977 L640 975 L638 973 L637 973 L637 972 L637 972 L637 972 L637 972 L637 972 L637 972 L637 973 L637 973 L637 973 L637 973 L637 973 L637 973 L637 973 L636 973 L636 973 L636 974 L636 974 L636 974 L636 974 L636 974 L636 974 L636 974 L636 974 L636 974 L636 974 L636 974 L636 974 L636 974 L636 974 L636 974 L640 974 L645 974 L650 974 L657 975 L663 975 L668 975 L670 975 L671 975 L672 975 L672 975 L673 975 L673 975 L673 975 L673 975 L673 975 L673 975 L673 975 L673 975 L673 975 L673 975 L673 975 L673 975 L673 975 L673 975 L673 975 L673 975 L671 975 L667 974 L661 973 L655 973 L649 973 L642 974 L636 975 L628 977 L621 980 L615 982 L608 985 L602 988 L596 991 L595 991 L595 991 L597 990 L601 988 L606 986 L612 983 L617 981 L622 978 L624 977 L626 976 L627 976 L627 976 L627 976 L628 975 L628 975 L628 975 L628 975 L628 975 L628 975 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L628 974 L627 974 L626 973 L622 971 L617 968 L612 966 L606 963 L601 960 L598 959 L596 958 L595 958 L595 958 L595 958 L595 958 L595 958 L595 958 L595 958 L595 958 L595 958 L595 958 L595 958 L595 958 L595 958 L595 958 L595 958 L595 958 L595 958 L593 957 L588 956 L582 955 L576 955 L576 955 L576 955 L576 955 L576 955 L580 955 L589 956 L601 958 L614 962 L624 967 L631 971 L638 976" fill="none" stroke="var(--trail)" stroke-width="20" stroke-linejoin="round" stroke-linecap="round" opacity="0.9" class="trailpath" style="--len:6473"/></svg></div><div class="meta"><h3>Map 1 - 120x90 serpentine</h3><div class="stat"><span>sector points</span><b>4 / 8</b></div><div class="stat"><span>run</span><b>175 s &nbsp;<span class="pill mid">out of time</span></b></div><div class="stat"><span>wall scrapes</span><b>274</b></div><p style="font-size:.85rem;color:var(--ink-3);line-height:1.5">Best guess at the inner walls. The scrape count is the robot grinding round corners it barely fits through.</p></div></div><div class="mapcard"><div class="art"><svg viewBox="0 0 2400 2400" role="img" aria-label="Map 2 - 150x150 island loop: the path the robot drove"><rect width="2400" height="2400" fill="var(--floor)"/><g fill="var(--wall)"><rect x="420" y="1950" width="1560" height="30"/><rect x="1950" y="1920" width="30" height="30"/><rect x="1950" y="1890" width="30" height="30"/><rect x="1950" y="1860" width="30" height="30"/><rect x="1950" y="1830" width="30" height="30"/><rect x="1950" y="1800" width="30" height="30"/><rect x="1950" y="1770" width="30" height="30"/><rect x="1950" y="1740" width="30" height="30"/><rect x="1950" y="1710" width="30" height="30"/><rect x="1950" y="1680" width="30" height="30"/><rect x="1950" y="1650" width="30" height="30"/><rect x="420" y="1620" width="1230" height="30"/><rect x="1950" y="1620" width="30" height="30"/><rect x="420" y="1590" width="1230" height="30"/><rect x="1950" y="1590" width="30" height="30"/><rect x="420" y="1560" width="1230" height="30"/><rect x="1950" y="1560" width="30" height="30"/><rect x="420" y="1530" width="1230" height="30"/><rect x="1950" y="1530" width="30" height="30"/><rect x="420" y="1500" width="1230" height="30"/><rect x="1950" y="1500" width="30" height="30"/><rect x="420" y="1470" width="1230" height="30"/><rect x="1950" y="1470" width="30" height="30"/><rect x="420" y="1440" width="1230" height="30"/><rect x="1950" y="1440" width="30" height="30"/><rect x="420" y="1410" width="1230" height="30"/><rect x="1950" y="1410" width="30" height="30"/><rect x="420" y="1380" width="1230" height="30"/><rect x="1950" y="1380" width="30" height="30"/><rect x="420" y="1350" width="1230" height="30"/><rect x="1950" y="1350" width="30" height="30"/><rect x="420" y="1320" width="1230" height="30"/><rect x="1950" y="1320" width="30" height="30"/><rect x="420" y="1290" width="1230" height="30"/><rect x="1950" y="1290" width="30" height="30"/><rect x="420" y="1260" width="1230" height="30"/><rect x="1950" y="1260" width="30" height="30"/><rect x="420" y="1230" width="1230" height="30"/><rect x="1950" y="1230" width="30" height="30"/><rect x="420" y="1200" width="1230" height="30"/><rect x="1950" y="1200" width="30" height="30"/><rect x="420" y="1170" width="1230" height="30"/><rect x="1950" y="1170" width="30" height="30"/><rect x="420" y="1140" width="1230" height="30"/><rect x="1950" y="1140" width="30" height="30"/><rect x="420" y="1110" width="1230" height="30"/><rect x="1950" y="1110" width="30" height="30"/><rect x="420" y="1080" width="1230" height="30"/><rect x="1950" y="1080" width="30" height="30"/><rect x="420" y="1050" width="1230" height="30"/><rect x="1950" y="1050" width="30" height="30"/><rect x="420" y="1020" width="1230" height="30"/><rect x="1950" y="1020" width="30" height="30"/><rect x="420" y="990" width="1230" height="30"/><rect x="1950" y="990" width="30" height="30"/><rect x="420" y="960" width="1230" height="30"/><rect x="1950" y="960" width="30" height="30"/><rect x="420" y="930" width="1230" height="30"/><rect x="1950" y="930" width="30" height="30"/><rect x="420" y="900" width="1230" height="30"/><rect x="1950" y="900" width="30" height="30"/><rect x="420" y="870" width="1230" height="30"/><rect x="1950" y="870" width="30" height="30"/><rect x="420" y="840" width="1230" height="30"/><rect x="1950" y="840" width="30" height="30"/><rect x="420" y="810" width="1230" height="30"/><rect x="1950" y="810" width="30" height="30"/><rect x="420" y="780" width="1230" height="30"/><rect x="1950" y="780" width="30" height="30"/><rect x="420" y="750" width="1230" height="30"/><rect x="1950" y="750" width="30" height="30"/><rect x="1950" y="720" width="30" height="30"/><rect x="1950" y="690" width="30" height="30"/><rect x="1950" y="660" width="30" height="30"/><rect x="1950" y="630" width="30" height="30"/><rect x="1950" y="600" width="30" height="30"/><rect x="1950" y="570" width="30" height="30"/><rect x="1950" y="540" width="30" height="30"/><rect x="1950" y="510" width="30" height="30"/><rect x="1950" y="480" width="30" height="30"/><rect x="1950" y="450" width="30" height="30"/><rect x="420" y="420" width="1560" height="30"/></g><line x1="480" y1="750" x2="480" y2="480" stroke="var(--good)" stroke-width="22" stroke-linecap="round"/><line x1="780" y1="750" x2="780" y2="480" stroke="var(--good)" stroke-width="22" stroke-linecap="round"/><line x1="1080" y1="750" x2="1080" y2="480" stroke="var(--good)" stroke-width="22" stroke-linecap="round"/><line x1="1650" y1="1320" x2="1920" y2="1320" stroke="var(--good)" stroke-width="22" stroke-linecap="round"/><line x1="1650" y1="1620" x2="1920" y2="1620" stroke="var(--good)" stroke-width="22" stroke-linecap="round"/><line x1="1080" y1="1950" x2="1080" y2="1680" stroke="var(--good)" stroke-width="22" stroke-linecap="round"/><line x1="780" y1="1950" x2="780" y2="1680" stroke="var(--good)" stroke-width="22" stroke-linecap="round"/><line x1="480" y1="1950" x2="480" y2="1680" stroke="var(--good)" stroke-width="22" stroke-linecap="round"/><path d="M200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L202 615 L209 615 L220 615 L233 615 L246 615 L261 615 L275 615 L290 615 L305 615 L320 616 L335 616 L349 616 L364 616 L379 616 L394 616 L409 616 L424 615 L439 615 L454 614 L469 613 L483 612 L498 612 L513 611 L528 610 L543 609 L558 608 L573 607 L588 607 L603 606 L618 605 L633 605 L648 604 L662 604 L677 604 L692 603 L707 603 L722 603 L737 603 L752 603 L767 603 L782 602 L797 602 L812 602 L827 602 L842 602 L857 602 L872 602 L886 602 L901 602 L916 603 L931 603 L946 603 L961 603 L976 603 L991 603 L1006 603 L1021 603 L1036 603 L1051 603 L1066 603 L1081 603 L1095 603 L1110 603 L1125 603 L1140 603 L1155 603 L1170 603 L1185 603 L1200 602 L1215 602 L1230 602 L1245 602 L1260 602 L1275 602 L1290 602 L1305 602 L1320 602 L1334 602 L1349 602 L1364 602 L1379 602 L1394 602 L1409 601 L1424 601 L1439 601 L1454 601 L1469 601 L1484 601 L1499 601 L1514 602 L1528 602 L1539 602 L1547 602 L1555 602 L1563 602 L1570 602 L1577 602 L1583 602 L1590 601 L1597 601 L1604 601 L1610 601 L1617 601 L1624 601 L1630 601 L1636 601 L1643 601 L1649 601 L1655 601 L1662 601 L1669 601 L1675 601 L1682 601 L1689 602 L1695 602 L1702 602 L1709 602 L1715 602 L1722 602 L1729 603 L1735 603 L1742 603 L1749 603 L1755 603 L1762 603 L1769 603 L1775 604 L1782 604 L1789 604 L1796 604 L1800 604 L1799 604 L1795 604 L1790 604 L1784 604 L1778 604 L1774 604 L1772 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1771 604 L1770 600 L1770 596 L1768 590 L1768 587 L1768 587 L1768 587 L1768 587 L1768 587 L1768 587 L1768 587 L1768 587 L1768 587 L1768 587 L1768 587 L1768 587 L1768 587 L1768 587 L1768 587 L1768 587 L1768 591 L1769 601 L1770 612 L1771 626 L1773 640 L1775 654 L1777 668 L1779 683 L1781 698 L1783 713 L1785 727 L1787 742 L1789 757 L1791 772 L1793 787 L1794 801 L1796 816 L1797 831 L1799 846 L1800 861 L1801 876 L1802 891 L1803 906 L1804 921 L1805 935 L1805 950 L1806 965 L1806 980 L1807 995 L1807 1010 L1807 1025 L1807 1040 L1808 1055 L1808 1070 L1808 1085 L1808 1100 L1808 1114 L1808 1129 L1808 1144 L1808 1159 L1809 1174 L1809 1189 L1809 1204 L1809 1219 L1809 1234 L1809 1249 L1809 1264 L1809 1279 L1809 1294 L1809 1309 L1809 1324 L1809 1339 L1809 1354 L1809 1369 L1809 1383 L1809 1398 L1809 1413 L1809 1428 L1809 1443 L1809 1458 L1809 1473 L1809 1488 L1809 1503 L1808 1518 L1808 1530 L1808 1540 L1808 1548 L1808 1556 L1807 1563 L1807 1570 L1807 1578 L1807 1586 L1808 1593 L1808 1601 L1808 1608 L1808 1614 L1808 1621 L1808 1628 L1808 1634 L1808 1640 L1808 1647 L1807 1653 L1807 1660 L1807 1666 L1807 1673 L1807 1680 L1807 1686 L1807 1693 L1806 1700 L1806 1706 L1806 1713 L1806 1720 L1806 1726 L1805 1733 L1805 1740 L1805 1746 L1805 1753 L1805 1760 L1805 1766 L1805 1773 L1805 1780 L1805 1784 L1805 1787 L1805 1788 L1805 1789 L1805 1789 L1805 1790 L1805 1790 L1805 1790 L1804 1790 L1804 1790 L1804 1790 L1804 1790 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1804 1791 L1807 1790 L1810 1789 L1810 1789 L1810 1789 L1810 1789 L1811 1789 L1811 1789 L1811 1789 L1811 1789 L1811 1789 L1811 1789 L1811 1789 L1811 1789 L1810 1789 L1810 1789 L1810 1789 L1810 1789 L1810 1789 L1809 1789 L1802 1790 L1791 1792 L1778 1793 L1765 1795 L1751 1796 L1736 1798 L1721 1799 L1707 1801 L1692 1802 L1677 1804 L1662 1805 L1647 1807 L1632 1808 L1618 1809 L1603 1811 L1588 1812 L1573 1813 L1558 1814 L1543 1815 L1528 1815 L1513 1816 L1498 1816 L1483 1817 L1468 1817 L1453 1818 L1439 1818 L1424 1818 L1409 1818 L1394 1818 L1379 1819 L1364 1818 L1349 1818 L1334 1818 L1319 1818 L1304 1818 L1289 1818 L1274 1818 L1259 1818 L1245 1818 L1230 1818 L1215 1818 L1200 1818 L1185 1818 L1170 1818 L1155 1818 L1140 1818 L1125 1818 L1110 1818 L1095 1818 L1080 1818 L1065 1818 L1050 1818 L1035 1818 L1020 1818 L1005 1818 L990 1818 L976 1818 L961 1818 L946 1818 L931 1818 L916 1818 L901 1818 L886 1818 L871 1818 L856 1818 L841 1818 L826 1818 L812 1818 L797 1818 L782 1818 L767 1818 L752 1818 L737 1818 L722 1819 L707 1819 L692 1819 L677 1819 L662 1819 L647 1819 L632 1819 L617 1819 L602 1819 L587 1819 L572 1819 L558 1819 L543 1819 L528 1819 L513 1819 L498 1819 L483 1819 L468 1819 L453 1819 L438 1819 L423 1819" fill="none" stroke="var(--trail)" stroke-width="20" stroke-linejoin="round" stroke-linecap="round" opacity="0.9" class="trailpath" style="--len:4302"/></svg></div><div class="meta"><h3>Map 2 - 150x150 island loop</h3><div class="stat"><span>sector points</span><b>8 / 8</b></div><div class="stat"><span>run</span><b>38 s &nbsp;<span class="pill ok">finished</span></b></div><div class="stat"><span>wall scrapes</span><b>11</b></div><p style="font-size:.85rem;color:var(--ink-3);line-height:1.5">Matches your photo. Every sector line, 38 seconds, almost no contact. This is what a solved map looks like.</p></div></div><div class="mapcard"><div class="art"><svg viewBox="0 0 2400 2100" role="img" aria-label="Map 3 - 150x120 spine snake: the path the robot drove"><rect width="2400" height="2100" fill="var(--floor)"/><g fill="var(--wall)"><rect x="420" y="1650" width="1560" height="30"/><rect x="420" y="1620" width="30" height="30"/><rect x="1950" y="1620" width="30" height="30"/><rect x="420" y="1590" width="30" height="30"/><rect x="1950" y="1590" width="30" height="30"/><rect x="420" y="1560" width="30" height="30"/><rect x="1950" y="1560" width="30" height="30"/><rect x="420" y="1530" width="30" height="30"/><rect x="1950" y="1530" width="30" height="30"/><rect x="420" y="1500" width="30" height="30"/><rect x="1950" y="1500" width="30" height="30"/><rect x="420" y="1470" width="30" height="30"/><rect x="1950" y="1470" width="30" height="30"/><rect x="420" y="1440" width="30" height="30"/><rect x="1950" y="1440" width="30" height="30"/><rect x="420" y="1410" width="30" height="30"/><rect x="1950" y="1410" width="30" height="30"/><rect x="420" y="1380" width="30" height="30"/><rect x="1950" y="1380" width="30" height="30"/><rect x="420" y="1350" width="30" height="30"/><rect x="1950" y="1350" width="30" height="30"/><rect x="420" y="1320" width="30" height="30"/><rect x="750" y="1320" width="300" height="30"/><rect x="1350" y="1320" width="300" height="30"/><rect x="1950" y="1320" width="30" height="30"/><rect x="420" y="1290" width="30" height="30"/><rect x="750" y="1290" width="300" height="30"/><rect x="1350" y="1290" width="300" height="30"/><rect x="1950" y="1290" width="30" height="30"/><rect x="420" y="1260" width="30" height="30"/><rect x="750" y="1260" width="300" height="30"/><rect x="1350" y="1260" width="300" height="30"/><rect x="1950" y="1260" width="30" height="30"/><rect x="420" y="1230" width="30" height="30"/><rect x="750" y="1230" width="300" height="30"/><rect x="1350" y="1230" width="300" height="30"/><rect x="1950" y="1230" width="30" height="30"/><rect x="420" y="1200" width="30" height="30"/><rect x="750" y="1200" width="300" height="30"/><rect x="1350" y="1200" width="300" height="30"/><rect x="1950" y="1200" width="30" height="30"/><rect x="420" y="1170" width="30" height="30"/><rect x="750" y="1170" width="300" height="30"/><rect x="1350" y="1170" width="300" height="30"/><rect x="1950" y="1170" width="30" height="30"/><rect x="420" y="1140" width="30" height="30"/><rect x="750" y="1140" width="300" height="30"/><rect x="1350" y="1140" width="300" height="30"/><rect x="1950" y="1140" width="30" height="30"/><rect x="420" y="1110" width="30" height="30"/><rect x="750" y="1110" width="300" height="30"/><rect x="1350" y="1110" width="300" height="30"/><rect x="1950" y="1110" width="30" height="30"/><rect x="420" y="1080" width="30" height="30"/><rect x="750" y="1080" width="300" height="30"/><rect x="1350" y="1080" width="300" height="30"/><rect x="1950" y="1080" width="30" height="30"/><rect x="420" y="1050" width="30" height="30"/><rect x="1050" y="1050" width="300" height="30"/><rect x="1950" y="1050" width="30" height="30"/><rect x="420" y="1020" width="30" height="30"/><rect x="1050" y="1020" width="300" height="30"/><rect x="1950" y="1020" width="30" height="30"/><rect x="420" y="990" width="30" height="30"/><rect x="1050" y="990" width="300" height="30"/><rect x="1950" y="990" width="30" height="30"/><rect x="420" y="960" width="30" height="30"/><rect x="1050" y="960" width="300" height="30"/><rect x="1950" y="960" width="30" height="30"/><rect x="420" y="930" width="30" height="30"/><rect x="1050" y="930" width="300" height="30"/><rect x="1950" y="930" width="30" height="30"/><rect x="420" y="900" width="30" height="30"/><rect x="1050" y="900" width="300" height="30"/><rect x="1950" y="900" width="30" height="30"/><rect x="420" y="870" width="30" height="30"/><rect x="1050" y="870" width="300" height="30"/><rect x="1950" y="870" width="30" height="30"/><rect x="420" y="840" width="30" height="30"/><rect x="1050" y="840" width="300" height="30"/><rect x="1950" y="840" width="30" height="30"/><rect x="420" y="810" width="30" height="30"/><rect x="1050" y="810" width="300" height="30"/><rect x="1950" y="810" width="30" height="30"/><rect x="420" y="780" width="30" height="30"/><rect x="1050" y="780" width="300" height="30"/><rect x="1950" y="780" width="30" height="30"/><rect x="420" y="750" width="30" height="30"/><rect x="1050" y="750" width="300" height="30"/><rect x="1950" y="750" width="30" height="30"/><rect x="1050" y="720" width="300" height="30"/><rect x="1050" y="690" width="300" height="30"/><rect x="1050" y="660" width="300" height="30"/><rect x="1050" y="630" width="300" height="30"/><rect x="1050" y="600" width="300" height="30"/><rect x="1050" y="570" width="300" height="30"/><rect x="1050" y="540" width="300" height="30"/><rect x="1050" y="510" width="300" height="30"/><rect x="1050" y="480" width="300" height="30"/><rect x="1050" y="450" width="300" height="30"/><rect x="420" y="420" width="1560" height="30"/></g><line x1="510" y1="750" x2="510" y2="480" stroke="var(--good)" stroke-width="22" stroke-linecap="round"/><line x1="450" y1="900" x2="720" y2="900" stroke="var(--ink)" stroke-width="16" stroke-linecap="round"/><line x1="450" y1="1500" x2="720" y2="1500" stroke="var(--ink)" stroke-width="16" stroke-linecap="round"/><line x1="960" y1="1650" x2="960" y2="1380" stroke="var(--ink)" stroke-width="16" stroke-linecap="round"/><line x1="1380" y1="1650" x2="1380" y2="1380" stroke="var(--ink)" stroke-width="16" stroke-linecap="round"/><line x1="1650" y1="1500" x2="1920" y2="1500" stroke="var(--ink)" stroke-width="16" stroke-linecap="round"/><line x1="1650" y1="900" x2="1920" y2="900" stroke="var(--ink)" stroke-width="16" stroke-linecap="round"/><line x1="1830" y1="750" x2="1830" y2="480" stroke="var(--ink)" stroke-width="16" stroke-linecap="round"/><path d="M200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L200 615 L202 615 L209 615 L220 615 L233 615 L246 615 L261 615 L275 615 L290 615 L305 615 L320 616 L335 616 L349 616 L364 616 L379 616 L394 616 L409 616 L424 615 L439 615 L453 614 L464 614 L473 613 L481 613 L488 613 L495 612 L502 612 L509 612 L516 612 L522 611 L529 611 L536 611 L542 611 L549 611 L556 611 L562 611 L569 611 L576 611 L583 611 L589 611 L596 610 L602 610 L605 610 L607 610 L608 610 L609 610 L609 610 L609 610 L610 610 L610 610 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 611 L610 610 L609 606 L608 601 L607 595 L606 589 L606 587 L606 587 L606 587 L606 586 L606 587 L606 587 L606 587 L606 587 L606 587 L606 587 L606 587 L606 587 L606 587 L606 587 L606 588 L607 595 L609 606 L614 618 L620 630 L628 642 L637 653 L645 665 L654 677 L662 690 L670 701 L676 710 L681 718 L685 725 L689 731 L692 737 L696 743 L699 749 L702 755 L704 761 L707 768 L709 774 L712 779 L714 785 L716 791 L718 798 L720 804 L722 811 L724 817 L726 824 L728 830 L730 837 L732 843 L734 850 L736 856 L737 863 L739 869 L740 876 L741 883 L742 890 L744 896 L745 903 L747 910 L748 916 L749 923 L751 929 L751 930 L750 928 L750 923 L749 918 L748 912 L748 907 L747 904 L747 903 L747 902 L747 901 L747 901 L747 901 L746 901 L746 900 L746 900 L746 900 L746 900 L746 900 L746 900 L746 900 L745 900 L745 900 L745 900 L745 900 L745 900 L745 900 L745 900 L745 901 L745 901 L745 901 L745 901 L745 901 L745 901 L745 901 L745 901 L745 901 L745 901 L745 901 L744 903 L743 907 L742 912 L741 918 L740 924 L739 930 L738 933 L738 935 L738 936 L738 937 L738 937 L738 937 L738 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 937 L737 935 L737 926 L736 915 L736 902 L735 888 L736 876 L737 866 L737 858 L738 850 L739 843 L740 837 L740 830 L741 823 L741 816 L741 810 L741 803 L742 796 L742 790 L742 783 L742 776 L742 770 L742 763 L742 757 L742 750 L743 742 L745 735 L747 729 L749 722 L752 716 L756 710 L760 704 L763 697 L766 691 L768 683 L770 677 L772 670 L775 663 L777 657 L780 651 L782 644 L785 638 L787 631 L789 625 L791 617 L793 610 L795 604 L796 602 L795 605 L794 609 L792 614 L791 620 L789 625 L788 627 L788 629 L788 629 L788 630 L788 630 L788 631 L788 631 L788 631 L788 631 L788 631 L788 631 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L788 632 L791 632 L795 632 L800 633 L806 633 L812 634 L818 634 L822 635 L823 635 L824 635 L825 635 L825 635 L825 635 L825 635 L825 635 L825 635 L826 635 L826 635 L826 635 L826 635 L826 635 L826 635 L826 635 L826 635 L825 635 L819 636 L809 637 L799 640 L791 643 L784 647 L777 651 L771 654 L765 659 L759 664 L754 669 L749 674 L742 679 L736 684 L730 689 L725 693 L719 697 L714 701 L709 704 L703 707 L698 711 L692 714 L686 717 L680 720 L674 722 L668 725 L661 727 L655 730 L649 732 L642 734 L636 736 L629 738 L621 741 L613 742 L604 742 L596 742 L589 741 L589 741 L589 741 L589 741 L589 741 L589 741 L589 741 L589 741 L589 741 L589 741 L589 741 L589 741 L591 741 L595 742 L601 743 L607 743 L614 743 L621 741 L628 740 L634 737 L638 736 L637 736 L633 738 L629 740 L624 743 L618 745 L612 748 L606 750 L599 752 L594 754 L594 754 L598 753 L602 752 L608 751 L614 750 L618 749 L620 749 L621 749 L621 749 L622 749 L622 748 L622 748 L622 748 L622 748 L622 748 L622 748 L622 748 L622 748 L622 748 L622 748 L622 747 L622 747 L622 747 L622 747 L622 747 L622 747 L622 747 L622 747 L622 747 L622 747 L622 747 L622 747 L622 747 L622 747 L622 747 L622 747 L622 747 L621 747 L618 746 L613 745 L607 744 L601 743 L595 742 L590 741 L588 741 L587 740 L586 740 L586 740 L585 740 L585 740 L585 740 L585 740 L585 740 L585 740 L585 740 L585 740 L585 740 L585 740 L585 740 L585 740 L585 740 L585 740 L585 740 L585 740 L585 740 L585 740 L586 740 L594 739 L604 738 L617 736 L629 733 L639 731 L648 730 L655 729 L663 728 L670 728 L677 728 L684 728 L693 728 L701 728 L708 728 L715 729 L722 729 L729 730 L735 730 L741 731 L748 732 L754 733 L761 734 L767 734 L774 735 L780 736 L787 737 L794 738 L800 739 L807 740 L813 740 L820 741 L827 742 L834 743 L841 744 L848 745 L855 746 L861 748 L868 749 L875 750 L881 751 L888 751 L894 752 L901 752 L902 752 L899 752 L895 752 L889 752 L883 751 L878 751 L876 751 L874 751 L873 751 L873 751 L873 751 L873 751 L873 751 L873 751 L873 751 L873 751 L873 751 L873 751 L873 751 L873 752 L873 752 L873 752 L873 752 L873 752 L873 752 L873 753 L873 753 L873 753 L873 753 L873 753 L873 753 L873 753 L873 753 L873 753 L873 753 L873 753 L873 753 L873 753 L875 752 L879 751 L884 749 L889 747 L895 744 L901 742 L904 741 L906 741 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L907 740 L904 740 L896 741 L884 743 L872 745 L861 746 L851 748 L843 749 L836 750 L829 752 L822 753 L815 754 L809 755 L802 756 L796 757 L789 758 L781 760 L773 761 L766 762 L759 763 L752 764 L745 764 L738 764 L731 765 L723 764 L716 764 L708 762 L701 760 L695 758 L687 754 L679 752 L672 750 L666 747 L659 745 L652 742 L645 740 L639 738 L632 736 L626 733 L620 731 L613 728 L607 726 L600 724 L592 722 L588 721 L587 721 L587 721 L587 721 L587 721 L587 721 L587 721 L587 721 L587 721 L587 721 L587 721 L587 721 L587 721 L590 721 L595 723 L600 724 L606 727 L612 730 L617 734 L623 739 L626 742 L623 739 L618 732 L610 724 L600 715 L590 705 L579 696 L568 687 L556 678 L543 670 L530 663 L517 657 L503 651 L489 646 L475 641 L461 637 L448 634 L439 632 L431 630 L423 629 L416 628 L409 627 L402 627 L395 627 L389 628 L382 629 L376 630 L369 631 L362 632 L356 633 L349 634 L343 635 L336 636 L329 637 L323 638 L316 639 L309 640 L305 640 L302 641 L301 641 L300 641 L300 641 L299 641 L299 641 L299 641 L299 641 L299 641 L299 641 L299 641 L299 640 L299 640 L299 640 L298 640 L298 640 L298 640 L298 640 L298 640 L298 640 L298 640 L298 640 L298 640 L298 640 L298 640 L298 640 L298 640 L298 640 L298 640 L298 640 L298 640 L298 640 L299 643 L301 647 L302 653 L304 658 L306 665 L308 670 L309 672 L309 674 L310 675 L310 675 L310 675 L310 675 L310 675 L310 675 L310 675 L310 675 L310 675 L310 675 L309 674 L308 667 L305 656 L301 644 L296 632 L289 619 L282 606 L275 593 L268 580 L261 567 L254 554 L248 540 L241 527 L235 513 L228 500 L222 487 L217 477 L213 469 L209 462 L206 456 L202 450 L199 444 L196 438 L192 432 L189 426 L186 420 L183 414 L180 409 L177 402 L174 396 L171 390 L169 384 L166 378 L164 372 L162 365 L160 359 L158 356 L158 354 L158 352 L157 352 L157 351 L157 351 L157 351 L157 351 L157 350 L157 350 L157 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L158 350 L156 351 L152 353 L147 356 L146 357 L145 357 L144 357 L144 358 L143 359 L145 357 L151 351 L159 343 L169 334 L178 325 L187 317 L194 310 L200 305 L205 299 L211 295 L217 289 L224 284 L229 280 L235 276 L241 272 L247 268 L257 262 L268 256 L280 250 L293 244 L307 239 L321 234 L335 229 L349 225 L364 222 L378 219 L393 216 L408 213 L423 211 L437 208 L452 206 L467 204 L482 203 L497 201 L511 199 L526 198 L541 196 L556 195 L571 194 L586 193 L601 192 L616 192 L631 191 L646 191 L661 191 L676 191 L690 191 L705 191 L720 192 L735 192 L750 192 L765 192 L780 193 L795 193 L810 194 L825 194 L840 195 L855 195 L869 196 L884 196 L899 196 L914 197 L929 197 L944 198 L959 198 L974 198 L989 199 L1004 199 L1019 199 L1034 199 L1049 200 L1064 200 L1079 200 L1094 200 L1109 200 L1124 200 L1138 200 L1153 201 L1168 201 L1183 201 L1198 201 L1213 202 L1228 202 L1243 202 L1258 203 L1273 203 L1288 204 L1303 204 L1318 204 L1333 205 L1348 205 L1363 205 L1378 206 L1392 206 L1407 206 L1422 206 L1437 207 L1452 207 L1467 207 L1482 207 L1497 208 L1512 208 L1527 208 L1542 208 L1556 209 L1571 209 L1586 209 L1601 209 L1616 210 L1631 210 L1646 210 L1661 211 L1676 211 L1691 212 L1706 213 L1721 214 L1736 214 L1751 215 L1766 215 L1781 215 L1795 215 L1810 214 L1825 214 L1840 213 L1855 213 L1870 212 L1885 211 L1900 211 L1915 211 L1930 211 L1945 211 L1960 211 L1974 211 L1985 211 L1993 211 L2001 211 L2008 210 L2014 210 L2021 209 L2028 208 L2034 207 L2041 206 L2047 205 L2054 204 L2061 203 L2067 202 L2074 201 L2080 200 L2087 199 L2094 198 L2100 197 L2107 196 L2113 195 L2120 193 L2126 192 L2133 191 L2139 190 L2143 190 L2146 190 L2147 189 L2147 189 L2148 189 L2148 189 L2148 189 L2148 189 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 190 L2149 186 L2148 182 L2148 176 L2147 170 L2147 163 L2146 159 L2146 156 L2146 155 L2146 154 L2146 154 L2146 154 L2146 153 L2146 153 L2146 153 L2146 153 L2146 153 L2146 153 L2146 153 L2146 153 L2146 153 L2146 153 L2146 153 L2146 153 L2146 153 L2146 154 L2146 154 L2146 158 L2145 167 L2145 179 L2146 192 L2148 206 L2150 220 L2154 235 L2158 249 L2162 263 L2167 277 L2172 291 L2177 305 L2182 319 L2186 334 L2189 348 L2192 363 L2194 378 L2195 393 L2195 408 L2195 423 L2194 438 L2194 453 L2193 468 L2193 482" fill="none" stroke="var(--trail)" stroke-width="20" stroke-linejoin="round" stroke-linecap="round" opacity="0.9" class="trailpath" style="--len:5762"/></svg></div><div class="meta"><h3>Map 3 - 150x120 spine snake</h3><div class="stat"><span>sector points</span><b>1 / 8</b></div><div class="stat"><span>run</span><b>85 s &nbsp;<span class="pill mid">finished</span></b></div><div class="stat"><span>wall scrapes</span><b>18</b></div><p style="font-size:.85rem;color:var(--ink-3);line-height:1.5">Best guess at the inner walls. Needs a straight-down photo before it is worth tuning against.</p></div></div></div>
+
+  <div class="grid2">
+    <div class="callout">
+      <span class="lbl">Why this changes your strategy</span>
+      <p style="font-size:.95rem">§6.1 awards a point per sector line all three wheels
+        cross, and time is only a tie-breaker. <strong>Finishing is not required to
+        score.</strong> A robot that never jams and keeps crossing lines beats one that
+        solves two maps perfectly and wedges on the third.</p>
+    </div>
+    <div class="stack">
+      <h3>The one shape wall-following cannot solve</h3>
+      <p style="color:var(--ink-2);font-size:.94rem">If a finish is a chamber in the
+        <em>middle</em>, enclosed by its own ring of wall — which is what photo 1 looks
+        like — then no wall-following robot can ever reach it. The goal is not connected to
+        the wall you are holding. That is maze theory, not a bug.</p>
+      <p style="color:var(--ink-2);font-size:.94rem">Our memory mode still collects 5–6 of
+        that map's 7 sector points. And if the real map 1 has its finish gate on the outer
+        edge, as the striped marking suggests, the problem disappears — hence question 2 in
+        the email.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 04 -->
+<section>
+  <div class="shead">
+    <span class="idx">04</span>
+    <div class="txt">
+      <span class="eyebrow">Two questions you asked</span>
+      <h2>The gyro, and the memory you already own</h2>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="stack">
+      <h3>Direction sensor — yes, buy two</h3>
+      <p style="color:var(--ink-2);font-size:.95rem">An MPU-6050 is a sensor, not a
+        microcontroller, so §2.2 explicitly permits it ("use of multiple sensors"). What it
+        buys you:</p>
+      <ul class="tight">
+        <li><strong>Turns that are actually 90°.</strong> Without it you run the motors in
+          opposite directions for 400&nbsp;ms and hope — wrong by 5–15° every time, and it
+          depends on battery voltage and floor friction. Four corners in, the robot is 40°
+          crooked and wedges.</li>
+        <li><strong>Straight lines.</strong> Your two TT motors are not matched; in
+          simulation the right one runs about 6% weak. Without a heading reference the
+          robot curves into a wall down a long corridor.</li>
+        <li><strong>Turning in a doorway,</strong> where there are no side walls to
+          reference and the gyro is the only thing that knows which way you point.</li>
+      </ul>
+      <div class="callout">
+        <span class="lbl">The catch, and the fix</span>
+        <p style="font-size:.93rem">Naive integration drifts 15–20° per run, which is
+          exactly enough to jam the robot in the next corner — we measured 22° of error
+          after 50 seconds. The firmware re-measures the gyro's zero-rate bias every time
+          the robot stops (which it does for a quarter-second before every turn), and
+          re-zeroes the heading to the corridor after every completed turn. The gyro then
+          only has to stay honest for the 1.5&nbsp;s that one turn takes.</p>
+      </div>
+    </div>
+
+    <div class="stack">
+      <h3>Memory module — you don't need one</h3>
+      <p style="color:var(--ink-2);font-size:.95rem">The ATmega328P on your Uno already
+        contains both kinds of memory, and <code>EEPROM.h</code> ships with the IDE.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Memory</th><th>Size</th><th>We use</th></tr></thead>
+          <tbody>
+            <tr><td>SRAM (working)</td><td class="n">2048 B</td><td class="n">192 B</td></tr>
+            <tr><td>EEPROM (keeps its contents)</td><td class="n">1024 B</td><td class="n">192 B</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="color:var(--ink-2);font-size:.95rem">The junction map costs <strong>4 bytes
+        per junction</strong> — position plus two bits per compass direction recording how
+        often that exit was used. 48 junctions fit in 192 bytes; a maze this size has maybe
+        10–20. Nothing to buy, nothing to mount, no rule to worry about.</p>
+      <p style="color:var(--ink-2);font-size:.95rem">That memory is what runs Trémaux's
+        algorithm: at each junction take the exit you have used least, breaking ties in
+        wall-following order. It beats plain wall-following on maps with loops — 9.8 versus
+        8.0 sector points on the serpentine.</p>
+      <div class="callout">
+        <span class="lbl">The rule that saves runs</span>
+        <p style="font-size:.93rem">At the first junction, the passage behind you is the
+          start gate, so it gets marked "fully used" immediately. Without that, a
+          wall-following robot laps the outer ring and calmly drives back out of its own
+          front door — the most common way to score nothing at this kind of event.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 05 -->
+<section>
+  <div class="shead">
+    <span class="idx">05</span>
+    <div class="txt">
+      <span class="eyebrow">Two shops, one trip each</span>
+      <h2>What to buy</h2>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:26px">
+    <div class="stack">
+      <h3>Electronics shop <span style="color:var(--ink-3);font-weight:400">— الموجات الإلكترونية, King Fahd St</span></h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Item</th><th>Qty</th><th>SAR</th></tr></thead>
+          <tbody>
+            <tr><td><strong>MPU-6050 gyro</strong><div class="ar">حساس جيروسكوب</div></td><td class="n">2</td><td class="n">15–25</td></tr>
+            <tr><td><strong>LM393 wheel encoder</strong><div class="ar">حساس سرعة العجلة</div></td><td class="n">2–4</td><td class="n">8–12</td></tr>
+            <tr><td><strong>TCRT5000 line sensor</strong><div class="ar">حساس خط</div></td><td class="n">2</td><td class="n">8–12</td></tr>
+            <tr><td><strong>6×AA holder</strong> or 2× 18650 + charger<div class="ar">بيت بطاريات</div></td><td class="n">1</td><td class="n">15–60</td></tr>
+            <tr><td>Rocker switch 3 A<div class="ar">مفتاح تشغيل</div></td><td class="n">2</td><td class="n">5</td></tr>
+            <tr><td>1000 µF + 100 nF capacitors<div class="ar">مكثفات</div></td><td class="n">2 + 10</td><td class="n">15</td></tr>
+            <tr><td>Pin headers, 22 AWG wire, heat-shrink<div class="ar">هيدر، سلك، حرارية</div></td><td class="n">—</td><td class="n">40</td></tr>
+            <tr><td>Spare HC-SR04<div class="ar">حساس مسافة احتياطي</div></td><td class="n">1–2</td><td class="n">20</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="stack">
+      <h3>SACO <span style="color:var(--ink-3);font-weight:400">— ساكو</span></h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Item</th><th>SAR</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Soldering iron 40–60 W + stand, solder, flux</strong><div class="ar">كاوي لحام + قصدير</div></td><td class="n">90</td></tr>
+            <tr><td><strong>Digital multimeter</strong><div class="ar">افوميتر</div></td><td class="n">60</td></tr>
+            <tr><td>Precision screwdrivers, PH1/PH2<div class="ar">طقم مفكات دقيقة + مفك صليبة</div></td><td class="n">50</td></tr>
+            <tr><td>Needle-nose pliers, side cutters, wire strippers<div class="ar">زرادية، قصافة، مقشر أسلاك</div></td><td class="n">55</td></tr>
+            <tr><td>M3 + M2 screws, nuts, washers, nylon standoffs<div class="ar">مسامير وصواميل وفواصل</div></td><td class="n">60</td></tr>
+            <tr><td>Zip ties, double-sided foam tape, thread-lock<div class="ar">ربطات، لاصق وجهين، مثبت مسامير</div></td><td class="n">45</td></tr>
+            <tr><td>Hot glue gun, electrical tape, craft knife, files<div class="ar">شمع لاصق، شريط عازل، كتر، مبارد</div></td><td class="n">60</td></tr>
+            <tr><td><strong>Practice track:</strong> 12× foam board 5 mm, black gaffer tape, white board, masking tape<div class="ar">فوم بورد، شريط أسود، كرتون أبيض</div></td><td class="n">150</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="callout">
+      <span class="lbl">If the budget gets tight</span>
+      <p style="font-size:.95rem">The three you cannot cut are the <strong>MPU-6050</strong>,
+        the <strong>multimeter</strong>, and the <strong>practice track materials</strong>.
+        You cannot tune a maze robot without a maze, and every hour on a real track is worth
+        ten hours of guessing.</p>
+    </div>
+    <div class="callout bad">
+      <span class="lbl">Do not buy — §2.2 is a disqualification</span>
+      <p style="font-size:.95rem">No ESP32, Raspberry Pi, Nano or any second
+        microcontroller — not even unused on the board. No external EEPROM or SD module
+        (§4 explains why). And skip the magnetometer compass: it reads the motor magnets and
+        lies to you. Use the green perfboard instead of the white breadboard — spring
+        contacts shake loose, and §5.1 checks for exactly that.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 06 -->
+<section>
+  <div class="shead">
+    <span class="idx">06</span>
+    <div class="txt">
+      <span class="eyebrow">Ordered so nothing gets built before it's needed</span>
+      <h2>The plan</h2>
+    </div>
+  </div>
+
+  <ol class="phases">
+    <li>
+      <span class="ph">Phase 0<br>1 hour</span>
+      <div class="body">
+        <h3>Before you spend a riyal</h3>
+        <p>Send the email. Measure your robot — length, width, wheelbase, wheel diameter,
+          nose-to-axle — put the numbers in <code>config.h</code>, run
+          <code>tools/geometry_check.py</code>, then watch the maps drive.</p>
+      </div>
+    </li>
+    <li>
+      <span class="ph">Phase 1<br>2 days</span>
+      <div class="body">
+        <h3>Buy and build — practice track first</h3>
+        <p>Build the 2&nbsp;m track before you touch the robot; it is the thing you will be
+          tempted to skip and the thing that decides the result. Then assemble with the
+          axle centred, solder the perfboard, wire it, and re-measure where the sensors
+          actually ended up.</p>
+      </div>
+    </li>
+    <li>
+      <span class="ph">Phase 2<br>1 day</span>
+      <div class="body">
+        <h3>Bring it up, one subsystem at a time</h3>
+        <p>Motors, then encoders, then sonars, then gyro, then line sensor — each a
+          throwaway sketch with a pass condition. Debugging three subsystems at once is how
+          a week disappears.</p>
+      </div>
+    </li>
+    <li>
+      <span class="ph">Phase 3<br>1 day</span>
+      <div class="body">
+        <h3>Tune on the track</h3>
+        <p>Straight corridor, then one corner, then a dead end, then each map shape ten
+          times. Every change goes into <code>config.h</code> and gets re-checked in the
+          simulator before it goes on the robot. Log the robot's telemetry and compare it
+          to the simulator's — where they disagree tells you which model parameter is
+          wrong, and after you fix it the simulator predicts <em>your</em> robot.</p>
+      </div>
+    </li>
+    <li>
+      <span class="ph">Phase 4<br>half a day</span>
+      <div class="body">
+        <h3>Reliability, not speed</h3>
+        <p>Ten clean runs per map shape. Start it 30&nbsp;mm off-centre and 10° crooked,
+          because the judges will not place it perfectly. Run it on half-flat batteries.
+          Then lower the cruise speed until the failure rate hits zero and leave it there.</p>
+      </div>
+    </li>
+    <li>
+      <span class="ph">Phase 5<br>the day</span>
+      <div class="body">
+        <h3>Measure the real maze, then choose your hand</h3>
+        <p>Trace each map into the simulator on arrival — fifteen minutes each — and it
+          tells you which wall-following direction wins before your run. The robot lets you
+          pick at the start line with a hand gesture: a quick tap in front of the nose is
+          left-hand, a long hold is right-hand, and the countdown blinks slow or fast to
+          confirm. No laptop, no radio, nothing to touch.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- ============================================================ 07 -->
+<section style="border-bottom:0">
+  <div class="shead">
+    <span class="idx">07</span>
+    <div class="txt">
+      <span class="eyebrow">Found in simulation, before any hardware existed</span>
+      <h2>Four bugs that would have cost you the event</h2>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>The steering was inverted</h3>
+      <p>The wall-centring term had the wrong sign, so the robot steered <em>into</em>
+        whichever wall it was already too close to. Fixing it cut wall scrapes from about
+        2,500 per run to under 100.</p>
+    </div>
+    <div class="card">
+      <h3>It turned into a wall in the first two seconds</h3>
+      <p>Junction detection asked "is the side open right now?", which is true the instant
+        the robot rolls out of the gate into the open start zone — before it has seen a
+        single wall. It now triggers on the <em>edge</em> from wall to open, debounced over
+        nine loops so one dropped ping cannot invent a junction.</p>
+    </div>
+    <div class="card">
+      <h3>It pivoted from the wrong place</h3>
+      <p>The ultrasonic sits 95&nbsp;mm ahead of the wheel axle. Stop when the sensor sees
+        the wall and the axle is still 95&nbsp;mm short of the junction centre — pivot from
+        there and the robot lands 95&nbsp;mm off the new corridor's centreline, which in a
+        300&nbsp;mm passage means hitting the wall. It now creeps until the axle is in the
+        middle, ranging off the wall ahead.</p>
+    </div>
+    <div class="card">
+      <h3>Every turn leaked a few millimetres</h3>
+      <p>The two wheels are never matched, so during a pivot the odometry gained a few
+        millimetres of phantom travel. Forty turns later the robot thought it was a quarter
+        metre from where it was, and the junction memory became worthless. Translation is
+        now discarded while pivoting.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="wrap">
+  <p>Full source, firmware and docs: <code>Muzoka/Robotic-comp</code>, branch
+    <code>claude/robot-competition-setup-ingek7</code> — pull request #1.</p>
+  <p>Every number on this page comes from <code>sim/run.py</code> and can be reproduced
+    with one command.</p>
+</footer>
