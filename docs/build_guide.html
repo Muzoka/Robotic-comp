@@ -18,6 +18,8 @@
 
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --ar:   "Segoe UI", "Noto Naskh Arabic", "Noto Sans Arabic", Tahoma,
+            "Traditional Arabic", "Geeza Pro", "Arial", sans-serif;
 
     --measure: 68ch;
     --r: 3px;
@@ -71,10 +73,52 @@
 
   .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px 96px; }
 
-  /* ---------- hero: the maze grid, one foot to a square ---------- */
+  /* ---------- bilingual ---------- */
+  [lang="ar"] {
+    font-family: var(--ar);
+    font-size: 1.06em;
+    line-height: 1.95;
+    text-align: right;
+  }
+  p[lang="ar"], li[lang="ar"] { max-width: var(--measure); }
+  body.only-en [lang="ar"] { display: none; }
+  body.only-ar .en-only { display: none; }
+  /* headings hold both languages stacked */
+  .h-ar {
+    display: block; font-family: var(--ar); font-weight: 600;
+    color: var(--muted); margin-top: 4px; line-height: 1.6;
+    font-size: .78em; letter-spacing: 0;
+  }
+  body.only-ar .h-ar { color: var(--ink); font-size: .92em; }
+  .lead-ar { color: var(--muted); }
+
+  /* language switch */
+  .langbar {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--surface); border-bottom: 1px solid var(--line);
+    margin: 0 -20px 0; padding: 8px 20px;
+    display: flex; gap: 8px; align-items: center; justify-content: flex-end;
+  }
+  .langbar span {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); margin-right: auto;
+  }
+  .langbar button {
+    font-family: var(--mono); font-size: 12px;
+    background: none; color: var(--muted);
+    border: 1px solid var(--line); border-radius: var(--r);
+    padding: 5px 12px; cursor: pointer;
+  }
+  .langbar button:hover { color: var(--ink); border-color: var(--muted); }
+  .langbar button[aria-pressed="true"] {
+    background: var(--accent); color: var(--surface); border-color: var(--accent);
+  }
+  .langbar button .a { font-family: var(--ar); }
+
+  /* ---------- hero ---------- */
   header.hero {
     position: relative;
-    padding: 72px 0 40px;
+    padding: 56px 0 40px;
     border-bottom: 1px solid var(--line);
     overflow: hidden;
   }
@@ -109,11 +153,12 @@
     text-wrap: balance;
     max-width: 16ch;
   }
+  h1 .h-ar { font-size: .46em; max-width: none; }
   .standfirst {
     font-size: clamp(17px, 2.2vw, 20px);
     color: var(--muted);
     max-width: var(--measure);
-    margin: 0 0 32px;
+    margin: 0 0 12px;
     text-wrap: pretty;
   }
 
@@ -126,12 +171,14 @@
     border-radius: var(--r);
     overflow: hidden;
     max-width: 760px;
+    margin-top: 26px;
   }
   .scoreboard div { background: var(--surface); padding: 14px 16px; }
   .scoreboard dt {
     font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
     text-transform: uppercase; color: var(--muted); margin: 0 0 6px;
   }
+  .scoreboard dt .a { font-family: var(--ar); letter-spacing: 0; text-transform: none; display: block; }
   .scoreboard dd {
     margin: 0; font-family: var(--mono); font-size: 21px; font-weight: 600;
     font-variant-numeric: tabular-nums; color: var(--accent);
@@ -141,8 +188,8 @@
   /* ---------- layout ---------- */
   .cols { display: grid; grid-template-columns: 1fr; gap: 40px; }
   @media (min-width: 1000px) {
-    .cols { grid-template-columns: 216px minmax(0, 1fr); gap: 56px; align-items: start; }
-    nav.toc { position: sticky; top: 24px; max-height: calc(100vh - 48px); overflow-y: auto; }
+    .cols { grid-template-columns: 232px minmax(0, 1fr); gap: 56px; align-items: start; }
+    nav.toc { position: sticky; top: 56px; max-height: calc(100vh - 80px); overflow-y: auto; }
   }
   nav.toc { padding-top: 40px; }
   nav.toc p {
@@ -153,17 +200,18 @@
   nav.toc a {
     display: flex; gap: 10px; align-items: baseline;
     padding: 5px 8px; border-radius: var(--r);
-    color: var(--ink); text-decoration: none; font-size: 14px; line-height: 1.35;
+    color: var(--ink); text-decoration: none; font-size: 13.5px; line-height: 1.35;
   }
   nav.toc a:hover { background: var(--sunk); }
   nav.toc a b {
     font-family: var(--mono); font-size: 11px; color: var(--accent);
     font-weight: 600; font-variant-numeric: tabular-nums; flex: none;
   }
+  nav.toc .a { font-family: var(--ar); color: var(--muted); font-size: 12.5px; display: block; }
   main { padding-top: 40px; min-width: 0; }
 
   /* ---------- phases ---------- */
-  section.phase { margin: 0 0 72px; scroll-margin-top: 20px; }
+  section.phase { margin: 0 0 72px; scroll-margin-top: 60px; }
   .phase-head { border-top: 2px solid var(--ink); padding-top: 16px; margin-bottom: 26px; }
   .phase-num {
     font-family: var(--mono); font-size: 12px; font-weight: 600;
@@ -177,24 +225,24 @@
     font-family: var(--mono); font-size: 12px; color: var(--muted);
     display: flex; flex-wrap: wrap; gap: 8px 18px;
   }
+  .phase-meta .a { font-family: var(--ar); }
 
   h3 {
     font-size: 19px; line-height: 1.3; letter-spacing: -.01em; font-weight: 650;
     margin: 38px 0 12px; text-wrap: balance;
   }
-  h4 {
-    font-size: 15px; font-weight: 650; margin: 26px 0 8px;
-  }
+  h4 { font-size: 15px; font-weight: 650; margin: 26px 0 8px; }
   p, li { max-width: var(--measure); text-wrap: pretty; }
   p { margin: 0 0 15px; }
   ul, ol { margin: 0 0 15px; padding-left: 22px; }
+  ul[lang="ar"], ol[lang="ar"] { padding-left: 0; padding-right: 22px; }
   li { margin-bottom: 7px; }
   a { color: var(--accent); }
   strong { font-weight: 650; }
   code {
     font-family: var(--mono); font-size: .885em;
     background: var(--sunk); padding: .12em .38em; border-radius: var(--r);
-    word-break: break-word;
+    word-break: break-word; direction: ltr; display: inline-block;
   }
   hr { border: 0; border-top: 1px solid var(--line); margin: 34px 0; }
 
@@ -204,6 +252,7 @@
     counter-increment: s; position: relative;
     padding: 0 0 20px 44px; margin: 0;
     border-left: 1px solid var(--line); margin-left: 12px;
+    max-width: none;
   }
   ol.steps > li::before {
     content: counter(s);
@@ -232,6 +281,7 @@
     text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 6px;
     color: var(--accent);
   }
+  .note-label .a { font-family: var(--ar); letter-spacing: 0; text-transform: none; }
   .note.warn   .note-label { color: var(--warn); }
   .note.danger .note-label { color: var(--danger); }
   .note.pass   .note-label { color: var(--ok); }
@@ -239,7 +289,7 @@
   /* ---------- code ---------- */
   .code {
     background: var(--sunk); border: 1px solid var(--line); border-radius: var(--r);
-    margin: 18px 0; overflow: hidden;
+    margin: 18px 0; overflow: hidden; direction: ltr; text-align: left;
   }
   .code-cap {
     font-family: var(--mono); font-size: 11px; color: var(--muted);
@@ -248,7 +298,7 @@
   .code pre { margin: 0; padding: 14px; overflow-x: auto; }
   .code code {
     background: none; padding: 0; font-size: 13px; line-height: 1.65;
-    white-space: pre; word-break: normal;
+    white-space: pre; word-break: normal; display: block;
   }
 
   /* ---------- tables ---------- */
@@ -260,9 +310,11 @@
     text-transform: uppercase; color: var(--muted); font-weight: 600;
     background: var(--surface); white-space: nowrap;
   }
+  th .a { font-family: var(--ar); letter-spacing: 0; text-transform: none; display: block; }
   tbody tr:last-child td { border-bottom: 0; }
   td.pin, td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .ar { font-size: 13.5px; color: var(--muted); }
+  .arw { font-family: var(--ar); direction: rtl; display: block; color: var(--muted); font-size: 13.5px; }
+  .ar-term { font-family: var(--ar); direction: rtl; color: var(--muted); font-size: 13.5px; }
 
   /* ---------- checklists ---------- */
   .check { list-style: none; padding: 0; margin: 16px 0; max-width: var(--measure); }
@@ -301,42 +353,57 @@
 
 <div class="wrap">
 
+<div class="langbar">
+  <span>Language / <span style="font-family:var(--ar)">اللغة</span></span>
+  <button type="button" data-lang="both" aria-pressed="true">EN + <span class="a">ع</span></button>
+  <button type="button" data-lang="en" aria-pressed="false">English</button>
+  <button type="button" data-lang="ar" aria-pressed="false"><span class="a">عربي</span></button>
+</div>
+
 <header class="hero">
   <p class="eyebrow">Robotics Navigation Challenge · Arduino Uno</p>
-  <h1>MazeRunner Build Guide</h1>
-  <p class="standfirst">
+  <h1>MazeRunner Build Guide
+    <span class="h-ar" dir="rtl" lang="ar">دليل بناء روبوت المتاهة</span>
+  </h1>
+  <p class="standfirst en-only">
     Everything from the shop counter to the start line: what to buy, how to wire it,
     what to test at each stage, and what to do on the day. Written for one specific
     robot that has been simulated to completion — but the method transfers to any
     two-wheeled maze robot on an Uno.
   </p>
+  <p class="standfirst lead-ar" dir="rtl" lang="ar">
+    كل شيء من المحل إلى خط البداية: ماذا تشتري، كيف توصّل الأسلاك، ما الذي تختبره
+    في كل مرحلة، وماذا تفعل يوم المسابقة. مكتوب لروبوت واحد محدد تم اختباره
+    بالمحاكاة حتى نجح في كل الخرائط — لكن الطريقة نفسها تنفع لأي روبوت متاهة
+    بعجلتين يعمل على Arduino Uno.
+  </p>
   <dl class="scoreboard">
-    <div><dt>Maps completed</dt><dd>3 / 3</dd></div>
-    <div><dt>Sector points</dt><dd>17 / 17</dd></div>
-    <div><dt>Simulated runs</dt><dd>96 <small>all passed</small></dd></div>
-    <div><dt>Slowest map</dt><dd>48 s <small>of 180</small></dd></div>
-    <div><dt>Wall contact</dt><dd>0</dd></div>
+    <div><dt>Maps completed <span class="a" dir="rtl" lang="ar">الخرائط المكتملة</span></dt><dd>3 / 3</dd></div>
+    <div><dt>Sector points <span class="a" dir="rtl" lang="ar">نقاط القطاعات</span></dt><dd>17 / 17</dd></div>
+    <div><dt>Simulated runs <span class="a" dir="rtl" lang="ar">جولات المحاكاة</span></dt><dd>96 <small>all passed</small></dd></div>
+    <div><dt>Slowest map <span class="a" dir="rtl" lang="ar">أبطأ خريطة</span></dt><dd>48 s <small>of 180</small></dd></div>
+    <div><dt>Wall contact <span class="a" dir="rtl" lang="ar">الاصطدام بالجدران</span></dt><dd>0</dd></div>
   </dl>
 </header>
 
 <div class="cols">
 
 <nav class="toc" aria-label="Contents">
-  <p>Phases</p>
+  <p>Phases / <span style="font-family:var(--ar)">المراحل</span></p>
   <ol>
-    <li><a href="#p0"><b>00</b><span>Before you spend anything</span></a></li>
-    <li><a href="#p1"><b>01</b><span>Shopping</span></a></li>
-    <li><a href="#p2"><b>02</b><span>Software setup</span></a></li>
-    <li><a href="#p3"><b>03</b><span>Test the code first</span></a></li>
-    <li><a href="#p4"><b>04</b><span>Bench-test each part</span></a></li>
-    <li><a href="#p5"><b>05</b><span>Mechanical assembly</span></a></li>
-    <li><a href="#p6"><b>06</b><span>Wiring, in order</span></a></li>
-    <li><a href="#p7"><b>07</b><span>First power-up</span></a></li>
-    <li><a href="#p8"><b>08</b><span>Measure and calibrate</span></a></li>
-    <li><a href="#p9"><b>09</b><span>Tuning on the real track</span></a></li>
-    <li><a href="#p10"><b>10</b><span>Competition day</span></a></li>
-    <li><a href="#p11"><b>11</b><span>When it goes wrong</span></a></li>
-    <li><a href="#p12"><b>12</b><span>For other students</span></a></li>
+    <li><a href="#p0"><b>00</b><span>Before you spend anything<span class="a" dir="rtl" lang="ar">قبل أن تصرف ريالاً</span></span></a></li>
+    <li><a href="#p1"><b>01</b><span>Shopping<span class="a" dir="rtl" lang="ar">المشتريات</span></span></a></li>
+    <li><a href="#p2"><b>02</b><span>Software setup<span class="a" dir="rtl" lang="ar">تجهيز البرامج</span></span></a></li>
+    <li><a href="#p3"><b>03</b><span>Test the code first<span class="a" dir="rtl" lang="ar">اختبر الكود أولاً</span></span></a></li>
+    <li><a href="#p4"><b>04</b><span>Bench-test each part<span class="a" dir="rtl" lang="ar">اختبر كل قطعة وحدها</span></span></a></li>
+    <li><a href="#p5"><b>05</b><span>Mechanical assembly<span class="a" dir="rtl" lang="ar">التجميع الميكانيكي</span></span></a></li>
+    <li><a href="#p6"><b>06</b><span>Wiring, in order<span class="a" dir="rtl" lang="ar">التوصيل بالترتيب</span></span></a></li>
+    <li><a href="#p7"><b>07</b><span>First power-up<span class="a" dir="rtl" lang="ar">أول تشغيل</span></span></a></li>
+    <li><a href="#p8"><b>08</b><span>Measure and calibrate<span class="a" dir="rtl" lang="ar">القياس والمعايرة</span></span></a></li>
+    <li><a href="#p9"><b>09</b><span>Tuning on the track<span class="a" dir="rtl" lang="ar">الضبط على المسار</span></span></a></li>
+    <li><a href="#p10"><b>10</b><span>Competition day<span class="a" dir="rtl" lang="ar">يوم المسابقة</span></span></a></li>
+    <li><a href="#p11"><b>11</b><span>When it goes wrong<span class="a" dir="rtl" lang="ar">حل المشاكل</span></span></a></li>
+    <li><a href="#p12"><b>12</b><span>For other students<span class="a" dir="rtl" lang="ar">للطلاب الآخرين</span></span></a></li>
   </ol>
 </nav>
 
@@ -346,52 +413,91 @@
 <section class="phase" id="p0">
   <div class="phase-head">
     <span class="phase-num">PHASE 00</span>
-    <h2>Before you spend anything</h2>
-    <div class="phase-meta"><span>~30 min</span><span>No parts needed</span></div>
+    <h2>Before you spend anything
+      <span class="h-ar" dir="rtl" lang="ar">قبل أن تصرف ريالاً واحداً</span>
+    </h2>
+    <div class="phase-meta"><span>~30 min</span><span>No parts needed</span><span class="a" dir="rtl" lang="ar">لا تحتاج أي قطعة</span></div>
   </div>
 
-  <p>
+  <p class="en-only">
     One measurement decides whether this robot can work at all, and it is not
     about code. A two-wheeled robot pivoting on the spot sweeps a circle as wide
     as its body diagonal. If that circle does not fit between the walls, the
     robot <em>cannot turn around</em> — no amount of tuning fixes it.
   </p>
+  <p dir="rtl" lang="ar">
+    هناك قياس واحد يحدد إن كان هذا الروبوت سينجح أصلاً، ولا علاقة له بالبرمجة.
+    الروبوت ذو العجلتين حين يدور حول نفسه يرسم دائرة قطرها بقدر قطر جسمه
+    (من زاوية إلى الزاوية المقابلة). إذا كانت هذه الدائرة أوسع من المسافة بين
+    الجدارين، فالروبوت <strong>لا يستطيع الدوران</strong> — ولن يصلحه أي ضبط
+    في الكود.
+  </p>
 
-  <p>The competition passage is one foot: <strong>304.8 mm</strong>.</p>
+  <p class="en-only">The competition passage is one foot: <strong>304.8 mm</strong>.</p>
+  <p dir="rtl" lang="ar">عرض الممر في المسابقة قدم واحدة: <strong>304.8 مم</strong>.</p>
 
   <div class="tw">
     <table>
-      <thead><tr><th>Robot size</th><th>Body diagonal</th><th>Clearance</th><th>Verdict</th></tr></thead>
+      <thead><tr>
+        <th>Robot size <span class="a" dir="rtl" lang="ar">مقاس الروبوت</span></th>
+        <th>Body diagonal <span class="a" dir="rtl" lang="ar">قطر الجسم</span></th>
+        <th>Clearance <span class="a" dir="rtl" lang="ar">الهامش</span></th>
+        <th>Verdict <span class="a" dir="rtl" lang="ar">النتيجة</span></th>
+      </tr></thead>
       <tbody>
-        <tr><td class="num">250 × 150 mm</td><td class="num">292 mm</td><td class="num">6 mm</td><td>Jams in corners</td></tr>
-        <tr><td class="num"><strong>220 × 115 mm</strong></td><td class="num"><strong>248 mm</strong></td><td class="num"><strong>28 mm</strong></td><td><strong>Target — build to this</strong></td></tr>
-        <tr><td class="num">200 × 110 mm</td><td class="num">228 mm</td><td class="num">38 mm</td><td>Fits, but twitchy — short wheelbase</td></tr>
+        <tr><td class="num">250 × 150 mm</td><td class="num">292 mm</td><td class="num">6 mm</td>
+            <td>Jams in corners<span class="arw">ينحشر في الزوايا</span></td></tr>
+        <tr><td class="num"><strong>220 × 115 mm</strong></td><td class="num"><strong>248 mm</strong></td><td class="num"><strong>28 mm</strong></td>
+            <td><strong>Target — build to this</strong><span class="arw">الهدف — ابنِ على هذا المقاس</span></td></tr>
+        <tr><td class="num">200 × 110 mm</td><td class="num">228 mm</td><td class="num">38 mm</td>
+            <td>Fits, but twitchy — short wheelbase<span class="arw">يمر، لكنه غير مستقر بسبب قصر المسافة بين العجلتين</span></td></tr>
       </tbody>
     </table>
   </div>
 
-  <p>
+  <p class="en-only">
     <strong>220 × 115 mm</strong> is a measured optimum, not a guess. Narrower is
     not automatically better: a narrower body means a shorter wheelbase, which
     makes the robot more sensitive to motor mismatch. In simulation, 110 mm wide
     completed 83% of runs and 115 mm completed 97%.
   </p>
+  <p dir="rtl" lang="ar">
+    مقاس <strong>220 × 115 مم</strong> نتيجة قياس، وليس تخميناً. الأضيق ليس
+    أفضل تلقائياً: الجسم الأضيق يعني مسافة أقصر بين العجلتين، وهذا يجعل الروبوت
+    أكثر حساسية لاختلاف قوة المحركين. في المحاكاة، العرض 110 مم أكمل 83% من
+    الجولات، بينما 115 مم أكمل 97%.
+  </p>
 
   <div class="note warn">
-    <span class="note-label">Measure this today</span>
-    <p>
+    <span class="note-label">Measure this today <span class="a" dir="rtl" lang="ar">· قِس هذا اليوم</span></span>
+    <p class="en-only">
       Put a ruler across your chassis as it stands, nose to tail and tyre-outside
       to tyre-outside. Most kit builds come out around 250 × 150 mm, and almost
       all of the excess is in the front ultrasonic bracket hanging off the nose.
-      You need to find about 3 cm of length. Knowing that now changes what you
-      buy.
+      You need to find about 3 cm of length. Knowing that now changes what you buy.
+    </p>
+    <p dir="rtl" lang="ar">
+      ضع المسطرة على الهيكل كما هو الآن: من المقدمة إلى المؤخرة، ومن الحافة
+      الخارجية للإطار الأيسر إلى الحافة الخارجية للإطار الأيمن. أغلب الروبوتات
+      المبنية من الكِت تكون حوالي 250 × 150 مم، والزيادة كلها تقريباً في حامل
+      الحساس الأمامي البارز من المقدمة. تحتاج أن تقلّص حوالي 3 سم من الطول.
+      معرفة هذا الآن تغيّر ما ستشتريه.
     </p>
   </div>
 
-  <h3>Two questions worth asking the organisers</h3>
-  <ol>
+  <h3>Two questions worth asking the organisers
+    <span class="h-ar" dir="rtl" lang="ar">سؤالان يستحقان أن تسألهما اللجنة المنظّمة</span>
+  </h3>
+  <ol class="en-only">
     <li><strong>What is the actual passage width?</strong> The rulebook says 200–400 mm and calls the dimensions "tentative". At 200 mm no standard kit robot can turn at all — that affects every team equally and is worth raising early, in writing.</li>
     <li><strong>Are the start and finish gates marked on the floor?</strong> It changes nothing in the code, but it is good to know what the robot will see.</li>
+  </ol>
+  <ol dir="rtl" lang="ar">
+    <li><strong>ما هو عرض الممر الفعلي؟</strong> اللوائح تقول 200–400 مم وتصف
+    الأبعاد بأنها «مبدئية». عند 200 مم لا يستطيع أي روبوت كِت قياسي أن يدور
+    إطلاقاً — وهذا يؤثر على كل الفرق بالتساوي، ويستحق أن تسأل عنه مبكراً وكتابةً.</li>
+    <li><strong>هل خطوط البداية والنهاية مرسومة على الأرض؟</strong> لا يغيّر
+    شيئاً في الكود، لكن من الجيد أن تعرف ما الذي سيراه الروبوت.</li>
   </ol>
 </section>
 
@@ -399,88 +505,169 @@
 <section class="phase" id="p1">
   <div class="phase-head">
     <span class="phase-num">PHASE 01</span>
-    <h2>Shopping</h2>
+    <h2>Shopping
+      <span class="h-ar" dir="rtl" lang="ar">المشتريات</span>
+    </h2>
     <div class="phase-meta"><span>Half a day</span><span>~300 SAR electronics + ~300 SAR tools</span></div>
   </div>
 
-  <p>
+  <p class="en-only">
     Two trips: an electronics shop, then SACO. <strong>No practice track</strong> —
     you have the real one, which saves about 120 SAR and a full weekend of cutting
     foam board.
   </p>
+  <p dir="rtl" lang="ar">
+    رحلتان: محل إلكترونيات، ثم ساكو. <strong>لا حاجة لمسار تدريب</strong> —
+    لديك المسار الحقيقي، وهذا يوفر حوالي 120 ريال وعطلة نهاية أسبوع كاملة من
+    تقطيع الفوم بورد.
+  </p>
 
-  <h3>Which to choose when there is a choice</h3>
-  <p>
+  <h3>Which to choose when there is a choice
+    <span class="h-ar" dir="rtl" lang="ar">أيهما تختار عند وجود خيارين</span>
+  </h3>
+  <p class="en-only">
     Scoring is sector points first (§6.1); time only breaks ties (§6.3). So
     <strong>reliability wins the event and weight wins the tie-break</strong>. Buy
     the reliable option, and take the lighter one only where it costs nothing.
   </p>
+  <p dir="rtl" lang="ar">
+    التقييم يعتمد أولاً على نقاط القطاعات (المادة 6.1)، والوقت يُستخدم فقط عند
+    التعادل (المادة 6.3). إذن <strong>الاعتمادية تكسب البطولة، والخفة تكسب
+    التعادل</strong>. اشترِ الخيار الأكثر اعتمادية، وخذ الأخف فقط حين لا يكلّفك شيئاً.
+  </p>
 
-  <h3>Electronics shop <span class="ar">(الموجات الإلكترونية, King Fahd St, Khobar)</span></h3>
+  <h3>Electronics shop <span class="ar-term">(الموجات الإلكترونية، شارع الملك فهد، الخبر)</span></h3>
 
   <ul class="check">
-    <li><input type="checkbox" id="b1"><label for="b1"><strong>MPU-6050 / GY-521 gyro × 2</strong> <span class="ar">حساس جيروسكوب</span> — 15–25 SAR each. The highest-value part you can add: it is what makes a turn actually 90°. Only 3 g, so no trade-off. <strong>Buy two</strong> — a dead gyro on the day ends your event. <em>Not</em> a compass module (HMC5883L/QMC5883); the motors fool it.</label></li>
-    <li><input type="checkbox" id="b2"><label for="b2"><strong>LM393 slot encoder × 2</strong> (+2 spare) <span class="ar">حساس سرعة العجلة</span> — 8–12 SAR each. The slotted discs in your kit only fit these.</label></li>
-    <li><input type="checkbox" id="b3"><label for="b3"><strong>Momentary push button × 2</strong> <span class="ar">زر ضغط</span> — 2 SAR each. The GO button. Two wires, no resistor.</label></li>
-    <li><input type="checkbox" id="b4"><label for="b4"><strong>2 × 18650 Li-ion + holder + charger</strong> <span class="ar">بطاريات ١٨٦٥٠ + بيت + شاحن</span> — ~60 SAR. 7.4 V, ~95 g, rechargeable, holds voltage under load. <strong>This is the reliable choice.</strong></label></li>
-    <li><input type="checkbox" id="b5"><label for="b5"><strong>Rocker/toggle switch, 3 A × 2</strong> <span class="ar">مفتاح تشغيل</span> — 5 SAR each. Master power. One is enough; buy a spare.</label></li>
-    <li><input type="checkbox" id="b6"><label for="b6"><strong>Inline fuse holder + 3 A fuse</strong> <span class="ar">حامل فيوز</span> — 8 SAR. Insurance against a shorted motor lead.</label></li>
-    <li><input type="checkbox" id="b7"><label for="b7"><strong>1000 µF 16 V capacitor × 2</strong> <span class="ar">مكثف ١٠٠٠ مايكرو</span> — 3 SAR each. Across the L298N supply; stops motor surges resetting the Arduino.</label></li>
-    <li><input type="checkbox" id="b8"><label for="b8"><strong>100 nF ceramic ("104") × 10</strong> <span class="ar">مكثف ١٠٤</span> — 1 SAR each. One across each motor's terminals; kills the brush noise that upsets the gyro.</label></li>
-    <li><input type="checkbox" id="b9"><label for="b9"><strong>JST-XH connector kit + crimp tool</strong> <span class="ar">وصلات JST + كماشة تكريب</span> — ~60 SAR. Cables cut to exact length, sensors unplug for repair. The biggest tidiness win. A Dupont kit is the cheaper substitute.</label></li>
-    <li><input type="checkbox" id="b10"><label for="b10"><strong>22 AWG stranded wire, 3 colours</strong> <span class="ar">سلك ٢٢ مجدول</span> — 15 SAR. <strong>Stranded, not solid.</strong> Solid wire work-hardens and snaps from vibration.</label></li>
-    <li><input type="checkbox" id="b11"><label for="b11"><strong>Heat-shrink assortment</strong> <span class="ar">أنابيب حرارية</span> — 15 SAR. §5.1 forbids exposed conductor.</label></li>
-    <li><input type="checkbox" id="b12"><label for="b12"><strong>Spiral cable wrap 6 mm, 2 m</strong> <span class="ar">لفافة أسلاك</span> — 10 SAR.</label></li>
-    <li><input type="checkbox" id="b13"><label for="b13"><strong>Pin headers, male + female</strong> <span class="ar">هيدر ذكر وأنثى</span> — 10 SAR.</label></li>
-    <li><input type="checkbox" id="b14"><label for="b14"><strong>Spare HC-SR04 × 2</strong> <span class="ar">حساس مسافة</span> — 20 SAR each. They die.</label></li>
-    <li><input type="checkbox" id="b15"><label for="b15"><em>Optional:</em> piezo buzzer 5 V <span class="ar">صافرة</span> — 5 SAR. In parallel with the LED, so the countdown is audible to a judge.</label></li>
+    <li><input type="checkbox" id="b1"><label for="b1"><strong>MPU-6050 / GY-521 gyro × 2</strong> — 15–25 SAR each. The highest-value part you can add: it is what makes a turn actually 90°. <strong>Buy two</strong> — a dead gyro on the day ends your event. <em>Not</em> a compass module (HMC5883L/QMC5883); the motors fool it.
+      <span class="arw"><strong>حساس جيروسكوب MPU-6050 عدد 2</strong> — 15–25 ريال للحبة. أهم قطعة يمكن إضافتها: هي التي تجعل اللفة 90 درجة فعلاً. اشترِ اثنين — جيروسكوب تالف يوم المسابقة ينهي مشاركتك. <strong>وليس</strong> حساس بوصلة (HMC5883L/QMC5883)؛ المحركات تشوّش عليه.</span></label></li>
+
+    <li><input type="checkbox" id="b2"><label for="b2"><strong>LM393 slot encoder × 2</strong> (+2 spare) — 8–12 SAR each. The slotted discs in your kit only fit these.
+      <span class="arw"><strong>حساس دوران العجلة LM393 عدد 2</strong> (+2 احتياطي) — 8–12 ريال للحبة. الأقراص المشقوقة في الكِت لا تناسب غيرها.</span></label></li>
+
+    <li><input type="checkbox" id="b3"><label for="b3"><strong>Momentary push button × 2</strong> — 2 SAR each. The GO button. Two wires, no resistor.
+      <span class="arw"><strong>زر ضغط لحظي عدد 2</strong> — 2 ريال للحبة. زر التشغيل GO. سلكان فقط، بدون مقاومة.</span></label></li>
+
+    <li><input type="checkbox" id="b4"><label for="b4"><strong>2 × 18650 Li-ion + holder + charger</strong> — ~60 SAR. 7.4 V, ~95 g, rechargeable, holds voltage under load. <strong>This is the reliable choice.</strong>
+      <span class="arw"><strong>بطاريتان 18650 + بيت بطارية + شاحن</strong> — حوالي 60 ريال. 7.4 فولت، ~95 غرام، قابلة للشحن، وتحافظ على الفولت تحت الحمل. <strong>هذا هو الخيار الموثوق.</strong></span></label></li>
+
+    <li><input type="checkbox" id="b5"><label for="b5"><strong>Rocker/toggle switch, 3 A × 2</strong> — 5 SAR each. Master power. One is enough; buy a spare.
+      <span class="arw"><strong>مفتاح تشغيل 3 أمبير عدد 2</strong> — 5 ريال للحبة. مفتاح الطاقة الرئيسي. واحد يكفي، والثاني احتياطي.</span></label></li>
+
+    <li><input type="checkbox" id="b6"><label for="b6"><strong>Inline fuse holder + 3 A fuse</strong> — 8 SAR. Insurance against a shorted motor lead.
+      <span class="arw"><strong>حامل فيوز + فيوز 3 أمبير</strong> — 8 ريال. تأمين ضد قصر في سلك المحرك.</span></label></li>
+
+    <li><input type="checkbox" id="b7"><label for="b7"><strong>1000 µF 16 V capacitor × 2</strong> — 3 SAR each. Across the L298N supply; stops motor surges resetting the Arduino.
+      <span class="arw"><strong>مكثف 1000 مايكروفاراد 16 فولت عدد 2</strong> — 3 ريال للحبة. يوضع على تغذية الـ L298N؛ يمنع اندفاع تيار المحركات من إعادة تشغيل الأردوينو.</span></label></li>
+
+    <li><input type="checkbox" id="b8"><label for="b8"><strong>100 nF ceramic ("104") × 10</strong> — 1 SAR each. One across each motor's terminals; kills the brush noise that upsets the gyro.
+      <span class="arw"><strong>مكثف سيراميك 104 عدد 10</strong> — 1 ريال للحبة. واحد على طرفَي كل محرك؛ يزيل التشويش الكهربائي الذي يربك الجيروسكوب.</span></label></li>
+
+    <li><input type="checkbox" id="b9"><label for="b9"><strong>JST-XH connector kit + crimp tool</strong> — ~60 SAR. Cables cut to exact length, sensors unplug for repair. The biggest tidiness win. A Dupont kit is the cheaper substitute.
+      <span class="arw"><strong>طقم وصلات JST-XH + كماشة تكريب</strong> — حوالي 60 ريال. أسلاك مقصوصة بالطول المضبوط، وحساسات تُفصل بسهولة للإصلاح. أكبر مكسب في ترتيب الأسلاك. طقم Dupont بديل أرخص.</span></label></li>
+
+    <li><input type="checkbox" id="b10"><label for="b10"><strong>22 AWG stranded wire, 3 colours</strong> — 15 SAR. <strong>Stranded, not solid.</strong> Solid wire work-hardens and snaps from vibration.
+      <span class="arw"><strong>سلك 22 مجدول، 3 ألوان</strong> — 15 ريال. <strong>مجدول وليس مصمت.</strong> السلك المصمت يتقصّف وينكسر من الاهتزاز.</span></label></li>
+
+    <li><input type="checkbox" id="b11"><label for="b11"><strong>Heat-shrink assortment</strong> — 15 SAR. §5.1 forbids exposed conductor.
+      <span class="arw"><strong>أنابيب حرارية بمقاسات مختلفة</strong> — 15 ريال. المادة 5.1 تمنع أي سلك مكشوف.</span></label></li>
+
+    <li><input type="checkbox" id="b12"><label for="b12"><strong>Spiral cable wrap 6 mm, 2 m</strong> — 10 SAR.
+      <span class="arw"><strong>لفافة أسلاك حلزونية 6 مم، 2 متر</strong> — 10 ريال.</span></label></li>
+
+    <li><input type="checkbox" id="b13"><label for="b13"><strong>Pin headers, male + female</strong> — 10 SAR.
+      <span class="arw"><strong>هيدر ذكر وأنثى</strong> — 10 ريال.</span></label></li>
+
+    <li><input type="checkbox" id="b14"><label for="b14"><strong>Spare HC-SR04 × 2</strong> — 20 SAR each. They die.
+      <span class="arw"><strong>حساس مسافة HC-SR04 احتياطي عدد 2</strong> — 20 ريال للحبة. تتلف بسهولة.</span></label></li>
+
+    <li><input type="checkbox" id="b15"><label for="b15"><em>Optional:</em> piezo buzzer 5 V — 5 SAR. In parallel with the LED, so the countdown is audible to a judge.
+      <span class="arw"><em>اختياري:</em> صافرة 5 فولت — 5 ريال. توصَّل بالتوازي مع الـ LED ليسمع الحكم العد التنازلي.</span></label></li>
   </ul>
 
   <div class="note danger">
-    <span class="note-label">Do not buy</span>
-    <ul>
+    <span class="note-label">Do not buy <span class="a" dir="rtl" lang="ar">· لا تشترِ</span></span>
+    <ul class="en-only">
       <li><strong>Any second microcontroller</strong> — ESP32, Nano, Pi. Rule §2.2, instant disqualification, even fitted and unused.</li>
       <li><strong>An external memory chip.</strong> The Uno's built-in 1 kB EEPROM is ten times what this needs — the junction memory uses 192 bytes.</li>
-      <li><strong>A TCRT5000 line sensor.</strong> It was in an earlier version of this design and was removed: its only job was spotting the finish, and a TCRT5000 chatters crossing tape at an angle, which could stop the robot mid-map. Measured with it gone: identical times, every sector line still crossed.</li>
-      <li><strong>Laser distance sensors</strong> (VL53L0X/VL53L1X). Modelled, and they measured <em>worse</em> than HC-SR04 here — a wide sonar cone averages a whole square of wall, which is exactly what a wall-follower wants.</li>
+      <li><strong>A TCRT5000 line sensor.</strong> It was in an earlier version of this design and was removed: its only job was spotting the finish, and a TCRT5000 chatters crossing tape at an angle, which could stop the robot mid-map.</li>
+      <li><strong>Laser distance sensors</strong> (VL53L0X/VL53L1X). Modelled, and they measured <em>worse</em> than HC-SR04 here — a wide sonar cone averages a whole square of wall, which is what a wall-follower wants.</li>
+    </ul>
+    <ul dir="rtl" lang="ar">
+      <li><strong>أي متحكم ثانٍ</strong> — ESP32 أو Nano أو Raspberry Pi. المادة 2.2:
+      استبعاد فوري، حتى لو كان مركّباً وغير مستخدم.</li>
+      <li><strong>شريحة ذاكرة خارجية.</strong> ذاكرة EEPROM المدمجة في الأردوينو (1 كيلوبايت)
+      أكبر بعشر مرات مما نحتاج — ذاكرة التقاطعات تستخدم 192 بايت فقط.</li>
+      <li><strong>حساس خط TCRT5000.</strong> كان موجوداً في نسخة سابقة من التصميم ثم حُذف:
+      وظيفته الوحيدة كانت اكتشاف خط النهاية، وهذا الحساس يعطي قراءات متذبذبة عند
+      عبور الشريط بزاوية مائلة، مما قد يوقف الروبوت في منتصف الخريطة.</li>
+      <li><strong>حساسات المسافة بالليزر</strong> (VL53L0X/VL53L1X). جرّبناها في النموذج
+      وكانت النتيجة <em>أسوأ</em> من HC-SR04 هنا — لأن مخروط الموجات الصوتية العريض
+      يعطي متوسطاً لمربع كامل من الجدار، وهذا بالضبط ما يحتاجه متتبّع الجدار.</li>
     </ul>
   </div>
 
-  <h3>SACO <span class="ar">(ساكو)</span> — tools</h3>
+  <h3>SACO <span class="ar-term">(ساكو)</span> — tools <span class="ar-term">الأدوات</span></h3>
   <ul class="check">
-    <li><input type="checkbox" id="t1"><label for="t1"><strong>Soldering iron 40–60 W + stand, solder, flux</strong> <span class="ar">كاوي لحام + قصدير</span> — 90 SAR</label></li>
-    <li><input type="checkbox" id="t2"><label for="t2"><strong>Digital multimeter</strong> <span class="ar">افوميتر</span> — 60 SAR. You will use this more than you expect.</label></li>
-    <li><input type="checkbox" id="t3"><label for="t3">Precision screwdriver set + PH1/PH2 <span class="ar">طقم مفكات دقيقة + مفك صليبة</span> — 50 SAR</label></li>
-    <li><input type="checkbox" id="t4"><label for="t4">Needle-nose pliers, side cutters, wire strippers <span class="ar">زرادية، قصافة، مقشر أسلاك</span> — 55 SAR</label></li>
-    <li><input type="checkbox" id="t5"><label for="t5">Desoldering braid <span class="ar">شفاط لحام</span> — 10 SAR</label></li>
-    <li><input type="checkbox" id="t6"><label for="t6">Hot glue gun + sticks <span class="ar">مسدس شمع</span> — 30 SAR</label></li>
-    <li><input type="checkbox" id="t7"><label for="t7">Craft knife, small files <span class="ar">كتر، مبارد</span> — 25 SAR</label></li>
-    <li><input type="checkbox" id="t8"><label for="t8">Safety glasses <span class="ar">نظارة أمان</span> — 15 SAR</label></li>
-    <li><input type="checkbox" id="t9"><label for="t9">Parts organiser box <span class="ar">علبة تنظيم</span> — 25 SAR</label></li>
-    <li><input type="checkbox" id="t10"><label for="t10"><strong>Tape measure + long steel ruler</strong> <span class="ar">متر + مسطرة</span> — to measure the real track the first time you see it</label></li>
+    <li><input type="checkbox" id="t1"><label for="t1"><strong>Soldering iron 40–60 W + stand, solder, flux</strong> — 90 SAR
+      <span class="arw"><strong>كاوي لحام 40–60 واط + قاعدة + قصدير + معجون لحام</strong> — 90 ريال</span></label></li>
+    <li><input type="checkbox" id="t2"><label for="t2"><strong>Digital multimeter</strong> — 60 SAR. You will use this more than you expect.
+      <span class="arw"><strong>أفوميتر رقمي</strong> — 60 ريال. ستستخدمه أكثر مما تتوقع.</span></label></li>
+    <li><input type="checkbox" id="t3"><label for="t3">Precision screwdriver set + PH1/PH2 — 50 SAR
+      <span class="arw">طقم مفكات دقيقة + مفك صليبة PH1/PH2 — 50 ريال</span></label></li>
+    <li><input type="checkbox" id="t4"><label for="t4">Needle-nose pliers, side cutters, wire strippers — 55 SAR
+      <span class="arw">زرادية مدببة، قصافة، مقشّر أسلاك — 55 ريال</span></label></li>
+    <li><input type="checkbox" id="t5"><label for="t5">Desoldering braid — 10 SAR
+      <span class="arw">شريط شفط اللحام — 10 ريال</span></label></li>
+    <li><input type="checkbox" id="t6"><label for="t6">Hot glue gun + sticks — 30 SAR
+      <span class="arw">مسدس شمع + أصابع لاصقة — 30 ريال</span></label></li>
+    <li><input type="checkbox" id="t7"><label for="t7">Craft knife, small files — 25 SAR
+      <span class="arw">كتر ومبارد صغيرة — 25 ريال</span></label></li>
+    <li><input type="checkbox" id="t8"><label for="t8">Safety glasses — 15 SAR
+      <span class="arw">نظارة أمان — 15 ريال</span></label></li>
+    <li><input type="checkbox" id="t9"><label for="t9">Parts organiser box — 25 SAR
+      <span class="arw">علبة تنظيم قطع — 25 ريال</span></label></li>
+    <li><input type="checkbox" id="t10"><label for="t10"><strong>Tape measure + long steel ruler</strong> — to measure the real track the first time you see it
+      <span class="arw"><strong>متر قياس + مسطرة حديد طويلة</strong> — لقياس المسار الحقيقي أول مرة تراه</span></label></li>
   </ul>
 
-  <h3>SACO — fasteners</h3>
+  <h3>SACO — fasteners <span class="ar-term">المسامير والتثبيت</span></h3>
   <ul class="check">
-    <li><input type="checkbox" id="f1"><label for="f1">M3 screws 6/8/10/12/20 mm <span class="ar">مسامير M3</span> — steel where it carries load</label></li>
-    <li><input type="checkbox" id="f2"><label for="f2"><strong>M3 NYLON standoffs 10–25 mm</strong> <span class="ar">فواصل نايلون M3</span> — buy nylon, not brass. Same job, a third of the weight, and you need 8–12. Free ~25 g.</label></li>
-    <li><input type="checkbox" id="f3"><label for="f3"><strong>M3 nylon screws + nuts</strong> <span class="ar">مسامير نايلون M3</span> — for the sensor boards, which carry nothing. Another ~10 g.</label></li>
-    <li><input type="checkbox" id="f4"><label for="f4">M3 steel nuts, nylon lock nuts, washers <span class="ar">صواميل وورد M3</span> — steel for the motor brackets only</label></li>
-    <li><input type="checkbox" id="f5"><label for="f5">M2 screws + nuts <span class="ar">مسامير M2</span> — sensor modules</label></li>
-    <li><input type="checkbox" id="f6"><label for="f6"><strong>Blue thread-lock</strong> <span class="ar">مثبت مسامير</span> — vibration loosens everything on this robot</label></li>
-    <li><input type="checkbox" id="f7"><label for="f7">Zip ties 100 mm + adhesive mounts <span class="ar">ربطات + قواعد لاصقة</span></label></li>
-    <li><input type="checkbox" id="f8"><label for="f8"><strong>Double-sided foam tape</strong> (3M VHB if stocked) <span class="ar">لاصق وجهين</span> — for mounting the gyro flat and rigid</label></li>
-    <li><input type="checkbox" id="f9"><label for="f9">Electrical tape <span class="ar">شريط عازل</span></label></li>
+    <li><input type="checkbox" id="f1"><label for="f1">M3 screws 6/8/10/12/20 mm — steel where it carries load
+      <span class="arw">مسامير M3 بأطوال 6/8/10/12/20 مم — حديد في الأماكن التي تحمل وزناً</span></label></li>
+    <li><input type="checkbox" id="f2"><label for="f2"><strong>M3 NYLON standoffs 10–25 mm</strong> — buy nylon, not brass. Same job, a third of the weight, and you need 8–12. Free ~25 g.
+      <span class="arw"><strong>فواصل نايلون M3 بطول 10–25 مم</strong> — اشترِ نايلون وليس نحاس. نفس الوظيفة بثلث الوزن، وتحتاج 8–12 حبة. توفير مجاني ~25 غرام.</span></label></li>
+    <li><input type="checkbox" id="f3"><label for="f3"><strong>M3 nylon screws + nuts</strong> — for the sensor boards, which carry nothing. Another ~10 g.
+      <span class="arw"><strong>مسامير وصواميل نايلون M3</strong> — لتثبيت ألواح الحساسات التي لا تحمل وزناً. توفير ~10 غرام إضافية.</span></label></li>
+    <li><input type="checkbox" id="f4"><label for="f4">M3 steel nuts, nylon lock nuts, washers — steel for the motor brackets only
+      <span class="arw">صواميل حديد M3، صواميل قفل نايلون، ورد — الحديد لحوامل المحركات فقط</span></label></li>
+    <li><input type="checkbox" id="f5"><label for="f5">M2 screws + nuts — sensor modules
+      <span class="arw">مسامير وصواميل M2 — لوحدات الحساسات</span></label></li>
+    <li><input type="checkbox" id="f6"><label for="f6"><strong>Blue thread-lock</strong> — vibration loosens everything on this robot
+      <span class="arw"><strong>مثبّت مسامير أزرق</strong> — الاهتزاز يفكّ كل شيء في هذا الروبوت</span></label></li>
+    <li><input type="checkbox" id="f7"><label for="f7">Zip ties 100 mm + adhesive mounts
+      <span class="arw">ربطات بلاستيك 100 مم + قواعد لاصقة</span></label></li>
+    <li><input type="checkbox" id="f8"><label for="f8"><strong>Double-sided foam tape</strong> (3M VHB if stocked) — for mounting the gyro flat and rigid
+      <span class="arw"><strong>لاصق وجهين إسفنجي</strong> (3M VHB إن توفر) — لتثبيت الجيروسكوب مستوياً وثابتاً</span></label></li>
+    <li><input type="checkbox" id="f9"><label for="f9">Electrical tape
+      <span class="arw">شريط عازل كهربائي</span></label></li>
   </ul>
 
   <div class="note">
-    <span class="note-label">Free weight — about 90 g</span>
-    <p>
+    <span class="note-label">Free weight — about 90 g <span class="a" dir="rtl" lang="ar">· توفير وزن مجاني ~90 غرام</span></span>
+    <p class="en-only">
       Nylon standoffs instead of brass (~35 g), leaving the breadboard off the
       robot (~30 g, and §2.2 explicitly allows it), cutting wires to length
       instead of coiling jumper leads (~15 g), green perfboard instead of the
       white breadboard (~25 g). On a ~600 g robot that is 15%, and it shows up as
       quicker starts out of every one of Map 3's eight turns.
+    </p>
+    <p dir="rtl" lang="ar">
+      فواصل نايلون بدل النحاس (~35 غرام)، وترك البريدبورد خارج الروبوت
+      (~30 غرام، والمادة 2.2 تسمح بذلك صراحةً)، وقص الأسلاك بالطول المضبوط بدل
+      لفّ الزائد منها (~15 غرام)، واستخدام اللوح الأخضر (perfboard) بدل البريدبورد
+      الأبيض (~25 غرام). على روبوت وزنه ~600 غرام هذه نسبة 15%، وتظهر كانطلاقة
+      أسرع بعد كل لفة من لفات الخريطة الثالثة الثماني.
     </p>
   </div>
 </section>
@@ -489,73 +676,104 @@
 <section class="phase" id="p2">
   <div class="phase-head">
     <span class="phase-num">PHASE 02</span>
-    <h2>Software setup</h2>
+    <h2>Software setup
+      <span class="h-ar" dir="rtl" lang="ar">تجهيز البرامج</span>
+    </h2>
     <div class="phase-meta"><span>~45 min</span><span>Laptop only</span></div>
   </div>
 
   <ol class="steps">
     <li>
-      <h4>Install the Arduino IDE</h4>
-      <p>
+      <h4>Install the Arduino IDE <span class="ar-term">ثبّت برنامج Arduino IDE</span></h4>
+      <p class="en-only">
         Download from <code>arduino.cc/en/software</code> — take <strong>IDE
         2.x</strong>. Install with the default options and let it install the
         USB drivers when it asks.
       </p>
+      <p dir="rtl" lang="ar">
+        نزّله من <code>arduino.cc/en/software</code> — اختر <strong>IDE 2.x</strong>.
+        ثبّته بالخيارات الافتراضية، ووافق على تثبيت تعريفات USB حين يطلب منك ذلك.
+      </p>
     </li>
+
     <li>
-      <h4>Install the CH340 driver (most likely needed)</h4>
-      <p>
+      <h4>Install the CH340 driver <span class="ar-term">ثبّت تعريف CH340</span></h4>
+      <p class="en-only">
         Kit Unos are usually clones with a <strong>CH340</strong> USB chip rather
         than the original FTDI. If you plug the board in and no port appears,
         this is why. Search "CH340 driver" for your operating system, install it,
         and replug.
       </p>
-      <p><strong>Windows:</strong> the port shows up as <code>COM3</code> or similar.
+      <p dir="rtl" lang="ar">
+        لوحات الأردوينو في الكِتات عادة نسخ مقلّدة تستخدم شريحة <strong>CH340</strong>
+        بدل FTDI الأصلية. إذا وصّلت اللوحة ولم يظهر أي منفذ (Port)، فهذا هو السبب.
+        ابحث عن «CH340 driver» لنظام تشغيلك، ثبّته، ثم أعد توصيل اللوحة.
+      </p>
+      <p class="en-only"><strong>Windows:</strong> the port shows up as <code>COM3</code> or similar.
       <strong>macOS:</strong> <code>/dev/cu.wchusbserial...</code>.
-      <strong>Linux:</strong> <code>/dev/ttyUSB0</code> — and you may need
-      <code>sudo usermod -aG dialout $USER</code>, then log out and back in.</p>
+      <strong>Linux:</strong> <code>/dev/ttyUSB0</code>.</p>
+      <p dir="rtl" lang="ar"><strong>ويندوز:</strong> يظهر المنفذ باسم <code>COM3</code> أو ما شابه.
+      <strong>ماك:</strong> <code>/dev/cu.wchusbserial...</code>.
+      <strong>لينكس:</strong> <code>/dev/ttyUSB0</code>.</p>
     </li>
+
     <li>
-      <h4>Select the board</h4>
-      <p>In the IDE: <strong>Tools → Board → Arduino AVR Boards → Arduino Uno</strong>,
+      <h4>Select the board <span class="ar-term">اختر اللوحة والمنفذ</span></h4>
+      <p class="en-only">In the IDE: <strong>Tools → Board → Arduino AVR Boards → Arduino Uno</strong>,
       then <strong>Tools → Port →</strong> whichever port appeared in the previous step.</p>
+      <p dir="rtl" lang="ar">من البرنامج: <strong>Tools → Board → Arduino AVR Boards → Arduino Uno</strong>،
+      ثم <strong>Tools → Port →</strong> المنفذ الذي ظهر في الخطوة السابقة.</p>
     </li>
+
     <li>
-      <h4>Prove the toolchain with Blink</h4>
-      <p><strong>File → Examples → 01.Basics → Blink</strong>, then press
-      <strong>Upload</strong> (the arrow). The board's LED should blink once a
-      second.</p>
+      <h4>Prove the toolchain with Blink <span class="ar-term">تأكد أن كل شيء يعمل بمثال Blink</span></h4>
+      <p class="en-only"><strong>File → Examples → 01.Basics → Blink</strong>, then press
+      <strong>Upload</strong> (the arrow). The board's LED should blink once a second.</p>
+      <p dir="rtl" lang="ar"><strong>File → Examples → 01.Basics → Blink</strong>، ثم اضغط
+      <strong>Upload</strong> (سهم الرفع). يجب أن يومض ضوء اللوحة مرة كل ثانية.</p>
       <div class="note pass">
-        <span class="note-label">Pass</span>
-        <p>Blink uploads and runs. Do not go further until it does — every later
+        <span class="note-label">Pass <span class="a" dir="rtl" lang="ar">· نجح</span></span>
+        <p class="en-only">Blink uploads and runs. Do not go further until it does — every later
         problem is easier to diagnose once you know uploading works.</p>
+        <p dir="rtl" lang="ar">مثال Blink يُرفع ويعمل. لا تكمل قبل أن ينجح — كل مشكلة لاحقة
+        تصبح أسهل في التشخيص حين تكون متأكداً أن الرفع يعمل.</p>
       </div>
     </li>
+
     <li>
-      <h4>Get the project files</h4>
-      <p>
-        Download the repository. If you use git:
-      </p>
+      <h4>Get the project files <span class="ar-term">احصل على ملفات المشروع</span></h4>
       <div class="code">
         <div class="code-cap">terminal</div>
         <pre><code>git clone https://github.com/Muzoka/Robotic-comp.git
 cd Robotic-comp</code></pre>
       </div>
-      <p>Otherwise use GitHub's <strong>Code → Download ZIP</strong> and unzip it.</p>
+      <p class="en-only">Otherwise use GitHub's <strong>Code → Download ZIP</strong> and unzip it.</p>
+      <p dir="rtl" lang="ar">أو استخدم <strong>Code → Download ZIP</strong> من GitHub ثم فك الضغط.</p>
     </li>
+
     <li>
-      <h4>Run the geometry check — five minutes, Python only</h4>
-      <p>
+      <h4>Run the geometry check — Python only <span class="ar-term">شغّل فحص الأبعاد — بايثون فقط</span></h4>
+      <p class="en-only">
         This is the one tool you should not skip, and it is the easiest to set
         up: <strong>no compiler, no libraries, nothing to install but Python</strong>.
         It reads your measurements out of <code>config.h</code> and tells you
         whether the robot can physically turn around in the corridor.
       </p>
-      <p>
+      <p dir="rtl" lang="ar">
+        هذه الأداة الوحيدة التي لا يجب تخطّيها، وهي أسهل شيء في التجهيز:
+        <strong>بدون مترجم، بدون مكتبات، لا تحتاج سوى بايثون</strong>. تقرأ
+        قياساتك من ملف <code>config.h</code> وتخبرك إن كان الروبوت قادراً
+        فعلياً على الدوران داخل الممر.
+      </p>
+      <p class="en-only">
         Install Python from <code>python.org/downloads</code>. On Windows, tick
         <strong>"Add python.exe to PATH"</strong> on the first screen of the
-        installer — it is easy to miss and everything fails without it. Then open
-        a terminal in the project folder and run:
+        installer — it is easy to miss and everything fails without it.
+      </p>
+      <p dir="rtl" lang="ar">
+        ثبّت بايثون من <code>python.org/downloads</code>. في ويندوز، ضع علامة على
+        خيار <strong>"Add python.exe to PATH"</strong> في أول شاشة من التثبيت —
+        من السهل نسيانه، وبدونه لن يعمل شيء.
       </p>
       <div class="code">
         <div class="code-cap">Windows — PowerShell, in the project folder</div>
@@ -565,55 +783,84 @@ cd Robotic-comp</code></pre>
         <div class="code-cap">macOS / Linux</div>
         <pre><code>python3 tools/geometry_check.py</code></pre>
       </div>
-      <p>
+      <p class="en-only">
         On Windows the command is <code>python</code>, not <code>python3</code>,
         and paths use backslashes. To open a terminal in the right place: open the
         project folder in File Explorer, click the address bar, type
         <code>powershell</code>, press Enter.
+      </p>
+      <p dir="rtl" lang="ar">
+        في ويندوز الأمر هو <code>python</code> وليس <code>python3</code>،
+        والمسارات تستخدم الشرطة المائلة العكسية. لفتح موجّه الأوامر في المكان
+        الصحيح: افتح مجلد المشروع في مستكشف الملفات، اضغط على شريط العنوان،
+        اكتب <code>powershell</code>، ثم Enter.
       </p>
       <div class="code">
         <div class="code-cap">what you should see</div>
         <pre><code>  body                    220 mm long  x   115 mm wide
   turning on the spot sweeps a circle 248 mm across
 
-passage    clearance verdict   what it means
+passage    clearance verdict
 200           -24 mm IMPOSSIBLE cannot turn round
 250             1 mm no        scrapes every corner, will jam
 300            26 mm tight     works if it centres itself well  &lt;-- ours
 350            51 mm fine      comfortable</code></pre>
       </div>
-      <p>
+      <p class="en-only">
         Change <code>ROBOT_LENGTH_MM</code> and <code>ROBOT_WIDTH_MM</code> in
         <code>firmware/MazeRunner/config.h</code> to your real measurements and run
         it again. That is the whole loop.
       </p>
+      <p dir="rtl" lang="ar">
+        غيّر <code>ROBOT_LENGTH_MM</code> و <code>ROBOT_WIDTH_MM</code> في ملف
+        <code>firmware/MazeRunner/config.h</code> إلى قياساتك الحقيقية ثم شغّل
+        الأمر مرة أخرى. هذه هي الدورة كاملة.
+      </p>
     </li>
+
     <li>
-      <h4>Optional: the full maze simulator</h4>
-      <p>
+      <h4>Optional: the full maze simulator <span class="ar-term">اختياري: محاكي المتاهة الكامل</span></h4>
+      <p class="en-only">
         This one watches the robot drive all three maps and saves an animated GIF
         of each. It needs two more things: the <code>pillow</code> image library
         and a <strong>C++ compiler</strong>.
       </p>
-      <p>
+      <p dir="rtl" lang="ar">
+        هذا يعرض الروبوت وهو يقود الخرائط الثلاث ويحفظ صورة متحركة GIF لكل خريطة.
+        يحتاج شيئين إضافيين: مكتبة الصور <code>pillow</code> و<strong>مترجم ++C</strong>.
+      </p>
+      <p class="en-only">
         The compiler is the awkward part on Windows, and it is there for a good
         reason — <strong>the simulator runs the real firmware</strong>.
         <code>nav_core.cpp</code> is compiled twice: once by the Arduino IDE onto
-        the Uno, once into a library the Python simulator drives. What you watch in
-        a simulated run is the behaviour of the code you flash, not a model of it.
+        the Uno, once into a library the Python simulator drives.
       </p>
-      <h4>Windows: install WSL</h4>
-      <p>
+      <p dir="rtl" lang="ar">
+        المترجم هو الجزء المزعج في ويندوز، ووجوده لسبب وجيه —
+        <strong>المحاكي يشغّل الكود الحقيقي نفسه</strong>. ملف
+        <code>nav_core.cpp</code> يُترجم مرتين: مرة بواسطة Arduino IDE إلى اللوحة،
+        ومرة إلى مكتبة يشغّلها محاكي بايثون.
+      </p>
+      <h4>Windows: install WSL <span class="ar-term">ويندوز: ثبّت WSL</span></h4>
+      <p class="en-only">
         WSL gives you a real Linux inside Windows. Open <strong>PowerShell as
         Administrator</strong> (right-click the Start button → Terminal (Admin)):
+      </p>
+      <p dir="rtl" lang="ar">
+        WSL يعطيك نظام لينكس حقيقياً داخل ويندوز. افتح
+        <strong>PowerShell كمسؤول</strong> (كليك يمين على زر ابدأ ← Terminal (Admin)):
       </p>
       <div class="code">
         <div class="code-cap">PowerShell, as Administrator — then reboot</div>
         <pre><code>wsl --install</code></pre>
       </div>
-      <p>
+      <p class="en-only">
         Reboot, open <strong>Ubuntu</strong> from the Start menu, and let it set up
         a username and password. Then, inside Ubuntu:
+      </p>
+      <p dir="rtl" lang="ar">
+        أعد تشغيل الجهاز، افتح <strong>Ubuntu</strong> من قائمة ابدأ، وأنشئ اسم
+        مستخدم وكلمة مرور. ثم داخل Ubuntu:
       </p>
       <div class="code">
         <div class="code-cap">Ubuntu terminal</div>
@@ -623,28 +870,26 @@ pip3 install pillow
 cd /mnt/c/Users/YOURNAME/Downloads/Robotic-comp
 cd sim && python3 run.py --all</code></pre>
       </div>
-      <p>
+      <p class="en-only">
         Your Windows <code>C:</code> drive appears as <code>/mnt/c</code> inside
         Ubuntu, so the project does not need to move. The GIFs land in
-        <code>sim/runs/</code> and you can open them normally from Windows.
+        <code>sim/runs/</code>.
       </p>
-      <h4>macOS / Linux</h4>
-      <div class="code">
-        <div class="code-cap">terminal</div>
-        <pre><code>xcode-select --install        # macOS only, installs the compiler
-sudo apt install g++          # Linux
-pip3 install pillow
-
-cd sim && python3 run.py --all</code></pre>
-      </div>
+      <p dir="rtl" lang="ar">
+        قرص <code>C:</code> في ويندوز يظهر باسم <code>/mnt/c</code> داخل Ubuntu،
+        فلا حاجة لنقل المشروع. الصور المتحركة تُحفظ في <code>sim/runs/</code>.
+      </p>
       <div class="note">
-        <span class="note-label">If you skip this</span>
-        <p>
+        <span class="note-label">If you skip this <span class="a" dir="rtl" lang="ar">· إذا تخطيت هذه الخطوة</span></span>
+        <p class="en-only">
           Nothing is lost that you cannot get elsewhere. Wokwi (Phase 03) already
           proves the firmware runs, and the geometry check above already answers
-          the question that decides the build. The maze simulator earns its keep
-          later, when you want to test a change to <code>config.h</code> without
-          walking to the track.
+          the question that decides the build.
+        </p>
+        <p dir="rtl" lang="ar">
+          لن تخسر شيئاً لا يمكنك الحصول عليه من مكان آخر. موقع Wokwi (المرحلة 03)
+          يثبت أن الكود يعمل، وفحص الأبعاد أعلاه يجيب على السؤال الذي يحدد
+          نجاح البناء.
         </p>
       </div>
     </li>
@@ -655,65 +900,89 @@ cd sim && python3 run.py --all</code></pre>
 <section class="phase" id="p3">
   <div class="phase-head">
     <span class="phase-num">PHASE 03</span>
-    <h2>Test the code before you own the parts</h2>
+    <h2>Test the code before you own the parts
+      <span class="h-ar" dir="rtl" lang="ar">اختبر الكود قبل أن تشتري القطع</span>
+    </h2>
     <div class="phase-meta"><span>~1 hour</span><span>Browser only · free</span></div>
   </div>
 
-  <p>
+  <p class="en-only">
     <a href="https://wokwi.com">Wokwi</a> is a browser Arduino simulator. It cannot
     tell you whether the robot navigates a maze — it has no wheels — but it proves
     the pin map, the I²C gyro, the sonar timing and the whole state machine. This
     is the cheapest bug-finding available, and it found three real bugs in this
     project that the maze simulator could not.
   </p>
+  <p dir="rtl" lang="ar">
+    موقع <a href="https://wokwi.com">Wokwi</a> محاكي أردوينو يعمل في المتصفح. لا
+    يستطيع إخبارك إن كان الروبوت سيجتاز المتاهة — فليس فيه عجلات — لكنه يثبت
+    صحة توزيع الأطراف (pins)، وعمل الجيروسكوب عبر I²C، وتوقيت حساسات المسافة،
+    وآلة الحالات كاملة. هذه أرخص طريقة لاكتشاف الأخطاء، وقد اكتشفت ثلاثة أخطاء
+    حقيقية في هذا المشروع لم يستطع محاكي المتاهة اكتشافها.
+  </p>
 
   <ol class="steps">
     <li>
-      <h4>New project</h4>
-      <p>Sign in at <code>wokwi.com</code> (free) → <strong>New Project → Arduino Uno</strong>.</p>
+      <h4>New project <span class="ar-term">مشروع جديد</span></h4>
+      <p class="en-only">Sign in at <code>wokwi.com</code> (free) → <strong>New Project → Arduino Uno</strong>.</p>
+      <p dir="rtl" lang="ar">سجّل الدخول في <code>wokwi.com</code> (مجاني) ← <strong>New Project → Arduino Uno</strong>.</p>
     </li>
     <li>
-      <h4>Paste two files</h4>
-      <p>
+      <h4>Paste two files <span class="ar-term">الصق ملفين</span></h4>
+      <p class="en-only">
         Click the <strong>diagram.json</strong> tab, select all, delete, paste
         <code>wokwi/diagram.json</code>. Then the <strong>sketch.ino</strong> tab,
         select all, delete, paste <code>wokwi/sketch.ino</code>.
       </p>
+      <p dir="rtl" lang="ar">
+        اضغط على تبويب <strong>diagram.json</strong>، حدد الكل، احذف، ثم الصق محتوى
+        <code>wokwi/diagram.json</code>. ثم تبويب <strong>sketch.ino</strong>،
+        حدد الكل، احذف، والصق <code>wokwi/sketch.ino</code>.
+      </p>
       <div class="note warn">
-        <span class="note-label">Use wokwi/sketch.ino, not the firmware one</span>
-        <p>
+        <span class="note-label">Use wokwi/sketch.ino <span class="a" dir="rtl" lang="ar">· استخدم wokwi/sketch.ino تحديداً</span></span>
+        <p class="en-only">
           <code>firmware/MazeRunner/MazeRunner.ino</code> is split across four
           files and opens with <code>#include "config.h"</code>. Paste that one on
           its own and the build stops with
           <code>fatal error: config.h: No such file or directory</code>.
-          <code>wokwi/sketch.ino</code> is the same code with all four files
-          already merged, so there is nothing to name and nothing to miss.
+        </p>
+        <p dir="rtl" lang="ar">
+          ملف <code>firmware/MazeRunner/MazeRunner.ino</code> مقسّم على أربعة ملفات
+          ويبدأ بسطر <code>#include "config.h"</code>. إذا لصقته وحده سيتوقف البناء
+          برسالة <code>fatal error: config.h: No such file or directory</code>.
+          أما <code>wokwi/sketch.ino</code> فهو نفس الكود مدموجاً في ملف واحد.
         </p>
       </div>
     </li>
     <li>
-      <h4>Press play, then open the Serial Monitor at 115200</h4>
+      <h4>Press play, open Serial Monitor at 115200 <span class="ar-term">شغّل، وافتح الشاشة التسلسلية على 115200</span></h4>
       <div class="code">
         <div class="code-cap">expected output</div>
         <pre><code># MazeRunner booting - hold still, calibrating gyro
 # gyro OK
 # ready. Press GO, or wave a hand in front of the nose.
 t_ms,state,dF,dL,dR,head,tgt,encL,encR,pwmL,pwmR,sect
-2685,WAIT_START,602,2000,2000,0.0,0.0,0,0,0,0,0
-2785,WAIT_START,602,90,90,0.0,0.0,0,0,0,0,0</code></pre>
+2685,WAIT_START,602,2000,2000,0.0,0.0,0,0,0,0,0</code></pre>
       </div>
-      <p>
+      <p class="en-only">
         <code>602</code> is the front sensor's default slider (60 cm) and
         <code>90</code> the sides (9 cm). Seeing the right numbers on the right
         channels is your pin map confirmed.
       </p>
+      <p dir="rtl" lang="ar">
+        الرقم <code>602</code> هو القيمة الافتراضية للحساس الأمامي (60 سم)،
+        و<code>90</code> للحساسين الجانبيين (9 سم). ظهور الأرقام الصحيحة في
+        الأعمدة الصحيحة يعني أن توزيع الأطراف سليم.
+      </p>
     </li>
     <li>
-      <h4>Check it does nothing on its own</h4>
-      <p>Leave it alone for ten seconds. It must stay in <code>WAIT_START</code>.</p>
+      <h4>Check it does nothing on its own <span class="ar-term">تأكد أنه لا يتحرك من نفسه</span></h4>
+      <p class="en-only">Leave it alone for ten seconds. It must stay in <code>WAIT_START</code>.</p>
+      <p dir="rtl" lang="ar">اتركه عشر ثوانٍ دون أن تلمسه. يجب أن يبقى في حالة <code>WAIT_START</code>.</p>
     </li>
     <li>
-      <h4>Press the red GO button</h4>
+      <h4>Press the red GO button <span class="ar-term">اضغط زر GO الأحمر</span></h4>
       <div class="code">
         <div class="code-cap">expected</div>
         <pre><code># GO pressed
@@ -725,28 +994,19 @@ t_ms,state,dF,dL,dR,head,tgt,encL,encR,pwmL,pwmR,sect
   </ol>
 
   <div class="note">
-    <span class="note-label">Why STUCK is correct here</span>
-    <p>
+    <span class="note-label">Why STUCK is correct here <span class="a" dir="rtl" lang="ar">· لماذا ظهور STUCK صحيح</span></span>
+    <p class="en-only">
       Wokwi has no wheels, so the encoder counts never rise. From the firmware's
       point of view the motors are running and the wheels are not turning, which
       is exactly what "jammed" means — so the watchdog fires after 900 ms. Tap the
-      blue and green buttons to feed it fake encoder ticks, or ignore it. Watch
-      the escape direction alternate (<code>-140,-55</code> then
-      <code>-55,-140</code>): that is the robot avoiding repeating a failed escape.
+      blue and green buttons to feed it fake encoder ticks, or ignore it.
     </p>
-  </div>
-
-  <p>Other things worth doing in Wokwi while you have it open:</p>
-  <div class="tw">
-    <table>
-      <thead><tr><th>Do this</th><th>Should happen</th></tr></thead>
-      <tbody>
-        <tr><td>Drag the <strong>front</strong> sensor down to 15 cm</td><td>State goes <code>CREEP</code> → <code>TURN</code>; the IN1/IN2 or IN3/IN4 LEDs swap — it is pivoting</td></tr>
-        <tr><td>Drag the <strong>left</strong> sensor up to 100 cm, front clear</td><td>It spots a left opening, creeps, then turns left</td></tr>
-        <tr><td>Drag <strong>all three</strong> above 60 cm</td><td>It keeps going straight — this is the straight-through-a-crossing rule</td></tr>
-        <tr><td>Check the compile output</td><td>RAM comfortably under 2048 bytes. The navigation brain uses 432 bytes, about 21%</td></tr>
-      </tbody>
-    </table>
+    <p dir="rtl" lang="ar">
+      لا توجد عجلات في Wokwi، لذا لا ترتفع قراءات حساسات الدوران أبداً. من وجهة
+      نظر الكود، المحركات تعمل والعجلات لا تدور — وهذا بالضبط معنى «محشور» — فيعمل
+      نظام الحماية بعد 900 مللي ثانية. اضغط الزرين الأزرق والأخضر لتغذيته بنبضات
+      وهمية، أو تجاهل الأمر.
+    </p>
   </div>
 </section>
 
@@ -754,56 +1014,77 @@ t_ms,state,dF,dL,dR,head,tgt,encL,encR,pwmL,pwmR,sect
 <section class="phase" id="p4">
   <div class="phase-head">
     <span class="phase-num">PHASE 04</span>
-    <h2>Bench-test each part, one at a time</h2>
+    <h2>Bench-test each part, one at a time
+      <span class="h-ar" dir="rtl" lang="ar">اختبر كل قطعة على حدة قبل التركيب</span>
+    </h2>
     <div class="phase-meta"><span>~2 hours</span><span>Before assembly</span></div>
   </div>
 
-  <p>
+  <p class="en-only">
     Test every subsystem <strong>before</strong> it is buried inside the robot.
     Debugging three subsystems at once is how a week disappears. Full sketches
-    are in <code>tools/serial_check.md</code>; here is what each one has to prove.
+    are in <code>tools/serial_check.md</code>.
+  </p>
+  <p dir="rtl" lang="ar">
+    اختبر كل جزء <strong>قبل</strong> أن يُدفن داخل الروبوت. محاولة تصحيح ثلاثة
+    أجزاء في وقت واحد هي الطريقة الأسرع لضياع أسبوع كامل. الأكواد الكاملة موجودة
+    في ملف <code>tools/serial_check.md</code>.
   </p>
 
   <div class="note warn">
-    <span class="note-label">Wheels off the ground</span>
-    <p>Put the chassis on a block for anything involving motors. It will drive off the table otherwise.</p>
+    <span class="note-label">Wheels off the ground <span class="a" dir="rtl" lang="ar">· ارفع العجلات عن الأرض</span></span>
+    <p class="en-only">Put the chassis on a block for anything involving motors. It will drive off the table otherwise.</p>
+    <p dir="rtl" lang="ar">ضع الهيكل على قاعدة مرتفعة في أي اختبار فيه محركات، وإلا سيسقط عن الطاولة.</p>
   </div>
 
   <div class="tw">
     <table>
-      <thead><tr><th>#</th><th>Test</th><th>Pass criteria</th></tr></thead>
+      <thead><tr>
+        <th>#</th>
+        <th>Test <span class="a" dir="rtl" lang="ar">الاختبار</span></th>
+        <th>Pass criteria <span class="a" dir="rtl" lang="ar">شرط النجاح</span></th>
+      </tr></thead>
       <tbody>
         <tr>
-          <td class="pin">1</td><td><strong>Motors</strong></td>
-          <td>All four motions correct — both forward, both back, spin left, spin right — and the wheels stop dead in the pause. Note the lowest PWM at which each wheel actually turns; that is <code>PWM_MIN</code>, usually 50–70.</td>
+          <td class="pin">1</td><td><strong>Motors</strong><span class="arw">المحركات</span></td>
+          <td>All four motions correct — both forward, both back, spin left, spin right — and the wheels stop dead in the pause. Note the lowest PWM at which each wheel actually turns; that is <code>PWM_MIN</code>, usually 50–70.
+            <span class="arw">الحركات الأربع صحيحة — للأمام، للخلف، دوران يسار، دوران يمين — والعجلات تتوقف تماماً في فترة السكون. سجّل أقل قيمة PWM تدور عندها كل عجلة فعلاً؛ هذه هي <code>PWM_MIN</code>، وعادة بين 50 و70.</span></td>
         </tr>
         <tr>
-          <td class="pin">2</td><td><strong>Encoders</strong></td>
-          <td>Turn each wheel exactly one revolution by hand; the count rises by 20 (or however many slots your disc has — count them). If it jumps 2–3 per slot you have contact bounce: the disc is rubbing or off-centre in the slot.</td>
+          <td class="pin">2</td><td><strong>Encoders</strong><span class="arw">حساسات دوران العجلات</span></td>
+          <td>Turn each wheel exactly one revolution by hand; the count rises by 20 (or however many slots your disc has — count them). If it jumps 2–3 per slot you have contact bounce: the disc is rubbing or off-centre.
+            <span class="arw">لُف كل عجلة دورة كاملة واحدة باليد؛ يجب أن يزيد العداد 20 (أو حسب عدد الشقوق في قرصك — عُدّها). إذا قفز 2–3 لكل شق فهناك ارتداد: القرص يحتك أو غير مركزي.</span></td>
         </tr>
         <tr>
-          <td class="pin">3</td><td><strong>Ultrasonics</strong></td>
-          <td>Hold a flat book at 50, 100, 300 and 1000 mm; each sensor within ~10 mm of a ruler. Then hold the book <strong>at 45°</strong> — it should report no echo. That is real physics, not a fault, and it is why the firmware treats a missing echo as "far".</td>
+          <td class="pin">3</td><td><strong>Ultrasonics</strong><span class="arw">حساسات المسافة</span></td>
+          <td>Hold a flat book at 50, 100, 300 and 1000 mm; each sensor within ~10 mm of a ruler. Then hold the book <strong>at 45°</strong> — it should report no echo. That is real physics, not a fault.
+            <span class="arw">ضع كتاباً مسطحاً على بعد 50 و100 و300 و1000 مم؛ يجب أن يكون كل حساس ضمن ~10 مم من قياس المسطرة. ثم أمِل الكتاب <strong>بزاوية 45 درجة</strong> — يجب ألا يرجع أي صدى. هذه فيزياء طبيعية وليست عطلاً.</span></td>
         </tr>
         <tr>
-          <td class="pin">4</td><td><strong>Gyro</strong></td>
-          <td>Three checks: (a) still for 60 s, heading drifts under ±2°; (b) turn 90° by hand against a square, reads 90 ± 3°; (c) turn 90° the other way, reads −90. If the sign is backwards set <code>GYRO_Z_SIGN = -1.0f</code>.</td>
+          <td class="pin">4</td><td><strong>Gyro</strong><span class="arw">الجيروسكوب</span></td>
+          <td>Three checks: (a) still for 60 s, heading drifts under ±2°; (b) turn 90° by hand against a square, reads 90 ± 3°; (c) turn 90° the other way, reads −90. If the sign is backwards set <code>GYRO_Z_SIGN = -1.0f</code>.
+            <span class="arw">ثلاثة فحوص: (أ) اتركه ثابتاً 60 ثانية، يجب ألا ينحرف أكثر من ±2 درجة؛ (ب) لُفّه 90 درجة باليد على زاوية قائمة، يجب أن يقرأ 90 ± 3؛ (ج) لُفّه 90 في الاتجاه المعاكس، يجب أن يقرأ −90. إذا كانت الإشارة معكوسة اضبط <code>GYRO_Z_SIGN = -1.0f</code>.</span></td>
         </tr>
         <tr>
-          <td class="pin">5</td><td><strong>GO button</strong></td>
-          <td>Steady <code>1</code> untouched, <code>0</code> while held, back to <code>1</code> on release. Always <code>0</code> means wrong pin or a short; never <code>0</code> means a wire is not making contact.</td>
+          <td class="pin">5</td><td><strong>GO button</strong><span class="arw">زر التشغيل</span></td>
+          <td>Steady <code>1</code> untouched, <code>0</code> while held, back to <code>1</code> on release.
+            <span class="arw">يقرأ <code>1</code> ثابتاً دون لمس، و<code>0</code> أثناء الضغط، ويعود إلى <code>1</code> عند الإفلات.</span></td>
         </tr>
       </tbody>
     </table>
   </div>
 
   <div class="note">
-    <span class="note-label">Try the cross-talk failure deliberately</span>
-    <p>
+    <span class="note-label">Try the cross-talk failure deliberately <span class="a" dir="rtl" lang="ar">· جرّب مشكلة التداخل عمداً</span></span>
+    <p class="en-only">
       In the ultrasonic test, remove the <code>delay(60)</code> between sensors and
       watch the readings go mad. Three sonars firing together hear each other's
-      pings. That is why the firmware fires them one at a time, front / left /
-      front / right — never "ping all three to go faster".
+      pings. That is why the firmware fires them one at a time.
+    </p>
+    <p dir="rtl" lang="ar">
+      في اختبار حساسات المسافة، احذف <code>delay(60)</code> بين الحساسات وشاهد
+      القراءات تضطرب. ثلاثة حساسات تُطلق في وقت واحد يسمع كل منها نبضات الآخر.
+      لهذا يطلقها الكود واحداً تلو الآخر.
     </p>
   </div>
 </section>
@@ -812,91 +1093,138 @@ t_ms,state,dF,dL,dR,head,tgt,encL,encR,pwmL,pwmR,sect
 <section class="phase" id="p5">
   <div class="phase-head">
     <span class="phase-num">PHASE 05</span>
-    <h2>Mechanical assembly</h2>
+    <h2>Mechanical assembly
+      <span class="h-ar" dir="rtl" lang="ar">التجميع الميكانيكي</span>
+    </h2>
     <div class="phase-meta"><span>~4 hours</span><span>Target: 220 × 115 mm</span></div>
   </div>
 
   <ol class="steps">
     <li>
-      <h4>Mount the motors with the axle centred</h4>
-      <p>
+      <h4>Mount the motors with the axle centred <span class="ar-term">ثبّت المحركات ومحور العجلات في المنتصف</span></h4>
+      <p class="en-only">
         The wheel axle should sit <strong>halfway along the body</strong>. An axle
         mounted two-thirds of the way back makes the pivot circle bigger for no
-        benefit — and it is usually just a matter of which mounting holes you use.
-        Steel screws and nylock nuts here; this joint carries load. Thread-lock on
-        every one.
+        benefit. Steel screws and nylock nuts here; this joint carries load.
+        Thread-lock on every one.
+      </p>
+      <p dir="rtl" lang="ar">
+        يجب أن يكون محور العجلات <strong>في منتصف طول الجسم</strong>. المحور
+        المركّب في الثلث الخلفي يكبّر دائرة الدوران بلا فائدة. استخدم مسامير حديد
+        وصواميل قفل هنا؛ هذا المفصل يحمل وزناً. وضع مثبّت مسامير على كل واحد.
       </p>
     </li>
     <li>
-      <h4>Fit the encoder discs and sensors</h4>
-      <p>
+      <h4>Fit the encoder discs and sensors <span class="ar-term">ركّب أقراص وحساسات الدوران</span></h4>
+      <p class="en-only">
         The LM393 slot sensor straddles the black slotted disc on the inside of
         each wheel. Get the disc <strong>centred in the slot</strong>: if it rubs,
-        it brakes the wheel; too far out and it misses counts. Check by spinning
-        the wheel by hand and watching the sensor's LED flicker evenly.
+        it brakes the wheel; too far out and it misses counts.
+      </p>
+      <p dir="rtl" lang="ar">
+        حساس LM393 يحيط بالقرص الأسود المشقوق داخل كل عجلة. اجعل القرص
+        <strong>في منتصف الشق</strong>: إذا احتك سيكبح العجلة، وإذا ابتعد كثيراً
+        سيفوّت نبضات.
       </p>
     </li>
     <li>
-      <h4>Bring the body down to size</h4>
-      <p>
+      <h4>Bring the body down to size <span class="ar-term">صغّر مقاس الجسم</span></h4>
+      <p class="en-only">
         This is the step that decides whether the robot works. Everything must sit
         <strong>inside the tyre line and inside the nose</strong> — no bracket,
         sensor, wire loom or battery sticking out past the tyres or off the front.
       </p>
-      <p>
+      <p dir="rtl" lang="ar">
+        هذه هي الخطوة التي تحدد نجاح الروبوت. كل شيء يجب أن يكون
+        <strong>داخل خط الإطارات وداخل حدود المقدمة</strong> — لا حامل ولا حساس
+        ولا ضفيرة أسلاك ولا بطارية تبرز خارج الإطارات أو أمام المقدمة.
+      </p>
+      <p class="en-only">
         The front ultrasonic bracket is almost always the problem. Mount the front
         sensor flush against the nose, not on an arm. Put the battery <strong>on
         top</strong>, never behind the axle — anything behind the axle adds to the
         tail, and the tail is what sweeps the wall.
       </p>
+      <p dir="rtl" lang="ar">
+        حامل الحساس الأمامي هو المشكلة في أغلب الحالات. ثبّت الحساس الأمامي ملاصقاً
+        للمقدمة، وليس على ذراع بارز. وضع البطارية <strong>في الأعلى</strong>،
+        وليس خلف المحور أبداً — كل ما هو خلف المحور يزيد طول الذيل، والذيل هو الذي
+        يحتك بالجدار عند الدوران.
+      </p>
       <div class="note pass">
-        <span class="note-label">Pass</span>
-        <p>Nose to tail ≤ 220 mm. Tyre outside to tyre outside ≤ 115 mm. Measure it, do not estimate it.</p>
+        <span class="note-label">Pass <span class="a" dir="rtl" lang="ar">· شرط النجاح</span></span>
+        <p class="en-only">Nose to tail ≤ 220 mm. Tyre outside to tyre outside ≤ 115 mm. Measure it, do not estimate it.</p>
+        <p dir="rtl" lang="ar">من المقدمة إلى المؤخرة ≤ 220 مم. ومن حافة الإطار الخارجية إلى الأخرى ≤ 115 مم. قِس ولا تقدّر.</p>
       </div>
     </li>
     <li>
-      <h4>Mount the three ultrasonics</h4>
-      <p>
+      <h4>Mount the three ultrasonics <span class="ar-term">ثبّت حساسات المسافة الثلاثة</span></h4>
+      <p class="en-only">
         Front one dead ahead in the middle of the nose. Left and right facing
         <strong>exactly 90° out</strong>, level, and — this matters — <strong>on the
         wheel-axle line</strong>, not ahead of it. That way a gap is seen at the
-        instant the axle draws level with it, which is the moment the robot needs
-        to know. Moving them back from 40 mm ahead to the axle line was worth about
-        20 percentage points of completion on Map 3 in simulation, and it costs
-        nothing but where you drill.
+        instant the axle draws level with it. Measured: moving them back to the
+        axle line was worth about 20 percentage points of completion on Map 3, and
+        it costs nothing but where you drill.
       </p>
-      <p>Nylon screws here — these boards carry nothing.</p>
+      <p dir="rtl" lang="ar">
+        الأمامي في منتصف المقدمة تماماً. والأيسر والأيمن يواجهان
+        <strong>90 درجة بالضبط</strong> إلى الخارج، بمستوى أفقي، والأهم:
+        <strong>على خط محور العجلات</strong> وليس أمامه. بهذه الطريقة تُرى الفتحة
+        في اللحظة التي يصل فيها المحور إليها. بالقياس: نقلهما إلى خط المحور رفع
+        نسبة إكمال الخريطة الثالثة حوالي 20 نقطة مئوية، ولا يكلّف شيئاً سوى مكان الثقب.
+      </p>
     </li>
     <li>
-      <h4>Mount the gyro flat, level and rigid</h4>
-      <p>
+      <h4>Mount the gyro flat, level and rigid <span class="ar-term">ثبّت الجيروسكوب مستوياً وثابتاً</span></h4>
+      <p class="en-only">
         As close to the middle of the robot as you can. Double-sided foam tape,
         then a zip tie over the top. <strong>If it can wobble, it will report the
         wobble as turning.</strong> Keep it away from the motors and from the motor
         wires — and twist those wires together to cancel their magnetic field.
       </p>
+      <p dir="rtl" lang="ar">
+        أقرب ما يمكن إلى منتصف الروبوت. لاصق إسفنجي وجهين، ثم ربطة بلاستيك فوقه.
+        <strong>إذا كان يهتز، فسيسجّل الاهتزاز على أنه دوران.</strong> أبعده عن
+        المحركات وعن أسلاكها — واجدل أسلاك المحركات معاً لإلغاء مجالها المغناطيسي.
+      </p>
     </li>
     <li>
-      <h4>Mount the GO button on the back</h4>
-      <p>
+      <h4>Mount the GO button on the back <span class="ar-term">ثبّت زر التشغيل في المؤخرة</span></h4>
+      <p class="en-only">
         On a stiff bracket, so pressing it pushes the robot <em>into</em> the start
         wall rather than sideways off its line.
       </p>
+      <p dir="rtl" lang="ar">
+        على حامل صلب، بحيث يدفع الضغطُ الروبوتَ <em>نحو</em> جدار البداية بدلاً من
+        أن يزيحه جانبياً عن مساره.
+      </p>
     </li>
     <li>
-      <h4>Solder the perfboard</h4>
-      <p>
+      <h4>Solder the perfboard <span class="ar-term">الحم اللوح الأخضر</span></h4>
+      <p class="en-only">
         Use the <strong>green perfboard, not the white breadboard</strong>. A
         breadboard's spring contacts shake loose, and your robot is a vibrating
         gearbox bolted to a plastic plate — a run ends the moment one 5 V jumper
-        lifts 0.3 mm. Rule §5.1 prohibits loose components and §11 checks secure
-        mounting; §2.2 names the breadboard as the one part you may remove, which
-        is the rulebook telling you it expects you to solder.
+        lifts 0.3 mm. §2.2 names the breadboard as the one part you may remove,
+        which is the rulebook telling you it expects you to solder.
       </p>
-      <p>
+      <p dir="rtl" lang="ar">
+        استخدم <strong>اللوح الأخضر (perfboard) وليس البريدبورد الأبيض</strong>.
+        ملامسات البريدبورد الزنبركية تتفكك، وروبوتك عبارة عن صندوق تروس مهتز مثبّت
+        على لوح بلاستيك — تنتهي الجولة في اللحظة التي يرتفع فيها سلك 5 فولت بمقدار
+        0.3 مم. والمادة 2.2 تذكر البريدبورد كالقطعة الوحيدة المسموح بإزالتها، وهذه
+        إشارة من اللوائح أنها تتوقع منك أن تلحم.
+      </p>
+      <p class="en-only">
         Lay out: one 5 V rail, one GND rail, three 4-pin headers for the
         ultrasonics, one 4-pin header for the gyro, two 3-pin headers for the
-        encoders, one 2-pin for the GO button. Everything plugs into that.
+        encoders, one 2-pin for the GO button.
+      </p>
+      <p dir="rtl" lang="ar">
+        التخطيط: خط 5 فولت واحد، خط أرضي واحد، ثلاثة هيدرات 4 أطراف لحساسات
+        المسافة، هيدر 4 أطراف للجيروسكوب، هيدران 3 أطراف لحساسات الدوران، وهيدر
+        طرفين لزر التشغيل.
       </p>
     </li>
   </ol>
@@ -906,53 +1234,62 @@ t_ms,state,dF,dL,dR,head,tgt,encL,encR,pwmL,pwmR,sect
 <section class="phase" id="p6">
   <div class="phase-head">
     <span class="phase-num">PHASE 06</span>
-    <h2>Wiring, in this order</h2>
+    <h2>Wiring, in this order
+      <span class="h-ar" dir="rtl" lang="ar">التوصيل، بهذا الترتيب</span>
+    </h2>
     <div class="phase-meta"><span>~3 hours</span><span>Power off throughout</span></div>
   </div>
 
-  <p>Every pin is spoken for. Do not improvise — the firmware assumes exactly this.</p>
+  <p class="en-only">Every pin is spoken for. Do not improvise — the firmware assumes exactly this.</p>
+  <p dir="rtl" lang="ar">كل طرف له وظيفة محددة. لا تجتهد — الكود يفترض هذا التوزيع بالضبط.</p>
 
   <div class="tw">
     <table>
-      <thead><tr><th>Pin</th><th>Connects to</th><th>Note</th></tr></thead>
+      <thead><tr>
+        <th>Pin</th>
+        <th>Connects to <span class="a" dir="rtl" lang="ar">يوصَّل بـ</span></th>
+        <th>Note <span class="a" dir="rtl" lang="ar">ملاحظة</span></th>
+      </tr></thead>
       <tbody>
-        <tr><td class="pin">D0, D1</td><td>—</td><td>Leave alone. USB serial.</td></tr>
-        <tr><td class="pin">D2</td><td>LEFT encoder OUT</td><td>Interrupt 0</td></tr>
-        <tr><td class="pin">D3</td><td>RIGHT encoder OUT</td><td>Interrupt 1</td></tr>
+        <tr><td class="pin">D0, D1</td><td>—</td><td>Leave alone. USB serial.<span class="arw">لا تستخدمهما. منفذ USB.</span></td></tr>
+        <tr><td class="pin">D2</td><td>LEFT encoder OUT<span class="arw">حساس دوران العجلة اليسرى</span></td><td>Interrupt 0</td></tr>
+        <tr><td class="pin">D3</td><td>RIGHT encoder OUT<span class="arw">حساس دوران العجلة اليمنى</span></td><td>Interrupt 1</td></tr>
         <tr><td class="pin">D4</td><td>L298N IN1</td><td></td></tr>
-        <tr><td class="pin">D5</td><td>L298N ENA</td><td>PWM, RIGHT motor</td></tr>
-        <tr><td class="pin">D6</td><td>L298N ENB</td><td>PWM, LEFT motor</td></tr>
+        <tr><td class="pin">D5</td><td>L298N ENA</td><td>PWM, RIGHT motor<span class="arw">المحرك الأيمن</span></td></tr>
+        <tr><td class="pin">D6</td><td>L298N ENB</td><td>PWM, LEFT motor<span class="arw">المحرك الأيسر</span></td></tr>
         <tr><td class="pin">D7</td><td>L298N IN2</td><td></td></tr>
         <tr><td class="pin">D8</td><td>L298N IN3</td><td></td></tr>
-        <tr><td class="pin">D9</td><td>HC-SR04 RIGHT TRIG</td><td></td></tr>
+        <tr><td class="pin">D9</td><td>HC-SR04 RIGHT TRIG<span class="arw">الحساس الأيمن</span></td><td></td></tr>
         <tr><td class="pin">D10</td><td>HC-SR04 RIGHT ECHO</td><td></td></tr>
         <tr><td class="pin">D11</td><td>L298N IN4</td><td></td></tr>
-        <tr><td class="pin">D12</td><td>GO button → GND</td><td>Two wires, no resistor</td></tr>
-        <tr><td class="pin">D13</td><td>Status LED (onboard) + buzzer</td><td>Output only</td></tr>
-        <tr><td class="pin">A0</td><td>HC-SR04 FRONT TRIG</td><td></td></tr>
+        <tr><td class="pin">D12</td><td>GO button → GND<span class="arw">زر التشغيل ← الأرضي</span></td><td>Two wires, no resistor<span class="arw">سلكان، بدون مقاومة</span></td></tr>
+        <tr><td class="pin">D13</td><td>Status LED + buzzer<span class="arw">ضوء الحالة + صافرة</span></td><td>Output only<span class="arw">خرج فقط</span></td></tr>
+        <tr><td class="pin">A0</td><td>HC-SR04 FRONT TRIG<span class="arw">الحساس الأمامي</span></td><td></td></tr>
         <tr><td class="pin">A1</td><td>HC-SR04 FRONT ECHO</td><td></td></tr>
-        <tr><td class="pin">A2</td><td>HC-SR04 LEFT TRIG</td><td></td></tr>
+        <tr><td class="pin">A2</td><td>HC-SR04 LEFT TRIG<span class="arw">الحساس الأيسر</span></td><td></td></tr>
         <tr><td class="pin">A3</td><td>HC-SR04 LEFT ECHO</td><td></td></tr>
-        <tr><td class="pin">A4</td><td>MPU-6050 SDA</td><td>Do not reuse</td></tr>
-        <tr><td class="pin">A5</td><td>MPU-6050 SCL</td><td>Do not reuse</td></tr>
-        <tr><td class="pin">VIN</td><td>Battery +</td><td>Through the switch and fuse</td></tr>
-        <tr><td class="pin">GND</td><td>Common ground</td><td>Everything</td></tr>
+        <tr><td class="pin">A4</td><td>MPU-6050 SDA</td><td>Do not reuse<span class="arw">لا تستخدمه لشيء آخر</span></td></tr>
+        <tr><td class="pin">A5</td><td>MPU-6050 SCL</td><td>Do not reuse<span class="arw">لا تستخدمه لشيء آخر</span></td></tr>
+        <tr><td class="pin">VIN</td><td>Battery +<span class="arw">موجب البطارية</span></td><td>Through switch and fuse<span class="arw">عبر المفتاح والفيوز</span></td></tr>
+        <tr><td class="pin">GND</td><td>Common ground<span class="arw">الأرضي المشترك</span></td><td></td></tr>
       </tbody>
     </table>
   </div>
 
-  <h3>Wire in this order</h3>
   <ol class="steps">
     <li>
-      <h4>Ground first, everywhere</h4>
-      <p>
+      <h4>Ground first, everywhere <span class="ar-term">الأرضي أولاً، في كل مكان</span></h4>
+      <p class="en-only">
         Arduino GND, L298N GND, battery −, and every sensor GND all to one rail.
-        <strong>If the sonar reads nonsense later, this is the first thing to
-        check.</strong>
+        <strong>If the sonar reads nonsense later, this is the first thing to check.</strong>
+      </p>
+      <p dir="rtl" lang="ar">
+        أرضي الأردوينو، وأرضي L298N، وسالب البطارية، وأرضي كل حساس — كلها على خط
+        واحد. <strong>إذا أعطت حساسات المسافة قراءات غريبة لاحقاً، فهذا أول ما تفحصه.</strong>
       </p>
     </li>
     <li>
-      <h4>Power</h4>
+      <h4>Power <span class="ar-term">التغذية الكهربائية</span></h4>
       <div class="code">
         <div class="code-cap">power path</div>
         <pre><code>            [ SWITCH ]   [ 3A FUSE ]
@@ -963,54 +1300,80 @@ BATT−  ───────────────────────�
                                     ├──── Arduino GND
                                     └──── sensor GND rail
 
-Arduino 5V ─────────────────────────┬──── HC-SR04 ×3  VCC
+Arduino 5V ─────────────────────────┬──── HC-SR04 x3  VCC
                                     ├──── MPU-6050    VCC
-                                    └──── LM393 ×2    VCC</code></pre>
+                                    └──── LM393 x2    VCC</code></pre>
       </div>
-      <ul>
+      <ul class="en-only">
         <li>Leave the L298N <strong>5V-EN jumper fitted</strong> so the driver powers its own logic.</li>
         <li><strong>Never</strong> join the L298N's 5 V output to the Arduino's 5 V pin.</li>
-        <li><strong>Remove the ENA and ENB jumpers</strong> on the L298N. Left fitted, the enable pins are tied high, PWM does nothing, and the robot has exactly one speed: flat out.</li>
+        <li><strong>Remove the ENA and ENB jumpers</strong> on the L298N. Left fitted, PWM does nothing and the robot has exactly one speed: flat out.</li>
         <li>Never power the motors from USB. It cannot supply the current and you may damage the port.</li>
+      </ul>
+      <ul dir="rtl" lang="ar">
+        <li>اترك <strong>جمبر 5V-EN مركّباً</strong> على L298N ليغذي دائرته المنطقية.</li>
+        <li><strong>لا</strong> توصّل خرج 5 فولت من L298N بطرف 5 فولت في الأردوينو أبداً.</li>
+        <li><strong>انزع جمبري ENA و ENB</strong> من L298N. إذا بقيا مركّبين، لن يعمل
+        الـ PWM وسيكون للروبوت سرعة واحدة فقط: أقصى سرعة.</li>
+        <li>لا تغذِّ المحركات من منفذ USB أبداً. لا يستطيع توفير التيار وقد تتلف المنفذ.</li>
       </ul>
     </li>
     <li>
-      <h4>Noise suppression — do this now, not later</h4>
-      <p>
+      <h4>Noise suppression — now, not later <span class="ar-term">كبح التشويش — الآن وليس لاحقاً</span></h4>
+      <p class="en-only">
         <strong>1000 µF</strong> across the battery at the L298N terminals.
         <strong>100 nF</strong> soldered across each motor's own two terminals, at
         the motor. Skipping these produces symptoms that look exactly like software
         bugs: random resets, a gyro that drifts only while driving.
       </p>
+      <p dir="rtl" lang="ar">
+        مكثف <strong>1000 مايكروفاراد</strong> على أطراف البطارية عند L298N.
+        ومكثف <strong>100 نانوفاراد</strong> ملحوم على طرفَي كل محرك، عند المحرك
+        نفسه. تجاهل هذه المكثفات ينتج أعراضاً تبدو تماماً كأخطاء برمجية: إعادة
+        تشغيل عشوائية، وجيروسكوب ينحرف أثناء القيادة فقط.
+      </p>
     </li>
     <li>
-      <h4>Motors</h4>
+      <h4>Motors <span class="ar-term">المحركات</span></h4>
       <div class="tw">
         <table>
           <thead><tr><th>L298N</th><th>Goes to</th><th>Controlled by</th></tr></thead>
           <tbody>
-            <tr><td class="pin">OUT1, OUT2</td><td>RIGHT motor</td><td>ENA (D5), IN1 (D4), IN2 (D7)</td></tr>
-            <tr><td class="pin">OUT3, OUT4</td><td>LEFT motor</td><td>ENB (D6), IN3 (D8), IN4 (D11)</td></tr>
+            <tr><td class="pin">OUT1, OUT2</td><td>RIGHT motor<span class="arw">المحرك الأيمن</span></td><td>ENA (D5), IN1 (D4), IN2 (D7)</td></tr>
+            <tr><td class="pin">OUT3, OUT4</td><td>LEFT motor<span class="arw">المحرك الأيسر</span></td><td>ENB (D6), IN3 (D8), IN4 (D11)</td></tr>
           </tbody>
         </table>
       </div>
       <div class="note warn">
-        <span class="note-label">If a wheel spins the wrong way</span>
-        <p>
+        <span class="note-label">If a wheel spins the wrong way <span class="a" dir="rtl" lang="ar">· إذا دارت عجلة بالعكس</span></span>
+        <p class="en-only">
           Do <strong>not</strong> swap the wires — set <code>MOTOR_L_SIGN</code> or
           <code>MOTOR_R_SIGN</code> to <code>-1</code> in <code>config.h</code>.
-          Swapping wires <em>and</em> signs at the same time is how you lose an
-          afternoon.
+          Swapping wires <em>and</em> signs at the same time is how you lose an afternoon.
+        </p>
+        <p dir="rtl" lang="ar">
+          <strong>لا</strong> تبدّل الأسلاك — بل اضبط <code>MOTOR_L_SIGN</code> أو
+          <code>MOTOR_R_SIGN</code> إلى <code>-1</code> في <code>config.h</code>.
+          تبديل الأسلاك <em>والإشارات</em> معاً هو الطريقة المضمونة لضياع بعد ظهر كامل.
         </p>
       </div>
     </li>
-    <li><h4>Sensors</h4><p>Three ultrasonics, gyro on A4/A5, two encoders, GO button. Leave the MPU's AD0 pin unconnected.</p></li>
     <li>
-      <h4>Tidy the loom</h4>
-      <p>
+      <h4>Sensors <span class="ar-term">الحساسات</span></h4>
+      <p class="en-only">Three ultrasonics, gyro on A4/A5, two encoders, GO button. Leave the MPU's AD0 pin unconnected.</p>
+      <p dir="rtl" lang="ar">ثلاثة حساسات مسافة، الجيروسكوب على A4/A5، حساسا الدوران، وزر التشغيل. اترك طرف AD0 في الجيروسكوب غير موصّل.</p>
+    </li>
+    <li>
+      <h4>Tidy the loom <span class="ar-term">رتّب ضفيرة الأسلاك</span></h4>
+      <p class="en-only">
         Cut every wire to length. Spiral wrap the bundle, zip-tie it down, and check
         nothing can reach a wheel. Heat-shrink every joint — §5.1 forbids exposed
         conductor and the inspector will look.
+      </p>
+      <p dir="rtl" lang="ar">
+        اقطع كل سلك بالطول المضبوط. لُف الحزمة بلفافة حلزونية، وثبّتها بربطات،
+        وتأكد أن لا شيء يصل إلى العجلات. غطِّ كل وصلة بأنبوب حراري — المادة 5.1
+        تمنع أي موصل مكشوف، والمحكّم سينظر.
       </p>
     </li>
   </ol>
@@ -1020,32 +1383,40 @@ Arduino 5V ───────────────────────
 <section class="phase" id="p7">
   <div class="phase-head">
     <span class="phase-num">PHASE 07</span>
-    <h2>First power-up</h2>
+    <h2>First power-up
+      <span class="h-ar" dir="rtl" lang="ar">أول تشغيل</span>
+    </h2>
     <div class="phase-meta"><span>~30 min</span><span>Wheels still off the ground</span></div>
   </div>
 
   <ol class="steps">
     <li>
-      <h4>Before power: continuity check</h4>
-      <p>
+      <h4>Before power: continuity check <span class="ar-term">قبل التشغيل: افحص الاستمرارية</span></h4>
+      <p class="en-only">
         Multimeter on continuity. Check <strong>battery + to battery −</strong> is
         <em>not</em> shorted, and that GND really is common between the Arduino,
         the L298N and the sensor rail.
       </p>
-    </li>
-    <li>
-      <h4>Open the firmware</h4>
-      <p>
-        In the Arduino IDE, open
-        <code>firmware/MazeRunner/MazeRunner.ino</code>. The other three files
-        (<code>config.h</code>, <code>nav_core.h</code>, <code>nav_core.cpp</code>)
-        appear automatically as tabs because they sit in the same folder.
-        <strong>No libraries to install</strong> — <code>Wire</code> and
-        <code>EEPROM</code> ship with the IDE.
+      <p dir="rtl" lang="ar">
+        اضبط الأفوميتر على وضع الاستمرارية. تأكد أن <strong>موجب البطارية وسالبها</strong>
+        <em>غير</em> متلامسين، وأن الأرضي مشترك فعلاً بين الأردوينو و L298N وخط الحساسات.
       </p>
     </li>
     <li>
-      <h4>Upload, then open the Serial Monitor at 115200</h4>
+      <h4>Open the firmware <span class="ar-term">افتح الكود</span></h4>
+      <p class="en-only">
+        In the Arduino IDE, open <code>firmware/MazeRunner/MazeRunner.ino</code>.
+        The other three files appear automatically as tabs because they sit in the
+        same folder. <strong>No libraries to install.</strong>
+      </p>
+      <p dir="rtl" lang="ar">
+        من Arduino IDE، افتح <code>firmware/MazeRunner/MazeRunner.ino</code>.
+        الملفات الثلاثة الأخرى تظهر تلقائياً كتبويبات لأنها في نفس المجلد.
+        <strong>لا حاجة لتثبيت أي مكتبة.</strong>
+      </p>
+    </li>
+    <li>
+      <h4>Upload, open Serial Monitor at 115200 <span class="ar-term">ارفع الكود وافتح الشاشة التسلسلية</span></h4>
       <div class="code">
         <div class="code-cap">expected</div>
         <pre><code># MazeRunner booting - hold still, calibrating gyro
@@ -1054,39 +1425,48 @@ Arduino 5V ───────────────────────
 t_ms,state,dF,dL,dR,head,tgt,encL,encR,pwmL,pwmR,sect
 1240,WAIT_START,1850,1200,1300,0.0,0.0,0,0,0,0,0</code></pre>
       </div>
-      <p>
+      <p class="en-only">
         <code># gyro NOT FOUND</code> means the MPU is answering on address 0x69
-        instead of 0x68 — that happens when AD0 is tied high. Leave AD0
-        unconnected.
+        instead of 0x68 — that happens when AD0 is tied high. Leave AD0 unconnected.
+      </p>
+      <p dir="rtl" lang="ar">
+        ظهور <code># gyro NOT FOUND</code> يعني أن الجيروسكوب يستجيب على العنوان
+        0x69 بدل 0x68 — وهذا يحدث حين يكون طرف AD0 موصولاً بالموجب. اتركه غير موصّل.
       </p>
     </li>
     <li>
-      <h4>Leave it alone for ten seconds</h4>
-      <p>It must stay in <code>WAIT_START</code> and it must not move.</p>
+      <h4>Leave it alone for ten seconds <span class="ar-term">اتركه عشر ثوانٍ دون لمس</span></h4>
+      <p class="en-only">It must stay in <code>WAIT_START</code> and it must not move.</p>
+      <p dir="rtl" lang="ar">يجب أن يبقى في حالة <code>WAIT_START</code> وألا يتحرك إطلاقاً.</p>
       <div class="note danger">
-        <span class="note-label">Why this check exists</span>
-        <p>
+        <span class="note-label">Why this check exists <span class="a" dir="rtl" lang="ar">· لماذا هذا الفحص موجود</span></span>
+        <p class="en-only">
           An earlier version of this firmware started its own run about three
           seconds after power-on, because the sonar filter's history was
           zero-initialised and the first reading came out as 0 mm — which the
           start logic read as a hand held up to the nose. The only symptom was the
-          robot driving off while somebody was still placing it. It is fixed and
-          there is a regression test (<code>make test</code>), but ten seconds of
-          watching costs nothing.
+          robot driving off while somebody was still placing it.
+        </p>
+        <p dir="rtl" lang="ar">
+          نسخة سابقة من هذا الكود كانت تبدأ الجولة من نفسها بعد حوالي ثلاث ثوانٍ من
+          التشغيل، لأن ذاكرة مرشّح حساس المسافة كانت تبدأ بأصفار فتخرج أول قراءة
+          بقيمة 0 مم — وهو ما فسّره الكود على أنه يد مرفوعة أمام المقدمة. والعرض
+          الوحيد كان أن الروبوت ينطلق بينما ما زال أحدهم يضعه على خط البداية.
         </p>
       </div>
     </li>
     <li>
-      <h4>Press GO</h4>
-      <p>
+      <h4>Press GO <span class="ar-term">اضغط زر التشغيل</span></h4>
+      <p class="en-only">
         Serial prints <code># GO pressed</code>, the LED blinks a 3-second
         countdown, then the wheels spin. Hold a book in front of the nose and it
         should go <code>CREEP</code> → <code>TURN</code>.
       </p>
-      <div class="note pass">
-        <span class="note-label">Pass</span>
-        <p>All of that works on the block. Now it can go on the floor.</p>
-      </div>
+      <p dir="rtl" lang="ar">
+        تظهر رسالة <code># GO pressed</code>، ويومض الضوء عداً تنازلياً لثلاث ثوانٍ،
+        ثم تدور العجلات. ضع كتاباً أمام المقدمة، ويجب أن ينتقل إلى
+        <code>CREEP</code> ثم <code>TURN</code>.
+      </p>
     </li>
   </ol>
 </section>
@@ -1095,145 +1475,153 @@ t_ms,state,dF,dL,dR,head,tgt,encL,encR,pwmL,pwmR,sect
 <section class="phase" id="p8">
   <div class="phase-head">
     <span class="phase-num">PHASE 08</span>
-    <h2>Measure your robot and calibrate</h2>
+    <h2>Measure your robot and calibrate
+      <span class="h-ar" dir="rtl" lang="ar">قِس روبوتك واضبط الأرقام</span>
+    </h2>
     <div class="phase-meta"><span>~1 hour</span><span>The step most teams skip</span></div>
   </div>
 
-  <p>
+  <p class="en-only">
     Every threshold in the firmware is derived from the robot's geometry. Put in
     real measurements and the rest follows automatically; leave the defaults and
     you are tuning against someone else's robot.
   </p>
-
-  <p>Open <code>firmware/MazeRunner/config.h</code> and set these from a ruler:</p>
+  <p dir="rtl" lang="ar">
+    كل عتبة في الكود مشتقة من أبعاد الروبوت. أدخل قياساتك الحقيقية وسيتبعها الباقي
+    تلقائياً؛ وإذا تركت القيم الافتراضية فأنت تضبط على روبوت شخص آخر.
+  </p>
 
   <div class="tw">
     <table>
-      <thead><tr><th>Value</th><th>Measure</th><th>Default</th></tr></thead>
+      <thead><tr>
+        <th>Value <span class="a" dir="rtl" lang="ar">القيمة</span></th>
+        <th>Measure <span class="a" dir="rtl" lang="ar">ماذا تقيس</span></th>
+        <th>Default</th>
+      </tr></thead>
       <tbody>
-        <tr><td class="pin">ROBOT_LENGTH_MM</td><td>Nose to tail, including anything that sticks out</td><td class="num">220.0</td></tr>
-        <tr><td class="pin">ROBOT_WIDTH_MM</td><td><strong>Tyre outside to tyre outside</strong> — not the chassis plate. The tyres are what sweep the circle and what the walls see.</td><td class="num">115.0</td></tr>
-        <tr><td class="pin">WHEEL_DIAM_MM</td><td>Wheel diameter</td><td class="num">65.0</td></tr>
-        <tr><td class="pin">US_F_X_MM</td><td>Front sonar, forward of the axle</td><td>derived</td></tr>
-        <tr><td class="pin">US_L_Y_MM</td><td>Left sonar, left of centreline</td><td>derived</td></tr>
-        <tr><td class="pin">ENC_TICKS_PER_REV</td><td><strong>Count the slots in your disc.</strong> Do not assume 20.</td><td class="num">20</td></tr>
-        <tr><td class="pin">PWM_MIN</td><td>Lowest PWM at which the wheels actually turn (from Phase 04)</td><td class="num">55</td></tr>
-        <tr><td class="pin">CORRIDOR_MM</td><td>The real passage width, measured at the venue</td><td class="num">305</td></tr>
+        <tr><td class="pin">ROBOT_LENGTH_MM</td><td>Nose to tail, including anything that sticks out<span class="arw">من المقدمة إلى المؤخرة، شاملاً أي شيء بارز</span></td><td class="num">220.0</td></tr>
+        <tr><td class="pin">ROBOT_WIDTH_MM</td><td><strong>Tyre outside to tyre outside</strong> — not the chassis plate<span class="arw"><strong>من حافة الإطار الخارجية إلى الأخرى</strong> — وليس لوح الهيكل</span></td><td class="num">115.0</td></tr>
+        <tr><td class="pin">WHEEL_DIAM_MM</td><td>Wheel diameter<span class="arw">قطر العجلة</span></td><td class="num">65.0</td></tr>
+        <tr><td class="pin">ENC_TICKS_PER_REV</td><td><strong>Count the slots in your disc.</strong> Do not assume 20.<span class="arw"><strong>عُدّ الشقوق في قرصك.</strong> لا تفترض أنها 20.</span></td><td class="num">20</td></tr>
+        <tr><td class="pin">PWM_MIN</td><td>Lowest PWM at which the wheels actually turn<span class="arw">أقل قيمة PWM تدور عندها العجلات فعلاً</span></td><td class="num">55</td></tr>
+        <tr><td class="pin">CORRIDOR_MM</td><td>The real passage width, measured at the venue<span class="arw">عرض الممر الحقيقي، مقيساً في الموقع</span></td><td class="num">305</td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="note">
-    <span class="note-label">Then check it still fits</span>
+    <span class="note-label">Then check it still fits <span class="a" dir="rtl" lang="ar">· ثم تأكد أنه ما زال يمر</span></span>
     <div class="code">
       <div class="code-cap">terminal</div>
       <pre><code>python3 tools/geometry_check.py</code></pre>
     </div>
-    <p>
-      This prints the swept circle for <em>your</em> numbers and tells you the
-      minimum corridor it needs. Run it before you tune anything else — if the
-      geometry does not fit, no gain value will save it.
+    <p class="en-only">
+      This prints the swept circle for <em>your</em> numbers. Run it before you
+      tune anything else — if the geometry does not fit, no gain value will save it.
+    </p>
+    <p dir="rtl" lang="ar">
+      يطبع دائرة الدوران بناءً على <em>أرقامك أنت</em>. شغّله قبل ضبط أي شيء آخر —
+      إذا كانت الأبعاد لا تمر، فلن ينقذك أي رقم في الكود.
     </p>
   </div>
-
-  <h3>Then re-run the simulator with your robot</h3>
-  <div class="code">
-    <div class="code-cap">terminal</div>
-    <pre><code>cd sim
-python3 run.py --all --trials 10</code></pre>
-  </div>
-  <p>
-    If it still completes all three maps, your geometry is fine. If completion
-    drops, the geometry changed something and it is far cheaper to find that here
-    than on the track.
-  </p>
 </section>
 
 <!-- ============ 09 ============ -->
 <section class="phase" id="p9">
   <div class="phase-head">
     <span class="phase-num">PHASE 09</span>
-    <h2>Tuning on the real track</h2>
+    <h2>Tuning on the real track
+      <span class="h-ar" dir="rtl" lang="ar">الضبط على المسار الحقيقي</span>
+    </h2>
     <div class="phase-meta"><span>Several sessions</span><span>Change one number at a time</span></div>
   </div>
 
-  <p>
-    You have the competition track, which is a real advantage — use it
-    methodically rather than doing lap after lap and hoping.
-  </p>
-
   <ol class="steps">
     <li>
-      <h4>Measure the track before you drive on it</h4>
-      <p>
+      <h4>Measure the track before you drive on it <span class="ar-term">قِس المسار قبل أن تقود عليه</span></h4>
+      <p class="en-only">
         Passage width, wall height, overall size. If the passage is not 304.8 mm,
         put the real number in <code>CORRIDOR_MM</code> and re-run
         <code>geometry_check.py</code> immediately.
       </p>
+      <p dir="rtl" lang="ar">
+        عرض الممر، ارتفاع الجدار، الأبعاد الكلية. إذا لم يكن العرض 304.8 مم، ضع
+        الرقم الحقيقي في <code>CORRIDOR_MM</code> وأعد تشغيل
+        <code>geometry_check.py</code> فوراً.
+      </p>
     </li>
     <li>
-      <h4>One straight corridor first</h4>
-      <p>
+      <h4>One straight corridor first <span class="ar-term">ممر مستقيم واحد أولاً</span></h4>
+      <p class="en-only">
         Does it drive down the middle without weaving or scraping? If it drifts
         into a wall, the side sensors are not square. If it weaves, reduce
         <code>KP_WALL</code> slightly.
       </p>
+      <p dir="rtl" lang="ar">
+        هل يسير في المنتصف بدون تمايل أو احتكاك؟ إذا انحرف نحو جدار، فالحساسات
+        الجانبية غير متعامدة. وإذا تمايل، قلّل <code>KP_WALL</code> قليلاً.
+      </p>
     </li>
     <li>
-      <h4>One corner</h4>
-      <p>
+      <h4>One corner <span class="ar-term">زاوية واحدة</span></h4>
+      <p class="en-only">
         Does it stop, pivot cleanly, and set off square? A turn that finishes
         short is usually a loose gyro. A turn that hits the wall mid-pivot means
         the body is too big — back to Phase 05.
       </p>
-    </li>
-    <li>
-      <h4>Then whole maps, and record telemetry</h4>
-      <div class="code">
-        <div class="code-cap">terminal</div>
-        <pre><code>python3 tools/telemetry_log.py --port COM3 --out run1.csv</code></pre>
-      </div>
-      <p>
-        The real robot prints the same CSV format the simulator does, so you can
-        compare them directly and see where the model and reality diverge.
+      <p dir="rtl" lang="ar">
+        هل يتوقف، ويدور بنظافة، وينطلق مستقيماً؟ اللفة التي تنتهي ناقصة سببها عادة
+        جيروسكوب غير مثبّت جيداً. واللفة التي تصطدم بالجدار أثناء الدوران تعني أن
+        الجسم كبير جداً — ارجع إلى المرحلة 05.
       </p>
     </li>
     <li>
-      <h4>Adjust speed last</h4>
-      <p>
+      <h4>Adjust speed last <span class="ar-term">اضبط السرعة في النهاية</span></h4>
+      <p class="en-only">
         <code>PWM_CRUISE</code> is the one number that trades time for safety. It
         ships at <strong>200</strong>. Measured across all three maps:
       </p>
+      <p dir="rtl" lang="ar">
+        <code>PWM_CRUISE</code> هو الرقم الوحيد الذي يوازن بين الوقت والأمان. القيمة
+        المعتمدة <strong>200</strong>. القياسات على الخرائط الثلاث:
+      </p>
       <div class="tw">
         <table>
-          <thead><tr><th>PWM_CRUISE</th><th>Total time</th><th>Completed</th><th>Wall contact, degraded hardware</th></tr></thead>
+          <thead><tr><th>PWM_CRUISE</th><th>Total time<span class="a" dir="rtl" lang="ar">الزمن الكلي</span></th><th>Completed<span class="a" dir="rtl" lang="ar">نسبة الإكمال</span></th><th>Wall contact, degraded HW<span class="a" dir="rtl" lang="ar">الاصطدام مع عتاد سيئ</span></th></tr></thead>
           <tbody>
             <tr><td class="num">110</td><td class="num">182 s</td><td class="num">100%</td><td>—</td></tr>
             <tr><td class="num">140</td><td class="num">147 s</td><td class="num">100%</td><td>—</td></tr>
-            <tr><td class="num">170</td><td class="num">128 s</td><td class="num">100%</td><td class="num">100 episodes</td></tr>
+            <tr><td class="num">170</td><td class="num">128 s</td><td class="num">100%</td><td class="num">100</td></tr>
             <tr><td class="num"><strong>200</strong></td><td class="num"><strong>116 s</strong></td><td class="num"><strong>100%</strong></td><td><strong>none</strong></td></tr>
             <tr><td class="num">230</td><td class="num">108 s</td><td class="num">100%</td><td>none</td></tr>
           </tbody>
         </table>
       </div>
-      <p>
+      <p class="en-only">
         200 rather than 230 for a reason you can see in the code: steering is added
         to cruise and then clamped at 255, so at 200 the robot can still swing 135
-        counts of left–right difference to save a bad corner; at 230 only 105. That
-        reserve is worth more than eight seconds. <strong>If the real track is
-        slipperier than the model, drop to 170</strong> — you lose 12 seconds and
-        every hard correction gets its full authority back.
+        counts of left–right difference to save a bad corner; at 230 only 105.
+        <strong>If the real track is slipperier than the model, drop to 170.</strong>
+      </p>
+      <p dir="rtl" lang="ar">
+        اخترنا 200 بدل 230 لسبب تراه في الكود: قيمة التوجيه تُضاف إلى سرعة السير ثم
+        تُقصّ عند 255، فعند 200 يستطيع الروبوت أن يحدث فرقاً بين العجلتين قدره 135
+        وحدة لإنقاذ زاوية سيئة؛ أما عند 230 فـ 105 فقط.
+        <strong>إذا كان المسار الحقيقي أكثر انزلاقاً من النموذج، انزل إلى 170.</strong>
       </p>
     </li>
   </ol>
 
   <div class="note warn">
-    <span class="note-label">Discipline</span>
-    <p>
+    <span class="note-label">Discipline <span class="a" dir="rtl" lang="ar">· انضباط</span></span>
+    <p class="en-only">
       Change <strong>one</strong> number, run it three times, write down what
       happened. Changing three things at once and getting a better lap teaches you
-      nothing. Every value lives in <code>config.h</code>, and the simulator reads
-      that same file — so test a change in simulation first. It takes 30 seconds.
+      nothing.
+    </p>
+    <p dir="rtl" lang="ar">
+      غيّر رقماً <strong>واحداً</strong>، جرّب ثلاث مرات، ودوّن ما حدث. تغيير ثلاثة
+      أشياء دفعة واحدة والحصول على جولة أفضل لا يعلّمك شيئاً.
     </p>
   </div>
 </section>
@@ -1242,72 +1630,84 @@ python3 run.py --all --trials 10</code></pre>
 <section class="phase" id="p10">
   <div class="phase-head">
     <span class="phase-num">PHASE 10</span>
-    <h2>Competition day</h2>
-    <div class="phase-meta"><span>Print this phase</span></div>
+    <h2>Competition day
+      <span class="h-ar" dir="rtl" lang="ar">يوم المسابقة</span>
+    </h2>
+    <div class="phase-meta"><span>Print this phase</span><span class="a" dir="rtl" lang="ar">اطبع هذه المرحلة</span></div>
   </div>
 
-  <h3>The bag</h3>
+  <h3>The bag <span class="ar-term">الحقيبة</span></h3>
   <ul class="check">
-    <li><input type="checkbox" id="c1"><label for="c1">Robot, assembled and working</label></li>
-    <li><input type="checkbox" id="c2"><label for="c2">Laptop + USB cable + charger</label></li>
-    <li><input type="checkbox" id="c3"><label for="c3"><strong>Three charged battery sets</strong> + charger</label></li>
-    <li><input type="checkbox" id="c4"><label for="c4">Spares: MPU-6050, HC-SR04 ×2, LM393, push button, jumper leads</label></li>
-    <li><input type="checkbox" id="c5"><label for="c5">Soldering iron, solder, cutters, screwdrivers, multimeter</label></li>
-    <li><input type="checkbox" id="c6"><label for="c6">M3 screws, nuts, nylon standoffs, zip ties</label></li>
-    <li><input type="checkbox" id="c7"><label for="c7">Black tape, marker, tape measure</label></li>
-    <li><input type="checkbox" id="c8"><label for="c8"><strong>The kit box with every original part, including the breadboard</strong> — for inspection</label></li>
-    <li><input type="checkbox" id="c9"><label for="c9">This guide, printed</label></li>
+    <li><input type="checkbox" id="c1"><label for="c1">Robot, assembled and working<span class="arw">الروبوت مجمّعاً ويعمل</span></label></li>
+    <li><input type="checkbox" id="c2"><label for="c2">Laptop + USB cable + charger<span class="arw">لابتوب + كيبل USB + الشاحن</span></label></li>
+    <li><input type="checkbox" id="c3"><label for="c3"><strong>Three charged battery sets</strong> + charger<span class="arw"><strong>ثلاث مجموعات بطاريات مشحونة</strong> + الشاحن</span></label></li>
+    <li><input type="checkbox" id="c4"><label for="c4">Spares: MPU-6050, HC-SR04 ×2, LM393, push button, jumper leads<span class="arw">قطع احتياطية: جيروسكوب، حساسا مسافة، حساس دوران، زر ضغط، أسلاك توصيل</span></label></li>
+    <li><input type="checkbox" id="c5"><label for="c5">Soldering iron, solder, cutters, screwdrivers, multimeter<span class="arw">كاوي لحام، قصدير، قصافة، مفكات، أفوميتر</span></label></li>
+    <li><input type="checkbox" id="c6"><label for="c6">M3 screws, nuts, nylon standoffs, zip ties<span class="arw">مسامير M3، صواميل، فواصل نايلون، ربطات</span></label></li>
+    <li><input type="checkbox" id="c7"><label for="c7">Black tape, marker, tape measure<span class="arw">شريط أسود، قلم تحديد، متر قياس</span></label></li>
+    <li><input type="checkbox" id="c8"><label for="c8"><strong>The kit box with every original part, including the breadboard</strong><span class="arw"><strong>علبة الكِت بكل القطع الأصلية، ومنها البريدبورد</strong> — للفحص الفني</span></label></li>
+    <li><input type="checkbox" id="c9"><label for="c9">This guide, printed<span class="arw">هذا الدليل مطبوعاً</span></label></li>
   </ul>
 
-  <h3>Technical inspection (§11)</h3>
+  <h3>Technical inspection (§11) <span class="ar-term">الفحص الفني (المادة 11)</span></h3>
   <div class="tw">
     <table>
-      <thead><tr><th>They check</th><th>You show / say</th></tr></thead>
+      <thead><tr><th>They check <span class="a" dir="rtl" lang="ar">ما يفحصونه</span></th><th>You show / say <span class="a" dir="rtl" lang="ar">ما تقوله أو تعرضه</span></th></tr></thead>
       <tbody>
-        <tr><td>Kit completeness</td><td>Here is the box with every original part</td></tr>
-        <tr><td>No replacements</td><td>Original Uno, original L298N, original motors, original chassis</td></tr>
-        <tr><td>Breadboard</td><td>§2.2 permits removing it. Here it is in the box — we soldered instead, for reliability</td></tr>
-        <tr><td>Add-ons</td><td>Three ultrasonics (§2.2 explicitly allows three), one gyro, two wheel encoders, one button. All sensors — <strong>no second microcontroller anywhere</strong></td></tr>
-        <tr><td>Battery</td><td>7.4 V — under the 12 V per-supply and 20 V total limits</td></tr>
-        <tr><td>Safety</td><td>No exposed conductor, no sharp edges, everything bolted, master switch here</td></tr>
-        <tr><td>Autonomy</td><td>No radio of any kind. It starts on its own — watch</td></tr>
+        <tr><td>Kit completeness<span class="arw">اكتمال الكِت</span></td><td>Here is the box with every original part<span class="arw">هذه العلبة وفيها كل القطع الأصلية</span></td></tr>
+        <tr><td>No replacements<span class="arw">لا استبدال</span></td><td>Original Uno, original L298N, original motors, original chassis<span class="arw">أردوينو أصلي، L298N أصلي، محركات أصلية، هيكل أصلي</span></td></tr>
+        <tr><td>Breadboard<span class="arw">البريدبورد</span></td><td>§2.2 permits removing it. Here it is in the box — we soldered instead, for reliability<span class="arw">المادة 2.2 تسمح بإزالته. ها هو في العلبة — لحمنا بدلاً منه لزيادة الاعتمادية</span></td></tr>
+        <tr><td>Add-ons<span class="arw">الإضافات</span></td><td>Three ultrasonics (§2.2 allows three), one gyro, two encoders, one button. All sensors — <strong>no second microcontroller</strong><span class="arw">ثلاثة حساسات مسافة (المادة 2.2 تسمح بثلاثة)، جيروسكوب، حساسا دوران، زر واحد. كلها حساسات — <strong>ولا يوجد متحكم ثانٍ</strong></span></td></tr>
+        <tr><td>Battery<span class="arw">البطارية</span></td><td>7.4 V — under the 12 V per-supply and 20 V total limits<span class="arw">7.4 فولت — أقل من حد 12 فولت للمصدر و20 فولت للمجموع</span></td></tr>
+        <tr><td>Safety<span class="arw">السلامة</span></td><td>No exposed conductor, no sharp edges, everything bolted, master switch here<span class="arw">لا موصلات مكشوفة، لا حواف حادة، كل شيء مثبّت بالمسامير، والمفتاح الرئيسي هنا</span></td></tr>
+        <tr><td>Autonomy<span class="arw">الاستقلالية</span></td><td>No radio of any kind. It starts on its own — watch<span class="arw">لا يوجد أي اتصال لاسلكي. ينطلق ذاتياً — تفضلوا شاهدوا</span></td></tr>
       </tbody>
     </table>
   </div>
-  <p>Then demonstrate the start. That is the strongest thing you can show them.</p>
 
-  <h3>Starting a run</h3>
+  <h3>Starting a run <span class="ar-term">بدء الجولة</span></h3>
   <div class="code">
     <div class="code-cap">the whole procedure</div>
-    <pre><code>1.  Switch on. It calibrates the gyro — KEEP IT STILL for ~3 s.
+    <pre><code>1.  Switch on. It calibrates the gyro - KEEP IT STILL for ~3 s.
 2.  Place it in the Start Zone, pointing down the first corridor.
 3.  Watch it for ten seconds without touching it. It must NOT move.
 4.  Press the GO button on the back. Step back.
 5.  The LED blinks a 3-second countdown.
-6.  It goes. Do not touch it again (§3.4).</code></pre>
+6.  It goes. Do not touch it again (3.4).</code></pre>
   </div>
-  <p>
-    <strong>Backup start</strong>, if the button or its wire fails: hold a hand
-    about 5 cm in front of the nose for a second, then take it away. Same
-    countdown, same run, nothing to plug in. Practise it once so you are not
-    learning it at the table.
+  <ol dir="rtl" lang="ar">
+    <li>شغّل المفتاح. يعاير الجيروسكوب — <strong>أبقه ثابتاً تماماً</strong> لثلاث ثوانٍ.</li>
+    <li>ضعه في منطقة البداية، موجهاً نحو الممر الأول.</li>
+    <li>راقبه عشر ثوانٍ دون أن تلمسه. يجب ألا يتحرك.</li>
+    <li>اضغط زر GO في المؤخرة، ثم ابتعد.</li>
+    <li>يومض الضوء عداً تنازلياً لثلاث ثوانٍ.</li>
+    <li>ينطلق. لا تلمسه بعد ذلك (المادة 3.4).</li>
+  </ol>
+  <p class="en-only">
+    <strong>Backup start</strong>, if the button fails: hold a hand about 5 cm in
+    front of the nose for a second, then take it away. Same countdown, same run.
+  </p>
+  <p dir="rtl" lang="ar">
+    <strong>طريقة بديلة للبدء</strong> إذا تعطل الزر: ضع يدك على بعد 5 سم أمام
+    المقدمة لثانية واحدة ثم ارفعها. نفس العد التنازلي ونفس الجولة.
   </p>
 
-  <h3>Between runs</h3>
-  <ul>
-    <li><strong>Swap the battery every run</strong>, not every third run. A tired battery is the most common cause of a bad second attempt.</li>
-    <li>Wipe the wheels — dust on the tyres makes turns inconsistent.</li>
-    <li>Check the sensors are still square. They get knocked.</li>
-    <li>Put it down flat and still for the gyro calibration. Do not hold it while it boots.</li>
-  </ul>
-
-  <h3>Strategy</h3>
-  <ul>
+  <h3>Strategy <span class="ar-term">الاستراتيجية</span></h3>
+  <ul class="en-only">
     <li><strong>Points, not speed.</strong> One point per sector line all three wheels fully cross (§6.1); time only breaks ties (§6.3).</li>
     <li><strong>Finishing is not required to score.</strong> A robot that keeps moving and keeps crossing lines beats one that solves two maps and jams on the third.</li>
     <li><strong>Attempts:</strong> §3.3 gives 2–3 attempts only if you did <em>not</em> complete the map. Completing slowly beats failing quickly.</li>
-    <li><strong>Do not touch the robot during a run</strong> (§3.4, §6.2). If it is stuck, let the judge stop it. Touching it costs the run.</li>
-    <li>Appeals must be filed within 10 minutes (§7.3).</li>
+    <li><strong>Do not touch the robot during a run</strong> (§3.4, §6.2). If it is stuck, let the judge stop it.</li>
+  </ul>
+  <ul dir="rtl" lang="ar">
+    <li><strong>النقاط وليس السرعة.</strong> نقطة واحدة لكل خط قطاع تعبره العجلات
+    الثلاث كاملةً (المادة 6.1)؛ والوقت يُستخدم فقط عند التعادل (المادة 6.3).</li>
+    <li><strong>إكمال الخريطة ليس شرطاً للتسجيل.</strong> الروبوت الذي يستمر في
+    الحركة ويعبر الخطوط يتفوق على من يحل خريطتين ثم ينحشر في الثالثة.</li>
+    <li><strong>المحاولات:</strong> المادة 3.3 تمنح 2–3 محاولات فقط إذا <em>لم</em>
+    تُكمل الخريطة. الإكمال ببطء أفضل من الفشل بسرعة.</li>
+    <li><strong>لا تلمس الروبوت أثناء الجولة</strong> (المادتان 3.4 و6.2). إذا انحشر،
+    اترك الحكم يوقفه.</li>
   </ul>
 </section>
 
@@ -1315,35 +1715,42 @@ python3 run.py --all --trials 10</code></pre>
 <section class="phase" id="p11">
   <div class="phase-head">
     <span class="phase-num">PHASE 11</span>
-    <h2>When it goes wrong</h2>
+    <h2>When it goes wrong
+      <span class="h-ar" dir="rtl" lang="ar">حين تحدث مشكلة</span>
+    </h2>
     <div class="phase-meta"><span>Fixes you can do at the table</span></div>
   </div>
 
   <div class="tw">
     <table>
-      <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+      <thead><tr>
+        <th>Symptom <span class="a" dir="rtl" lang="ar">العَرَض</span></th>
+        <th>Cause <span class="a" dir="rtl" lang="ar">السبب</span></th>
+        <th>Fix <span class="a" dir="rtl" lang="ar">الحل</span></th>
+      </tr></thead>
       <tbody>
-        <tr><td>Curves into a wall on a straight</td><td>Gyro not calibrated — it moved during boot</td><td>Power cycle, keep it still</td></tr>
-        <tr><td>Turns short or long</td><td>Gyro loose, or mounted upside down</td><td>Tighten it; check <code>GYRO_Z_SIGN</code></td></tr>
-        <tr><td>Stops dead, motors humming</td><td>Battery flat, or wedged</td><td>New battery</td></tr>
-        <tr><td>Spins in place</td><td>Both side sensors reading "open" — one came loose</td><td>Check 5 V and GND on the side sonars</td></tr>
-        <tr><td>Ignores a turn</td><td>Side sensor not seeing the wall — mounted too far back or crooked</td><td>Re-square the sensor</td></tr>
-        <tr><td>Resets mid-run</td><td>Motor surge browning out the Arduino</td><td>Check the 1000 µF capacitor is fitted</td></tr>
-        <tr><td>Sonar reads nonsense</td><td>Grounds not common</td><td>One GND rail for everything</td></tr>
-        <tr><td>Only one speed, flat out</td><td>ENA/ENB jumpers still on the L298N</td><td>Remove them</td></tr>
-        <tr><td>Encoder counts jump 2–3 per slot</td><td>Disc rubbing or off-centre</td><td>Re-centre the disc in the sensor slot</td></tr>
-        <tr><td>Starts on its own</td><td>Old firmware</td><td>Update; run <code>make test</code></td></tr>
+        <tr><td>Curves into a wall on a straight<span class="arw">ينحرف نحو الجدار في الخط المستقيم</span></td><td>Gyro not calibrated — it moved during boot<span class="arw">الجيروسكوب غير معاير — تحرك أثناء التشغيل</span></td><td>Power cycle, keep it still<span class="arw">أعد التشغيل وأبقه ثابتاً</span></td></tr>
+        <tr><td>Turns short or long<span class="arw">اللفة ناقصة أو زائدة</span></td><td>Gyro loose, or upside down<span class="arw">الجيروسكوب غير مثبّت أو مقلوب</span></td><td>Tighten it; check <code>GYRO_Z_SIGN</code><span class="arw">ثبّته جيداً وافحص <code>GYRO_Z_SIGN</code></span></td></tr>
+        <tr><td>Stops dead, motors humming<span class="arw">يتوقف والمحركات تطنّ</span></td><td>Battery flat, or wedged<span class="arw">البطارية فارغة أو الروبوت محشور</span></td><td>New battery<span class="arw">بطارية جديدة</span></td></tr>
+        <tr><td>Spins in place<span class="arw">يدور في مكانه</span></td><td>Both side sensors reading "open"<span class="arw">الحساسان الجانبيان يقرآن «مفتوح»</span></td><td>Check 5 V and GND on the side sonars<span class="arw">افحص 5 فولت والأرضي على الحساسين الجانبيين</span></td></tr>
+        <tr><td>Ignores a turn<span class="arw">يتجاوز اللفة</span></td><td>Side sensor mounted too far back or crooked<span class="arw">الحساس الجانبي مركّب متأخراً أو مائلاً</span></td><td>Re-square the sensor<span class="arw">أعد ضبط الحساس ليكون متعامداً</span></td></tr>
+        <tr><td>Resets mid-run<span class="arw">يعيد التشغيل أثناء الجولة</span></td><td>Motor surge browning out the Arduino<span class="arw">اندفاع تيار المحركات يسبب هبوط الجهد</span></td><td>Check the 1000 µF capacitor is fitted<span class="arw">تأكد من تركيب مكثف 1000 مايكروفاراد</span></td></tr>
+        <tr><td>Sonar reads nonsense<span class="arw">قراءات المسافة غير منطقية</span></td><td>Grounds not common<span class="arw">الأرضي غير مشترك</span></td><td>One GND rail for everything<span class="arw">خط أرضي واحد للجميع</span></td></tr>
+        <tr><td>Only one speed, flat out<span class="arw">سرعة واحدة فقط، أقصى سرعة</span></td><td>ENA/ENB jumpers still on the L298N<span class="arw">جمبرا ENA/ENB ما زالا مركّبين</span></td><td>Remove them<span class="arw">انزعهما</span></td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="note warn">
-    <span class="note-label">Between runs, do not edit code</span>
-    <p>
+    <span class="note-label">Between runs, do not edit code <span class="a" dir="rtl" lang="ar">· لا تعدّل الكود بين الجولات</span></span>
+    <p class="en-only">
       Nothing in that table needs a code change. Do not edit code between runs
       unless you have a genuine, understood reason — and if you do, run it in the
-      simulator first, even at the venue. It takes 30 seconds and it has caught
-      more than one "obvious" fix that made things worse.
+      simulator first, even at the venue.
+    </p>
+    <p dir="rtl" lang="ar">
+      لا شيء في هذا الجدول يحتاج تعديل كود. لا تعدّل الكود بين الجولات إلا لسبب
+      حقيقي تفهمه تماماً — وإذا فعلت، جرّبه في المحاكي أولاً، حتى لو كنت في الصالة.
     </p>
   </div>
 </section>
@@ -1352,56 +1759,83 @@ python3 run.py --all --trials 10</code></pre>
 <section class="phase" id="p12">
   <div class="phase-head">
     <span class="phase-num">PHASE 12</span>
-    <h2>For other students using this</h2>
+    <h2>For other students using this
+      <span class="h-ar" dir="rtl" lang="ar">للطلاب الآخرين الذين سيستخدمون المشروع</span>
+    </h2>
     <div class="phase-meta"><span>What transfers, what does not</span></div>
   </div>
 
-  <p>
+  <p class="en-only">
     The repository is at
     <a href="https://github.com/Muzoka/Robotic-comp">github.com/Muzoka/Robotic-comp</a>.
-    Everything in it is reusable. Three things are worth understanding before you
-    adapt it.
+    Everything in it is reusable. Three things are worth understanding before you adapt it.
+  </p>
+  <p dir="rtl" lang="ar">
+    المستودع على
+    <a href="https://github.com/Muzoka/Robotic-comp">github.com/Muzoka/Robotic-comp</a>.
+    كل ما فيه قابل لإعادة الاستخدام. ثلاثة أمور تستحق أن تفهمها قبل أن تعدّله.
   </p>
 
-  <h3>The simulator runs the real firmware</h3>
-  <p>
+  <h3>The simulator runs the real firmware
+    <span class="h-ar" dir="rtl" lang="ar">المحاكي يشغّل الكود الحقيقي نفسه</span>
+  </h3>
+  <p class="en-only">
     <code>nav_core.cpp</code> contains all the navigation and <strong>no Arduino
     code at all</strong>. It is compiled twice: by the Arduino IDE onto the Uno,
     and by <code>g++</code> into a shared library that a Python simulator drives.
     So a behaviour you see in simulation is the behaviour of the code you flash —
     not a model of it. If you build anything like this, copy that idea before you
-    copy any of the tuning values.
+    copy any tuning value.
   </p>
-  <p>
-    The limit is worth knowing too: the guarantee covers the navigation brain, not
-    the hardware layer. Two of this project's real bugs lived in the hardware
-    layer, where the Python and the C++ had quietly drifted apart.
+  <p dir="rtl" lang="ar">
+    ملف <code>nav_core.cpp</code> يحتوي كل منطق الملاحة و<strong>لا يحتوي أي كود
+    خاص بالأردوينو</strong>. يُترجم مرتين: بواسطة Arduino IDE إلى اللوحة، وبواسطة
+    <code>g++</code> إلى مكتبة يشغّلها محاكي بايثون. لذلك أي سلوك تراه في المحاكاة
+    هو سلوك الكود الذي سترفعه فعلاً — وليس نموذجاً عنه. إذا بنيت شيئاً مشابهاً،
+    انسخ هذه الفكرة قبل أن تنسخ أي رقم ضبط.
   </p>
 
-  <h3>Your maze is not this maze</h3>
-  <p>
+  <h3>Your maze is not this maze
+    <span class="h-ar" dir="rtl" lang="ar">متاهتك ليست هذه المتاهة</span>
+  </h3>
+  <p class="en-only">
     The three maps live in <code>sim/maps/build_maps.py</code> as 5×5 grids of
     <code>P</code> (passage) and <code>X</code> (wall). Change them to yours,
     re-run the script, and the simulator, the sector lines and the route all
-    follow. It also checks something you should check too: whether your maze has
-    a <strong>dead end</strong>. If it does, set <code>DEFAULT_MODE</code> to
-    <code>MODE_TREMAUX</code> — the straight-first rule alone can walk out of a
-    crossing that still has road behind it.
+    follow. It also checks whether your maze has a <strong>dead end</strong> — if
+    it does, set <code>DEFAULT_MODE</code> to <code>MODE_TREMAUX</code>.
+  </p>
+  <p dir="rtl" lang="ar">
+    الخرائط الثلاث موجودة في <code>sim/maps/build_maps.py</code> على شكل شبكات
+    5×5 من <code>P</code> (ممر) و<code>X</code> (جدار). غيّرها إلى خرائطك، وأعد
+    تشغيل السكربت، وسيتبعها المحاكي وخطوط القطاعات والمسار كلها. كما يفحص إن كانت
+    متاهتك فيها <strong>طريق مسدود</strong> — إن وُجد، اضبط <code>DEFAULT_MODE</code>
+    على <code>MODE_TREMAUX</code>.
   </p>
 
-  <h3>The one rule that mattered most</h3>
-  <p>
+  <h3>The one rule that mattered most
+    <span class="h-ar" dir="rtl" lang="ar">القاعدة الأهم في المشروع كله</span>
+  </h3>
+  <p class="en-only">
     At a junction, <strong>go straight if the way ahead is open; only ask the
     wall-following rule when it is not.</strong> One line. On the map with a 4-way
     crossing it removed both pivots in the crossing — the worst place to turn,
     because with no wall on either side there is nothing to square up against
     afterwards. It also lifted the speed ceiling from 170 to 200 and made the
-    left-hand and right-hand rules produce identical routes, so choosing wrong at
-    the start line stopped being able to cost a map.
+    left-hand and right-hand rules produce identical routes.
+  </p>
+  <p dir="rtl" lang="ar">
+    عند التقاطع، <strong>امضِ مستقيماً إذا كان الطريق أمامك مفتوحاً، ولا تسأل قاعدة
+    تتبّع الجدار إلا إذا كان مغلقاً.</strong> سطر واحد. في الخريطة التي فيها تقاطع
+    رباعي، حذفت هذه القاعدة كلتا اللفتين داخل التقاطع — وهو أسوأ مكان للدوران، لأنه
+    بلا جدار على أي من الجانبين لا يوجد ما يستقيم عليه الروبوت بعد اللفة. كما رفعت
+    سقف السرعة من 170 إلى 200، وجعلت قاعدتَي اليد اليمنى واليسرى تنتجان نفس المسار.
   </p>
 
-  <h3>Things that measured worse than expected</h3>
-  <p>
+  <h3>Things that measured worse than expected
+    <span class="h-ar" dir="rtl" lang="ar">أشياء كانت نتيجتها أسوأ من المتوقع</span>
+  </h3>
+  <p class="en-only">
     Written down because they are the standard advice and they lost here, on a
     robot with 20-tick encoders in a 1-foot corridor: trapezoidal turn profiles
     (78% → 72% completion), yaw-rate damping (78% → 55%), PWM slew limiting
@@ -1409,24 +1843,16 @@ python3 run.py --all --trials 10</code></pre>
     the code, switched off, with the measurements beside them. Measure on your own
     robot before adopting any of it — including this guide.
   </p>
+  <p dir="rtl" lang="ar">
+    دوّنّاها لأنها النصيحة الشائعة، ومع ذلك خسرت هنا، على روبوت بحساسات دوران
+    ذات 20 شقاً داخل ممر عرضه قدم واحدة: منحنيات الدوران شبه المنحرفة
+    (الإكمال من 78% إلى 72%)، وتخميد معدل الدوران (من 78% إلى 55%)، وتحديد معدل
+    تغيّر PWM (من 78% إلى 67%)، وحساسات الليزر بدل الموجات فوق الصوتية. كلها ما
+    زالت في الكود، معطّلة، ومعها أرقام القياس. قِس على روبوتك أنت قبل أن تأخذ بأي
+    منها — بما في ذلك هذا الدليل نفسه.
+  </p>
 
   <hr>
-
-  <h3>Repository map</h3>
-  <div class="tw">
-    <table>
-      <thead><tr><th>Path</th><th>What it is</th></tr></thead>
-      <tbody>
-        <tr><td class="pin">firmware/MazeRunner/</td><td>The four files you flash. No libraries needed</td></tr>
-        <tr><td class="pin">wokwi/sketch.ino</td><td>All four merged into one, for browser testing</td></tr>
-        <tr><td class="pin">sim/run.py</td><td>The maze simulator — GIFs, CSV telemetry, scoreboards</td></tr>
-        <tr><td class="pin">tools/geometry_check.py</td><td>Can the robot turn in the corridor? Run first</td></tr>
-        <tr><td class="pin">tools/serial_check.md</td><td>Bench tests, one subsystem at a time</td></tr>
-        <tr><td class="pin">tools/test_start.py</td><td>Proves the robot never starts its own run</td></tr>
-        <tr><td class="pin">docs/</td><td>Rules, hardware, wiring, algorithm, competition day</td></tr>
-      </tbody>
-    </table>
-  </div>
 
   <div class="code">
     <div class="code-cap">the four commands worth knowing</div>
@@ -1438,11 +1864,16 @@ make all       # drive all three maps, make GIFs</code></pre>
 </section>
 
 <footer>
-  <p>
+  <p class="en-only">
     Built for the Robotics Navigation Challenge, Khobar. Firmware, simulator and
     documentation:
     <a href="https://github.com/Muzoka/Robotic-comp">github.com/Muzoka/Robotic-comp</a>.
     Free to use and adapt — if it helps your team, that is what it is for.
+  </p>
+  <p dir="rtl" lang="ar">
+    أُعدّ لمسابقة الملاحة الروبوتية، الخبر. الكود والمحاكي والتوثيق على
+    <a href="https://github.com/Muzoka/Robotic-comp">github.com/Muzoka/Robotic-comp</a>.
+    حر الاستخدام والتعديل — إن أفاد فريقك فهذا هو الغرض منه.
   </p>
 </footer>
 
@@ -1451,12 +1882,32 @@ make all       # drive all three maps, make GIFs</code></pre>
 </div>
 
 <div class="progress">
-  <span><b id="done">0</b> of <b id="total">0</b> items checked</span>
+  <span><b id="done">0</b> of <b id="total">0</b> checked <span style="font-family:var(--ar)">· مكتمل</span></span>
   <button type="button" id="reset">Clear all</button>
 </div>
 
 <script>
   (function () {
+    /* ---- language switch ---- */
+    var btns = Array.prototype.slice.call(document.querySelectorAll('.langbar button'));
+    function setLang(l) {
+      document.body.classList.remove('only-en', 'only-ar');
+      if (l === 'en') document.body.classList.add('only-en');
+      if (l === 'ar') document.body.classList.add('only-ar');
+      btns.forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b.dataset.lang === l));
+      });
+      try { localStorage.setItem('mazerunner-lang', l); } catch (e) {}
+    }
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () { setLang(b.dataset.lang); });
+    });
+    try {
+      var l = localStorage.getItem('mazerunner-lang');
+      if (l) setLang(l);
+    } catch (e) {}
+
+    /* ---- checklist progress ---- */
     var boxes = Array.prototype.slice.call(
       document.querySelectorAll('.check input[type="checkbox"]'));
     var done = document.getElementById('done');
@@ -1469,18 +1920,18 @@ make all       # drive all three maps, make GIFs</code></pre>
         var on = boxes.filter(function (b) { return b.checked; })
                       .map(function (b) { return b.id; });
         localStorage.setItem('mazerunner-checked', JSON.stringify(on));
-      } catch (e) { /* storage unavailable, in-session only */ }
+      } catch (e) {}
     }
     function count() {
       done.textContent = boxes.filter(function (b) { return b.checked; }).length;
     }
     try {
-      var saved = JSON.parse(localStorage.getItem('mazerunner-checked') || '[]');
-      saved.forEach(function (id) {
-        var el = document.getElementById(id);
-        if (el) el.checked = true;
-      });
-    } catch (e) { /* ignore */ }
+      JSON.parse(localStorage.getItem('mazerunner-checked') || '[]')
+        .forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) el.checked = true;
+        });
+    } catch (e) {}
 
     boxes.forEach(function (b) {
       b.addEventListener('change', function () { count(); save(); });
