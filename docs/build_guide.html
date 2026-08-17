@@ -544,25 +544,109 @@ cd Robotic-comp</code></pre>
       <p>Otherwise use GitHub's <strong>Code → Download ZIP</strong> and unzip it.</p>
     </li>
     <li>
-      <h4>Optional but recommended: run the simulator</h4>
+      <h4>Run the geometry check — five minutes, Python only</h4>
       <p>
-        You need Python 3, <code>pillow</code>, and a C++ compiler
-        (<code>g++</code> — already present on macOS and Linux; on Windows use
-        WSL). Then:
+        This is the one tool you should not skip, and it is the easiest to set
+        up: <strong>no compiler, no libraries, nothing to install but Python</strong>.
+        It reads your measurements out of <code>config.h</code> and tells you
+        whether the robot can physically turn around in the corridor.
+      </p>
+      <p>
+        Install Python from <code>python.org/downloads</code>. On Windows, tick
+        <strong>"Add python.exe to PATH"</strong> on the first screen of the
+        installer — it is easy to miss and everything fails without it. Then open
+        a terminal in the project folder and run:
       </p>
       <div class="code">
-        <div class="code-cap">terminal</div>
-        <pre><code>pip install pillow
-python3 tools/geometry_check.py      # can the robot turn in the corridor?
-cd sim && python3 run.py --all       # drive all three maps, makes GIFs</code></pre>
+        <div class="code-cap">Windows — PowerShell, in the project folder</div>
+        <pre><code>python tools\geometry_check.py</code></pre>
+      </div>
+      <div class="code">
+        <div class="code-cap">macOS / Linux</div>
+        <pre><code>python3 tools/geometry_check.py</code></pre>
       </div>
       <p>
-        The unusual thing about this project: the simulator runs the
-        <em>real firmware</em>. <code>nav_core.cpp</code> is compiled twice — once
-        by the Arduino IDE onto the Uno, once by <code>g++</code> into a library
-        the Python simulator drives. What you watch in a simulated run is the
-        behaviour of the code you flash.
+        On Windows the command is <code>python</code>, not <code>python3</code>,
+        and paths use backslashes. To open a terminal in the right place: open the
+        project folder in File Explorer, click the address bar, type
+        <code>powershell</code>, press Enter.
       </p>
+      <div class="code">
+        <div class="code-cap">what you should see</div>
+        <pre><code>  body                    220 mm long  x   115 mm wide
+  turning on the spot sweeps a circle 248 mm across
+
+passage    clearance verdict   what it means
+200           -24 mm IMPOSSIBLE cannot turn round
+250             1 mm no        scrapes every corner, will jam
+300            26 mm tight     works if it centres itself well  &lt;-- ours
+350            51 mm fine      comfortable</code></pre>
+      </div>
+      <p>
+        Change <code>ROBOT_LENGTH_MM</code> and <code>ROBOT_WIDTH_MM</code> in
+        <code>firmware/MazeRunner/config.h</code> to your real measurements and run
+        it again. That is the whole loop.
+      </p>
+    </li>
+    <li>
+      <h4>Optional: the full maze simulator</h4>
+      <p>
+        This one watches the robot drive all three maps and saves an animated GIF
+        of each. It needs two more things: the <code>pillow</code> image library
+        and a <strong>C++ compiler</strong>.
+      </p>
+      <p>
+        The compiler is the awkward part on Windows, and it is there for a good
+        reason — <strong>the simulator runs the real firmware</strong>.
+        <code>nav_core.cpp</code> is compiled twice: once by the Arduino IDE onto
+        the Uno, once into a library the Python simulator drives. What you watch in
+        a simulated run is the behaviour of the code you flash, not a model of it.
+      </p>
+      <h4>Windows: install WSL</h4>
+      <p>
+        WSL gives you a real Linux inside Windows. Open <strong>PowerShell as
+        Administrator</strong> (right-click the Start button → Terminal (Admin)):
+      </p>
+      <div class="code">
+        <div class="code-cap">PowerShell, as Administrator — then reboot</div>
+        <pre><code>wsl --install</code></pre>
+      </div>
+      <p>
+        Reboot, open <strong>Ubuntu</strong> from the Start menu, and let it set up
+        a username and password. Then, inside Ubuntu:
+      </p>
+      <div class="code">
+        <div class="code-cap">Ubuntu terminal</div>
+        <pre><code>sudo apt update && sudo apt install -y g++ python3-pip
+pip3 install pillow
+
+cd /mnt/c/Users/YOURNAME/Downloads/Robotic-comp
+cd sim && python3 run.py --all</code></pre>
+      </div>
+      <p>
+        Your Windows <code>C:</code> drive appears as <code>/mnt/c</code> inside
+        Ubuntu, so the project does not need to move. The GIFs land in
+        <code>sim/runs/</code> and you can open them normally from Windows.
+      </p>
+      <h4>macOS / Linux</h4>
+      <div class="code">
+        <div class="code-cap">terminal</div>
+        <pre><code>xcode-select --install        # macOS only, installs the compiler
+sudo apt install g++          # Linux
+pip3 install pillow
+
+cd sim && python3 run.py --all</code></pre>
+      </div>
+      <div class="note">
+        <span class="note-label">If you skip this</span>
+        <p>
+          Nothing is lost that you cannot get elsewhere. Wokwi (Phase 03) already
+          proves the firmware runs, and the geometry check above already answers
+          the question that decides the build. The maze simulator earns its keep
+          later, when you want to test a change to <code>config.h</code> without
+          walking to the track.
+        </p>
+      </div>
     </li>
   </ol>
 </section>

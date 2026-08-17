@@ -49,6 +49,35 @@ class NavOut(ctypes.Structure):
     ]
 
 
+_NO_COMPILER = """
+No C++ compiler found (looked for '%s').
+
+The maze simulator needs one, because it runs the REAL firmware rather than
+a copy of it: nav_core.cpp gets compiled into a library that Python drives.
+
+  Windows   The simplest route is WSL, which gives you a real Linux inside
+            Windows. In PowerShell AS ADMINISTRATOR:
+                wsl --install
+            Reboot, open "Ubuntu" from the Start menu, then:
+                sudo apt update && sudo apt install -y g++ python3-pip
+                pip3 install pillow
+            Your C: drive is at /mnt/c, so cd to the project and run it
+            there.
+
+  macOS     xcode-select --install
+
+  Linux     sudo apt install g++        (or your package manager's g++)
+
+You do NOT need a compiler for the most important check. This needs
+only Python:
+
+    python3 tools/geometry_check.py
+
+That is the one that tells you whether the robot physically fits the
+corridor, and it is worth more than everything else in this folder.
+"""
+
+
 def build(force=False):
     """Compile nav_core.cpp into a shared library."""
     src = os.path.join(_FW, "nav_core.cpp")
@@ -61,10 +90,13 @@ def build(force=False):
     cmd = [cxx, "-O2", "-fPIC", "-shared", "-std=c++11",
            "-Wall", "-Wextra", "-Wno-unused-parameter",
            "-I", _FW, src, "-o", _LIB, "-lm"]
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True)
+    except FileNotFoundError:
+        raise RuntimeError(_NO_COMPILER % cxx)
     if r.returncode != 0:
         sys.stderr.write(r.stdout + r.stderr)
-        raise RuntimeError("could not build nav_core - is g++ installed?")
+        raise RuntimeError("nav_core.cpp did not compile - see the errors above")
     if r.stderr.strip():
         sys.stderr.write(r.stderr)
     return _LIB
